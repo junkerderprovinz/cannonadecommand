@@ -2592,7 +2592,7 @@
   }
   function diskViewRow(c) {
     var label = T("Datenträger", "Disks");
-    var help = T("Wie der Tab Start die Datenträger zeigt: als Liste wie in Unraid oder als Kacheln mit einem Bild von jedem Laufwerk. Gilt für alle Abschnitte. Der Schalter über einem Abschnitt ändert nur diesen.", "How the Main tab shows the disks: as Unraid's list or as tiles with a picture of each drive. Applies to every section. The switch above a section changes only that one.");
+    var help = T("Wie der Tab Start die Datenträger zeigt: als Liste wie in Unraid oder als Kacheln mit einem Bild von jedem Laufwerk. Der Schalter oben im Tab Start stellt dasselbe um.", "How the Main tab shows the disks: as Unraid's list or as tiles with a picture of each drive. The switch at the top of the Main tab changes the same setting.");
     if (get("cc.theming", "1") === "0") {
       c.appendChild(lockRow(label, T("Liste, solange das Theming aus ist", "List while theming is off"), T("Zum Theming", "Go to Theming"), function () { jumpTo("general", "Theming"); }, help));
       return;
@@ -2602,7 +2602,6 @@
     var prev = viewPreview(opts, diskSketch), slot = el("div", "cc-set-viewslot cc-set-diskview");
     slot.appendChild(dropRow(label, opts, cur, function (v) {
       set("cc.diskview", v);
-      ["array", "pools", "boot", "ud"].forEach(function (k) { del("cc.diskview." + k); });
       prev.mark(v);
     }, help));
     c.appendChild(slot); c.appendChild(prev.el);

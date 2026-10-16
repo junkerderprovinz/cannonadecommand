@@ -1,6 +1,6 @@
 // The disk tiles on /Main. Loaded on every page through CannonadeCommand.Disks.page and live only
-// where the Start area styles /Main (shares.js), it gives each section (array, pools, boot,
-// Unassigned Devices) a Liste/Kacheln switch and draws one card per disk in the tile view.
+// where the Start area styles /Main (shares.js), it puts one Liste/Kacheln switch on the page and
+// draws one card per disk of the array, the pools, the boot device and Unassigned Devices.
 //
 // The cards read Unraid's own tables, which stay in the page, hidden, and keep being refilled by
 // Unraid's devices subscriber and by Unassigned Devices' own refresh, so the tiles follow the same
@@ -38,9 +38,8 @@
   function live() {
     return g("cc.theming", "1") !== "0" && g("cc.enable.main", "0") !== "0" && pn() === "/Main" && !!document.querySelector("#displaybox nav.tabs");
   }
-  // One key for every section, set on the settings page, and one per section that its own switch
-  // writes; the settings page clears those, so its choice reaches every section again.
-  function viewOf(key) { return g(KEY + "." + key, g(KEY, "tiles")) === "list" ? "list" : "tiles"; }
+  // One key for the whole page, written by its switch and by the settings page.
+  function view() { return g(KEY, "tiles") === "list" ? "list" : "tiles"; }
 
   // Tree helpers that use children, childNodes, tagName and getAttribute only, so the readers run
   // on the live rows, on the rows shares.js has badged, and on the test shim alike.
@@ -509,11 +508,13 @@
     return out.filter(function (S) { return S.box && S.sec; });
   }
 
-  function switchFor(S) {
-    var sw = S.sec.querySelector(':scope > .cc-dk-vsw[data-cc-dk="' + S.key + '"]');
+  // One switch for the whole page, at the right end of the tab bar where Unraid keeps its own page
+  // controls. In section view the bar holds nothing else, so the switch tops the page.
+  function pageSwitch() {
+    var nav = document.querySelector("#displaybox nav.tabs");
+    var sw = nav.querySelector(":scope > .cc-dk-vsw");
     if (sw) return sw;
     sw = el("div", "cc-dk-vsw");
-    sw.setAttribute("data-cc-dk", S.key);
     var seg = el("span", "cc-dk-seg");
     seg.setAttribute("role", "group"); seg.setAttribute("aria-label", t("view"));
     [["list", "IconViewList"], ["tiles", "IconViewGrid"]].forEach(function (o) {
@@ -521,25 +522,12 @@
       var b = el("span", "cc-seg-btn", glyph(o[1]) + "<span>" + esc(t(o[0])) + "</span>");
       b.setAttribute("data-v", o[0]);
       if (window.CCTheme && window.CCTheme.pressable) window.CCTheme.pressable(b); else { b.setAttribute("role", "button"); b.setAttribute("tabindex", "0"); }
-      b.addEventListener("click", function () { s(KEY + "." + S.key, o[0]); render(); });
+      b.addEventListener("click", function () { s(KEY, o[0]); render(); });
       seg.appendChild(b);
     });
     sw.appendChild(seg);
-    var head = S.sec.querySelector(":scope > .cc-card-head");
-    S.sec.insertBefore(sw, head ? head.nextSibling : S.sec.firstChild);
+    nav.insertBefore(sw, nav.querySelector(":scope > span.status"));
     return sw;
-  }
-  // In section view the switch sits at the right end of the badge row, left of the controls
-  // shares.js parks there.
-  function placeSwitch(S, sw) {
-    var head = S.sec.querySelector(":scope > .cc-card-head");
-    sw.classList.toggle("cc-dk-inhead", !!head);
-    var parked = head && head.querySelector(":scope > span.status, :scope > .cc-ud-ctrls");
-    sw.style.setProperty("--cc-dk-right", (parked && parked.offsetWidth ? parked.offsetWidth + 12 : 0) + "px");
-    var c = head ? getComputedStyle(head).backgroundColor : "";
-    var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c || "");
-    var hex = m ? "#" + [m[1], m[2], m[3]].map(function (x) { return ("0" + (+x).toString(16)).slice(-2); }).join("") : "";
-    if (hex) { sw.style.setProperty("--cc-dk-c", hex); sw.style.setProperty("--cc-dk-ct", ink(hex)); }
   }
   function hostFor(S) {
     var h = S.sec.querySelector(':scope .cc-dk-host[data-cc-dk="' + S.key + '"]');
@@ -557,43 +545,69 @@
     if (S.box) S.box.classList.remove("cc-dk-hidden");
   }
 
-  function renderSection(S) {
-    var data, n = 0, list = [];
-    if (S.key === "array") data = readArray(S.tbodies[0]);
-    else if (S.key === "pools") { data = { pools: S.tbodies.map(readPool) }; data.offline = data.pools.some(function (p) { return p.offline; }); }
-    else if (S.key === "boot") data = readBoot(S.tbodies[0]);
-    else data = readUd(S.tbodies[0]);
-    var sw = S.sec.querySelector(':scope > .cc-dk-vsw[data-cc-dk="' + S.key + '"]');
-    // A stopped array shows the assignment dropdowns, which only the list can hold.
-    if (data.offline) { if (sw) sw.parentNode.removeChild(sw); drop(S); return; }
-    sw = switchFor(S);
-    placeSwitch(S, sw);
-    var v = viewOf(S.key);
-    Array.prototype.forEach.call(sw.querySelectorAll(".cc-seg-btn"), function (b) { b.setAttribute("aria-pressed", attr(b, "data-v") === v ? "true" : "false"); b.classList.toggle("cc-seg-on", attr(b, "data-v") === v); });
-    if (v === "list") { drop(S); return; }
+  function readSection(S) {
+    if (S.key === "array") return readArray(S.tbodies[0]);
+    if (S.key === "pools") { var pools = S.tbodies.map(readPool); return { pools: pools, offline: pools.some(function (p) { return p.offline; }) }; }
+    if (S.key === "boot") return readBoot(S.tbodies[0]);
+    return readUd(S.tbodies[0]);
+  }
+  function cardsOf(disks, n) {
+    var members = disks.filter(function (d) { return !d.parity; }).length;
+    return disks.map(function (d, i) { return { d: d, ctx: { members: members }, n: n + i }; });
+  }
+  // Puts the given children into parent in this order and drops the rest.
+  function order(parent, list) {
+    list.forEach(function (c, i) { if (parent.children[i] !== c) parent.insertBefore(c, parent.children[i] || null); });
+    while (parent.children.length > list.length) parent.removeChild(parent.lastChild);
+  }
+  function group(wrap, key, val, title, sub, items) {
+    var box = wrap.querySelector(".cc-dk-pool[" + key + '="' + val + '"]');
+    if (!box) { box = el("div", "cc-dk-pool", '<div class="cc-dk-eyebrow"></div><div class="cc-dk-grid"></div>'); box.setAttribute(key, val); }
+    setHtml(box.querySelector(".cc-dk-eyebrow"), esc(title) + "<span>" + esc(sub.filter(Boolean).join(" · ")) + "</span>");
+    var grid = box.querySelector(".cc-dk-grid");
+    grid.style.setProperty("--cc-dk-n", items.length);
+    fillGrid(grid, items, colourAt);
+    return box;
+  }
+  function notesStrip(host, notes) {
+    var box = host.querySelector(":scope > .cc-dk-notes");
+    if (!notes.length) { if (box) host.removeChild(box); return; }
+    if (!box) box = host.appendChild(el("div", "cc-dk-sum cc-dk-notes"));
+    setHtml(box, notes.map(function (td) { return "<span>" + td.innerHTML + "</span>"; }).join(""));
+  }
+  // Pools of one or two devices share a row with the boot device, each under its own eyebrow; a
+  // larger pool keeps a row of its own.
+  function drawPools(host, pools, boot) {
+    var wrap = host.querySelector(":scope > .cc-dk-pools") || host.insertBefore(el("div", "cc-dk-pools"), host.firstChild);
+    var row = wrap.querySelector(":scope > .cc-dk-prow") || el("div", "cc-dk-prow");
+    var big = [], small = [], n = 0;
+    pools.forEach(function (p) {
+      if (!p.disks.length) return;
+      var multi = p.disks.length > 1;
+      var items = p.disks.map(function (d) {
+        var shown = Object.assign({}, d, { name: multi ? p.name + " " + d.name.replace(/\D+/g, "") : p.name, fs: multi ? null : p.fs, browse: d.browse || (multi ? "" : p.browse) });
+        return { d: shown, ctx: { member: multi ? p.name : "" }, n: n++ };
+      });
+      var box = group(wrap, "data-pool", p.key, p.name, [p.fs && p.fs.fs, p.status], items);
+      strip(box, "cc-dk-sum", multi && p.fs ? sumHtml({ label: p.name, temp: null, rdText: "", wrText: "", fs: p.fs }) : "");
+      box.classList.toggle("cc-dk-big", p.disks.length > 2);
+      (p.disks.length > 2 ? big : small).push(box);
+    });
+    if (boot && boot.data.disks.length) {
+      var first = boot.data.disks[0];
+      small.push(group(wrap, "data-boot", "1", boot.title, [first.fs && first.fs.fs], cardsOf(boot.data.disks, n)));
+    }
+    order(row, small);
+    order(wrap, small.length ? big.concat(row) : big);
+    notesStrip(host, boot ? boot.data.notes : []);
+  }
+
+  function renderSection(S, boot) {
+    var data = S.data;
+    if (data.unknown) { drop(S); return; }
     S.box.classList.add("cc-dk-hidden");
     var host = hostFor(S);
-    if (S.key === "pools") {
-      var wrap = host.querySelector(":scope > .cc-dk-pools") || host.appendChild(el("div", "cc-dk-pools"));
-      var seen = {};
-      data.pools.forEach(function (p) {
-        if (!p.disks.length) return;
-        seen[p.key] = 1;
-        var box = wrap.querySelector(':scope > .cc-dk-pool[data-pool="' + p.key + '"]');
-        if (!box) { box = el("div", "cc-dk-pool"); box.setAttribute("data-pool", p.key); box.innerHTML = '<div class="cc-dk-eyebrow"></div><div class="cc-dk-grid"></div>'; wrap.appendChild(box); }
-        setHtml(box.querySelector(".cc-dk-eyebrow"), esc(p.name) + "<span>" + esc([p.fs && p.fs.fs, p.status].filter(Boolean).join(" · ")) + "</span>");
-        var multi = p.disks.length > 1;
-        var items = p.disks.map(function (d) {
-          var shown = Object.assign({}, d, { name: multi ? p.name + " " + d.name.replace(/\D+/g, "") : p.name, fs: multi ? null : p.fs, browse: d.browse || (multi ? "" : p.browse) });
-          return { d: shown, ctx: { member: multi ? p.name : "" }, n: n++ };
-        });
-        fillGrid(box.querySelector(".cc-dk-grid"), items, colourAt);
-        strip(box, "cc-dk-sum", multi && p.fs ? sumHtml({ label: p.name, temp: null, rdText: "", wrText: "", fs: p.fs }) : "");
-      });
-      kids(wrap).forEach(function (b) { if (!seen[attr(b, "data-pool")]) wrap.removeChild(b); });
-      return;
-    }
-    if (data.unknown) { drop(S); return; }
+    if (S.key === "pools") { drawPools(host, data.pools, boot); return; }
     if (S.key === "ud" && !data.disks.length) {
       host.innerHTML = "";
       host.appendChild(el("div", "cc-dk-empty", "<b>" + esc(data.notice) + "</b>"));
@@ -601,19 +615,9 @@
     }
     var empty = host.querySelector(":scope > .cc-dk-empty"); if (empty) host.removeChild(empty);
     var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
-    var members = data.disks.filter(function (d) { return !d.parity; }).length;
-    data.disks.forEach(function (d) { list.push({ d: d, ctx: { members: members }, n: n++ }); });
-    fillGrid(grid, list, colourAt);
+    fillGrid(grid, cardsOf(data.disks, 0), colourAt);
     if (S.key === "array") strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : "");
-    if (S.key === "boot") {
-      var notes = host.querySelector(":scope > .cc-dk-notes");
-      if (!data.notes.length) { if (notes) host.removeChild(notes); }
-      else {
-        if (!notes) notes = host.appendChild(el("div", "cc-dk-sum cc-dk-notes"));
-        var html = data.notes.map(function (td) { return "<span>" + td.innerHTML + "</span>"; }).join("");
-        setHtml(notes, html);
-      }
-    }
+    if (S.key === "boot") notesStrip(host, data.notes);
   }
 
   function cardOf(e) { return e.target && e.target.closest ? e.target.closest(".cc-dk-card") : null; }
@@ -639,15 +643,42 @@
   }
 
   function teardown() {
-    document.documentElement.classList.remove("cc-dk-on");
+    document.documentElement.classList.remove("cc-dk-on", "cc-dk-tiled");
     Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-host, #displaybox .cc-dk-vsw"), function (n) { n.parentNode.removeChild(n); });
-    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden"), function (n) { n.classList.remove("cc-dk-hidden"); });
+    Array.prototype.forEach.call(document.querySelectorAll("#displaybox .cc-dk-hidden, #displaybox .cc-dk-merged"), function (n) { n.classList.remove("cc-dk-hidden", "cc-dk-merged"); });
   }
   function render() {
     if (!live()) { teardown(); return; }
-    document.documentElement.classList.add("cc-dk-on");
+    var root = document.documentElement, tiles = view() === "tiles", all = sections();
+    root.classList.add("cc-dk-on");
     defs();
-    sections().forEach(function (S) { try { renderSection(S); } catch (e) {} });
+    all.forEach(function (S) { try { S.data = readSection(S); } catch (e) { S.data = { offline: true }; } });
+    // A stopped array shows the assignment dropdowns, which only the list can hold.
+    var open = all.filter(function (S) { return !S.data.offline; });
+    var sw = document.querySelector("#displaybox nav.tabs > .cc-dk-vsw");
+    if (!open.length) { if (sw) sw.parentNode.removeChild(sw); }
+    else {
+      Array.prototype.forEach.call(pageSwitch().querySelectorAll(".cc-seg-btn"), function (b) {
+        var on = attr(b, "data-v") === (tiles ? "tiles" : "list");
+        b.setAttribute("aria-pressed", on ? "true" : "false"); b.classList.toggle("cc-seg-on", on);
+      });
+    }
+    // In section view the boot device joins the pools' row, so its own section steps aside.
+    var pools = tiles && open.filter(function (S) { return S.key === "pools"; })[0];
+    var boot = tiles && open.filter(function (S) { return S.key === "boot"; })[0];
+    var head = pools && boot && root.classList.contains("cc-sections-main") && boot.sec.querySelector(":scope > .cc-card-head");
+    var merged = head ? { title: clean(text(head.querySelector("span.left") || head)), data: boot.data } : null;
+    all.forEach(function (S) {
+      try {
+        S.sec.classList.toggle("cc-dk-merged", !!merged && S === boot);
+        if (!tiles || S.data.offline || (merged && S === boot)) drop(S);
+        else renderSection(S, S === pools ? merged : null);
+      } catch (e) {}
+    });
+    // The column and reads/writes controls act on the disk tables, so they go while none shows.
+    root.classList.toggle("cc-dk-tiled", tiles && !all.some(function (S) {
+      return S.key !== "ud" && !S.sec.classList.contains("cc-dk-merged") && !S.box.classList.contains("cc-dk-hidden");
+    }));
   }
   var frame = 0;
   function soon() { if (!frame) frame = (window.requestAnimationFrame || setTimeout)(function () { frame = 0; render(); }); }
@@ -677,7 +708,6 @@
     loadExtra();
     setInterval(loadExtra, 10 * 60 * 1000);
     watch();
-    window.addEventListener("resize", soon);
     window.addEventListener("storage", function (e) { if (e && e.key && /^cc[a-z]*\./.test(e.key) && e.key !== "cc.stateCache") soon(); });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

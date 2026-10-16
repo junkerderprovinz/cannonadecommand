@@ -3,7 +3,8 @@
 //   · a rule that is not gated on html.cc-dk-on restyles /Main with the Start area off
 //   · a reader that only knows the plain nchan rows and loses a disk once shares.js has badged them
 //   · an action that runs anything other than the call Unraid's own control carries
-//   · a section's own pick that the settings page cannot take back
+//   · a second view switch, or a key per section that the page switch cannot take back
+//   · a table control left in the tile view, where it does nothing
 //   · an animation outside the motion gate, or one that keeps running at "off"
 const fs = require('fs');
 const path = require('path');
@@ -64,7 +65,7 @@ const tbody = (rows) => parse('<tbody>' + rows + '</tbody>').children[0];
 
 // The readers out of disks.js, with the helpers they call.
 const READERS = ['kids', 'tag', 'attr', 'hasCls', 'find', 'text', 'clean', 'bytes', 'rate', 'temp', 'parseCall', 'run', 'cells', 'usage', 'fsInfo', 'linkName',
-  'kindOf', 'orbState', 'splitId', 'ioText', 'readRow', 'readArray', 'readPool', 'readBoot', 'readUd', 'cardOf', 'act', 'onClick', 'viewOf'];
+  'kindOf', 'orbState', 'splitId', 'ioText', 'readRow', 'readArray', 'readPool', 'readBoot', 'readUd', 'cardOf', 'act', 'onClick', 'view', 'order'];
 function load(env) {
   const src = [grabVar(js, 'POW'), grabVar(js, 'CALLS'), grabVar(js, 'KEY')].concat(READERS.map((n) => grabFn(js, n))).join('\n') + '\nreturn {' + READERS.join(',') + '};';
   return new Function('window', 'location', 'g', src)(env.window || {}, env.location || {}, env.g || (() => null));
@@ -194,22 +195,58 @@ console.log('\nThe actions run only the row\'s own calls');
   ok('a click on the bubble stays on the page', loc.href === '/Main');
 }
 
-console.log('\nThe view: tiles by default, a section\'s own pick, the settings page above them');
+console.log('\nThe view: one switch and one key for the whole page');
 {
   const store = {};
   const R = load({ g: (k, d) => (k in store ? store[k] : d) });
-  ok('unset, every section shows tiles', R.viewOf('array') === 'tiles' && R.viewOf('ud') === 'tiles');
+  ok('unset, the page shows tiles', R.view() === 'tiles');
   store['cc.diskview'] = 'list';
-  ok('the settings value reaches every section', R.viewOf('pools') === 'list');
+  ok('cc.diskview = list shows the list', R.view() === 'list');
   store['cc.diskview.pools'] = 'tiles';
-  ok('a section\'s own switch wins for that section only', R.viewOf('pools') === 'tiles' && R.viewOf('boot') === 'list');
+  ok('a key left from a per-section switch changes nothing', R.view() === 'list');
+  ok('the page switch writes cc.diskview', /s\(KEY, o\[0\]\)/.test(js) && /var KEY = "cc\.diskview";/.test(js) && !/KEY \+ "\."/.test(js));
+  ok('there is one switch, at the right end of the tab bar before Unraid\'s own controls', /nav\.insertBefore\(sw, nav\.querySelector\(":scope > span\.status"\)\)/.test(js) && (js.match(/el\("div", "cc-dk-vsw"\)/g) || []).length === 1);
   const settings = read('scripts/settings.js');
   const row = grabFn(settings, 'diskViewRow');
-  ok('the settings row writes cc.diskview and clears the four section picks', /set\("cc\.diskview", v\);/.test(row) && /\["array", "pools", "boot", "ud"\]\.forEach\(function \(k\) \{ del\("cc\.diskview\." \+ k\); \}\);/.test(row));
+  ok('the settings row writes the same key and nothing else', /set\("cc\.diskview", v\);/.test(row) && !/del\(/.test(row));
+  ok('its bubble points to the switch on the page', /Der Schalter oben im Tab Start stellt dasselbe um\./.test(row) && /The switch at the top of the Main tab changes the same setting\./.test(row));
   ok('it offers Liste and Kacheln with the view glyphs', /\[\["list", T\("Liste", "List"\), "IconViewList"\], \["tiles", T\("Kacheln", "Tiles"\), "IconViewGrid"\]\]/.test(row));
   ok('it has a bubble and a preview in the right column', /, help\)\);/.test(row) && /viewPreview\(opts, diskSketch\)/.test(row) && /splitCard\(c, \[prev\.el\], "cc-set-split-auto"\)/.test(row));
-  ok('the section switches use the same keys', /s\(KEY \+ "\." \+ S\.key, o\[0\]\)/.test(js) && /var KEY = "cc\.diskview";/.test(js));
   ok('a section shows "Ruht" only for a spun-down disk, never an active chip', /if \(d\.down\) h \+= '<span class="cc-dk-chip">' \+ glyph\("Moon"\) \+ esc\(t\("resting"\)\)/.test(js) && !/Aktiv/.test(js));
+}
+
+console.log('\nThe tile view hides the table controls');
+{
+  const rules = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const hide = /([^{}]+)\{\s*display: none !important; \}/g;
+  const hidden = [];
+  let m;
+  while ((m = hide.exec(rules))) hidden.push(...splitTop(m[1]).map((x) => x.trim()));
+  ok('Unraid\'s span.status in the tab bar goes in the tile view', hidden.includes('html.cc-dk-on.cc-dk-tiled #displaybox nav.tabs > span.status'));
+  // Shares.css shows it in section view with html.cc-shares-on.cc-on-main.cc-sections-main, four classes.
+  ok('in section view the hide outranks Shares.css', hidden.includes('html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status'));
+  ok('only while no disk table of the array, the pools or the boot device shows', /root\.classList\.toggle\("cc-dk-tiled", tiles && !all\.some\(function \(S\) \{\s*return S\.key !== "ud"/.test(js));
+  ok('Unassigned Devices keeps its controls, which still act on the tiles', !/cc-ud-ctrls/.test(rules));
+}
+
+console.log('\nSmall pools and the boot device share a row');
+{
+  ok('a pool of three or more devices fills a row alone', /\(p\.disks\.length > 2 \? big : small\)\.push\(box\)/.test(js));
+  ok('the boot device joins the small pools under its section title', /small\.push\(group\(wrap, "data-boot", "1", boot\.title/.test(js));
+  ok('only in section view, where its own section can step aside', /root\.classList\.contains\("cc-sections-main"\)/.test(js) && /html\.cc-dk-on\.cc-on-main\.cc-sections-main #displaybox section\[role="tabpanel"\]\.cc-dk-merged \{ display: none !important; \}/.test(css));
+  ok('a pool in the shared row gets one column per device', /grid\.style\.setProperty\("--cc-dk-n", items\.length\)/.test(js) && /repeat\(var\(--cc-dk-n, 1\), 260px\)/.test(css));
+  ok('on a phone every card takes the full width', /@media \(max-width: 600px\) \{[^@]*\.cc-dk-pool\.cc-dk-big \.cc-dk-grid \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
+
+  const R = load({});
+  const node = (id) => ({ id, parentNode: null });
+  const parent = { children: [] };
+  parent.insertBefore = (c, ref) => { if (c.parentNode) c.parentNode.removeChild(c); const i = ref ? parent.children.indexOf(ref) : parent.children.length; parent.children.splice(i, 0, c); c.parentNode = parent; };
+  parent.removeChild = (c) => { parent.children.splice(parent.children.indexOf(c), 1); c.parentNode = null; };
+  Object.defineProperty(parent, 'lastChild', { get: () => parent.children[parent.children.length - 1] });
+  const [a, b, c, d] = ['a', 'b', 'c', 'd'].map(node);
+  [a, b, c].forEach((n) => parent.insertBefore(n, null));
+  R.order(parent, [c, a, d]);
+  ok('the rows keep the order they are given and lose what is left over', parent.children.map((n) => n.id).join('') === 'cad');
 }
 
 console.log('\ndisks.php reads emhttp\'s own files');

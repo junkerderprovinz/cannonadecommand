@@ -20,14 +20,17 @@ html.cc-dk-on:is(.Theme--white, .Theme--azure) {
   --cc-dk-rest: #8d8d8d; --cc-dk-rest-ink: #ffffff; --cc-dk-bar-off: #4a4a4a;
 }
 html.cc-dk-on #displaybox .cc-dk-hidden { display: none !important; }
+/* The boot device's section, while its card sits in the pools' row; the panel rule in Shares.css
+   is as specific, so this one names the area too. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section[role="tabpanel"].cc-dk-merged { display: none !important; }
+/* The column reset and the reads/writes toggle act on the tables only. */
+html.cc-dk-on.cc-dk-tiled #displaybox nav.tabs > span.status,
+html.cc-dk-on.cc-dk-tiled.cc-on-main.cc-sections-main #displaybox .cc-card-head > span.status { display: none !important; }
 
-/* The view switch. In section view it sits at the right end of the badge row, left of the
-   controls shares.js parks there, and on a phone it drops under the badge. */
-html.cc-dk-on #displaybox .cc-dk-vsw { display: flex; justify-content: flex-end; margin: 0 0 12px; }
-html.cc-dk-on #displaybox .cc-dk-vsw.cc-dk-inhead { position: absolute; top: -4px; right: var(--cc-dk-right, 0px); margin: 0; z-index: 1; }
-@media (max-width: 600px) {
-  html.cc-dk-on #displaybox .cc-dk-vsw.cc-dk-inhead { position: static; margin: -6px 0 12px; }
-}
+/* The page's view switch, at the right end of the tab bar, left of Unraid's own controls there. */
+html.cc-dk-on #displaybox nav.tabs > .cc-dk-vsw { display: flex; align-self: center; margin-left: auto; }
+html.cc-dk-on.cc-on-main:not(.cc-sections-main) #displaybox nav.tabs > .cc-dk-vsw + span.status { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; }
+html.cc-dk-on.cc-sections-main #displaybox nav.tabs > .cc-dk-vsw { margin-bottom: 4px; }
 html.cc-dk-on #displaybox .cc-dk-seg { display: inline-flex; gap: 3px; padding: 3px; background: var(--cc-dk-inset); border-radius: var(--cc-radius-pill); }
 html.cc-dk-on #displaybox .cc-dk-seg .cc-seg-btn {
   display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 11px; border: 0; border-radius: var(--cc-radius-pill);
@@ -42,14 +45,18 @@ html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-vsw:hover .cc-dk-seg .cc-se
 
 html.cc-dk-on #displaybox .cc-dk-host { margin: 0 0 4px; }
 html.cc-dk-on #displaybox .cc-dk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
+/* Pools of one or two devices and the boot device share a row, a larger pool fills one alone. */
+html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-direction: column; gap: 18px; }
+html.cc-dk-on #displaybox .cc-dk-prow { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
 html.cc-dk-on #displaybox .cc-dk-pool { flex: 0 1 auto; min-width: 0; }
-html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid { grid-template-columns: repeat(auto-fill, 260px); }
+html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid { grid-template-columns: repeat(var(--cc-dk-n, 1), 260px); }
+html.cc-dk-on #displaybox .cc-dk-pool.cc-dk-big .cc-dk-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 html.cc-dk-on #displaybox .cc-dk-eyebrow { display: flex; gap: 8px; align-items: baseline; margin: 0 0 8px; font-size: var(--cc-text-meta); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--cc-text-hint); }
 html.cc-dk-on #displaybox .cc-dk-eyebrow span { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--cc-text-dim); }
 @media (max-width: 600px) {
   html.cc-dk-on #displaybox .cc-dk-grid,
-  html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid { grid-template-columns: minmax(0, 1fr); }
+  html.cc-dk-on #displaybox .cc-dk-pool .cc-dk-grid,
+  html.cc-dk-on #displaybox .cc-dk-pool.cc-dk-big .cc-dk-grid { grid-template-columns: minmax(0, 1fr); }
   html.cc-dk-on #displaybox .cc-dk-pool { flex: 1 1 100%; }
 }
 
