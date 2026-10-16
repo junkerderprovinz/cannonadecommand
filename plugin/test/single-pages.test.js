@@ -56,6 +56,7 @@ function run(route, store, buttons) {
       },
       getElementById: (id) => (buttons || {})[id] || null,
       querySelector: () => null,
+      querySelectorAll: () => [],
       addEventListener: () => {},
     },
   };
@@ -71,6 +72,49 @@ ok('the user editor rides the Settings and Tools area', run('/Users/UserEdit', {
 ok('Disk Stats needs the Shares area, which is off until switched on', run('/Stats', {}) === undefined && run('/Stats', { 'cc.enable.shares': '1' }) === 'stats');
 ok('master theming off names no page', run('/Tools/Syslog', { 'cc.theming': '0' }) === undefined);
 ok('a page that is not on the list is left alone', run('/Docker', {}) === undefined);
+
+console.log('\nThe VM template picker');
+{
+  ok('it is named with the VM area on, and not with it off', run('/VMs/VMTemplates', {}) === 'vmtemplates' && run('/VMs/VMTemplates', { 'cc.enable.vms': '0' }) === undefined);
+  // Just enough of a DOM for templateGroups: element nodes with children, classes and siblings.
+  function el(cls, text) {
+    const n = { nodeType: 1, childNodes: [], parentNode: null, className: cls || '', text: text || '' };
+    n.classList = { contains: (c) => n.className.split(' ').includes(c), add: (c) => { n.className = (n.className + ' ' + c).trim(); } };
+    Object.defineProperty(n, 'parentElement', { get: () => n.parentNode });
+    Object.defineProperty(n, 'firstChild', { get: () => n.childNodes[0] || null });
+    Object.defineProperty(n, 'nextSibling', { get: () => { const p = n.parentNode; return p ? p.childNodes[p.childNodes.indexOf(n) + 1] || null : null; } });
+    Object.defineProperty(n, 'textContent', { get: () => n.text + n.childNodes.map((c) => c.textContent).join('') });
+    n.removeChild = (c) => { n.childNodes.splice(n.childNodes.indexOf(c), 1); c.parentNode = null; return c; };
+    n.insertBefore = (c, ref) => { if (c.parentNode) c.parentNode.removeChild(c); n.childNodes.splice(n.childNodes.indexOf(ref), 0, c); c.parentNode = n; return c; };
+    n.appendChild = (c) => { if (c.parentNode) c.parentNode.removeChild(c); n.childNodes.push(c); c.parentNode = n; return c; };
+    return n;
+  }
+  const content = el('content');
+  for (const c of [el('title', 'Add VM'), el('vmheader', 'Windows'), el('vmtemplate', 'Windows 11'), el('vmtemplate', 'Windows 10'), el('vmheader', 'Linux'), el('vmtemplate', 'Arch'), el('vmheader', ''), el('vmtemplate', 'Custom'), el('', 'buttons')]) content.appendChild(c);
+  const before = content.childNodes.map((c) => c.textContent).join('|');
+  const src = js.match(/function templateGroups\(on\) \{[\s\S]*?\n  \}/)[0];
+  const doc = { createElement: () => el(''), querySelectorAll: () => content.childNodes.filter((c) => c.classList.contains('vmheader')).concat(...content.childNodes.map((g) => g.childNodes.filter((c) => c.classList.contains('vmheader')))) };
+  const templateGroups = new Function('document', 'return ' + src)(doc);
+  templateGroups(true);
+  const groups = content.childNodes.filter((c) => c.classList.contains('cc-vmt-group'));
+  ok('each heading and its tiles become one group', groups.length === 3 && groups[0].childNodes.length === 3 && groups[1].childNodes.length === 2, groups.map((g) => g.childNodes.length).join(','));
+  ok('the title and the buttons stay outside the groups', content.childNodes[0].className === 'title' && content.childNodes[content.childNodes.length - 1].text === 'buttons');
+  ok('a group without a name is marked so it shows no badge', groups[2].classList.contains('cc-vmt-bare') && !groups[0].classList.contains('cc-vmt-bare'));
+  templateGroups(true);
+  ok('a second pass changes nothing', content.childNodes.filter((c) => c.classList.contains('cc-vmt-group')).length === 3);
+  templateGroups(false);
+  ok('turning it off puts every node back in its place', content.childNodes.map((c) => c.textContent).join('|') === before && content.childNodes.every((c) => !c.classList.contains('cc-vmt-group')));
+}
+
+console.log('\nThe VM editor');
+{
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const desktop = clean.slice(0, clean.indexOf('@media (max-width: 600px) {\n  html[data-cc-page="vmform"]'));
+  ok('its labels keep Unraid\'s right-aligned column beside the fields', desktop.length < clean.length && !/data-cc-page="vmform"\] #vmform table td:first-child \{[^}]*(text-align|width)/.test(desktop));
+  ok('the section bar is a quiet pill, not Unraid\'s light grey', /data-cc-page="vmform"\] #vmform \.sectiontab \{[^}]*background: var\(--cc-chip\)/.test(clean));
+  ok('the tables lose the darker fill that banded the card', /data-cc-page="vmform"\] #vmform table \{ background: none !important; \}/.test(clean));
+  ok('Create is the one filled button, found by its id since every button there is type=button', /data-cc-page="vmform"\] #displaybox #btnSubmit:not\(:disabled\) \{[^}]*--cc-rbaccent/.test(clean));
+}
 
 console.log('\nCaptions only on buttons that do not submit');
 {

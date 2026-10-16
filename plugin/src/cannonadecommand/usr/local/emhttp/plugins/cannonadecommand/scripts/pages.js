@@ -3,8 +3,9 @@
  * Loaded on every page through CannonadeCommand.Pages.page. It names the current page in
  * html[data-cc-page] while master theming and the area the page belongs to are on, which is all
  * CannonadeCommand.Pages.css keys on, and does the few things CSS cannot: it translates two native
- * button captions, moves a hint printed under a field into an (i) bubble and gives the disk usage
- * chart a translated title. A caption only changes on a button whose value no form sends.
+ * button captions, moves a hint printed under a field into an (i) bubble, gives the disk usage
+ * chart a translated title and groups the VM templates into cards. A caption only changes on a
+ * button whose value no form sends.
  */
 (function () {
   "use strict";
@@ -18,6 +19,7 @@
   var PAGES = [
     [/^\/Users\/(UserEdit|UserAdd)$/, "useredit", "cc.enable.settings", "1"],
     [/^\/VMs\/(UpdateVM|AddVM)$/, "vmform", "cc.enable.vms", "1"],
+    [/^\/VMs\/VMTemplates$/, "vmtemplates", "cc.enable.vms", "1"],
     [/^\/Stats$/, "stats", "cc.enable.shares", "0"],
     [/^\/Main$/, "main", "cc.enable.main", "0"],
     [/^\/Main\/Device$/, "device", null],
@@ -99,6 +101,30 @@
     });
   }
 
+  // The template picker prints each group as a heading followed by loose tiles. A group's heading
+  // and tiles move into one wrapper, which Pages.css draws as a card with the heading as its badge.
+  // Only the wrappers are added, so turning the area off puts every node back where it was.
+  function templateGroups(on) {
+    var heads = document.querySelectorAll("#displaybox .vmheader");
+    for (var i = 0; i < heads.length; i++) {
+      var h = heads[i], box = h.parentElement;
+      if (on && !box.classList.contains("cc-vmt-group")) {
+        var g = document.createElement("div");
+        g.className = "cc-vmt-group";
+        if (!h.textContent.trim()) g.classList.add("cc-vmt-bare");
+        box.insertBefore(g, h);
+        for (var n = h; n && (n === h || (n.classList && n.classList.contains("vmtemplate")) || n.nodeType === 3);) {
+          var next = n.nextSibling;
+          g.appendChild(n);
+          n = next;
+        }
+      } else if (!on && box.classList.contains("cc-vmt-group")) {
+        while (box.firstChild) box.parentNode.insertBefore(box.firstChild, box);
+        box.parentNode.removeChild(box);
+      }
+    }
+  }
+
   var current = "";
   function apply() {
     var name = pageName(), root = document.documentElement;
@@ -109,6 +135,7 @@
     var hint = name === "useredit" && root.classList.contains("cc-tools-on");
     if (hint || was === "useredit") userHint(hint);
     if (name === "stats" || was === "stats") statsTitle(name === "stats");
+    if (name === "vmtemplates" || was === "vmtemplates") templateGroups(name === "vmtemplates");
   }
 
   function boot() {

@@ -29,9 +29,29 @@ html[data-cc-page="vmform"] #displaybox div.title i { color: inherit !important;
 html[data-cc-page="vmform"] #displaybox .domain {
   background: var(--cc-surface-2, #222222); border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-1); padding: 14px 18px;
 }
-/* The label stands at the start of the row (rule 35), in a left-aligned column of fixed width
-   instead of a right-aligned one that takes a third of the screen. */
-html[data-cc-page="vmform"] #vmform table td:first-child { width: 240px; text-align: start; padding-inline-end: 16px; color: var(--cc-text-chip, #cfcfcf); }
+/* The labels keep Unraid's own arrangement, right-aligned in the first column beside their
+   fields; they only take the secondary text colour. */
+html[data-cc-page="vmform"] #vmform table td:first-child { color: var(--cc-text-chip, #cfcfcf); }
+/* A repeatable section (a vDisk, a share, a graphics card, a network card) is marked by a bar at
+   its left edge. Unraid draws it light grey, close enough to a scroll bar to be taken for one; it
+   is a thin pill in the chip tone that takes the colour mode while its rows are pointed at, and
+   the add and remove glyphs drop Unraid's green and red. */
+html[data-cc-page="vmform"] #vmform .sectiontab { width: 4px !important; background: var(--cc-chip) !important; border-radius: var(--cc-radius-pill) !important; }
+html[data-cc-page="vmform"] #vmform .multiple:hover .sectiontab { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
+html[data-cc-page="vmform"] #vmform .sectionbutton { left: 12px !important; opacity: 1 !important; }
+html[data-cc-page="vmform"] #vmform .sectionbutton i { color: var(--cc-text-dim, #8a8a8a) !important; }
+html[data-cc-page="vmform"] #vmform .sectionbutton:hover i { color: var(--cc-text, #e6e6e6) !important; }
+/* Unraid fills the tables of the repeatable sections a shade darker than the card, which bands
+   it; the card stays the one surface. */
+html[data-cc-page="vmform"] #vmform table { background: none !important; }
+/* The USB and PCI lists: Unraid's 60px columns are narrower than their headings ("Auswählen"),
+   and boot order fields as tall as the other fields would merge into one grey block down the
+   list. */
+html[data-cc-page="vmform"] #vmform span.space { width: 96px; }
+html[data-cc-page="vmform"] #vmform input.bootorder { width: 64px !important; min-height: 0 !important; height: 24px; margin: 3px 10px 3px 0; }
+/* A timer row's "Present" dropdown is wider than the fixed column Unraid gives it, so the column
+   grows with it and the "Tick policy" label after it stays clear. */
+html[data-cc-page="vmform"] #vmform span.column2 { width: auto !important; margin-inline-end: 16px; }
 /* A select wider than its fixed 280px slot ran under the label of the second column ("ig:" for
    "Migrationsfähig:"), so the slot grows with its control and the label keeps its full width. */
 html[data-cc-page="vmform"] #vmform span.width { width: auto !important; min-width: 280px; }
@@ -57,15 +77,24 @@ html[data-cc-page="vmform"] #vmform label.checkbox .checkmark {
 }
 html[data-cc-page="vmform"] #vmform label.checkbox input:checked ~ .checkmark { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; }
 html[data-cc-page="vmform"] #vmform label.checkbox .checkmark::after { border-color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important; }
-/* Buttons are CC pills in one colour, like every form action. */
+/* Buttons are badges as on every native form: neutral at rest, the colour mode under the pointer,
+   and the forward action (Create, Update) filled. Unraid makes all of them type=button, so the
+   forward one is found by its id. */
 html[data-cc-page="vmform"] #displaybox :is(input[type="button"], input[type="submit"]) {
-  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
+  background: var(--cc-chip) !important; color: var(--cc-text, #e6e6e6) !important;
   border: none !important; outline: none !important; box-shadow: none !important; border-radius: var(--cc-radius-pill) !important;
   height: var(--cc-md-h); padding: var(--cc-md-btnpad) !important; min-width: 0 !important; margin: 0 8px 0 0 !important;
   font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: normal !important;
-  background-image: none !important; cursor: pointer;
+  background-image: none !important; cursor: pointer; transition: background-color .12s, color .12s;
 }
-html[data-cc-page="vmform"] #displaybox :is(input[type="button"], input[type="submit"]):hover:not(:disabled) { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
+html[data-cc-page="vmform"] #displaybox :is(input[type="button"], input[type="submit"]):hover:not(:disabled),
+html[data-cc-page="vmform"] #displaybox #btnSubmit:not(:disabled) {
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
+}
+html[data-cc-page="vmform"] #displaybox #btnSubmit:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cc-rbaccent, var(--cc-accent, #FCC419)) 85%, var(--cc-text, #e6e6e6)) !important;
+}
+html[data-cc-page="vmform"] #displaybox :is(input[type="button"], input[type="submit"]):focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
 /* Unraid's tiny switch track becomes the CC toggle. */
 html[data-cc-page="vmform"] #displaybox .switch-button-background {
   width: 36px !important; height: 20px !important; border: none !important; box-shadow: none !important;
@@ -95,6 +124,72 @@ html[data-cc-page="vmform"] #vmform :is(input, textarea, .cc-tsel-trigger):focus
 html[data-cc-page="vmform"] #displaybox blockquote.inline_help {
   border: none !important; background: var(--cc-surface-3, #2e2e2e) !important; border-radius: var(--cc-radius-control) !important; color: var(--cc-text-chip, #cfcfcf) !important;
 }
+/* At phone width the fixed table columns do not fit, so each label stands over its field,
+   both at the start, and a field takes the width that is left. */
+@media (max-width: 600px) {
+  html[data-cc-page="vmform"] #displaybox .domain { padding: 12px 14px; }
+  html[data-cc-page="vmform"] #vmform :is(table, tbody, tr, td) { display: block; width: auto !important; height: auto; line-height: 1.4; }
+  html[data-cc-page="vmform"] #vmform table td:first-child { text-align: start; padding: 10px 0 4px 14px; }
+  html[data-cc-page="vmform"] #vmform table td + td { padding-left: 14px; }
+  html[data-cc-page="vmform"] #vmform :is(span.width, span.column1, span.column2) { min-width: 0; max-width: 100%; }
+  html[data-cc-page="vmform"] #vmform span.label { text-align: start; margin-inline: 0 8px; min-width: 0; }
+  html[data-cc-page="vmform"] #vmform :is(input[type="text"], input:not([type]), textarea, .cc-tsel-trigger) { max-width: 100%; }
+}
+
+/* The VM template picker (/VMs/VMTemplates): every group is a card with its name as the badge on
+   the top edge (pages.js wraps them), and every template a tile without a frame. A tile's logo sits
+   in the logo box the VM list uses, quiet at rest and in the colour mode while the tile is pointed
+   at or focused. */
+html[data-cc-page="vmtemplates"] #displaybox div.title {
+  display: inline-flex !important; align-items: center; gap: 8px; width: fit-content !important; box-sizing: border-box;
+  min-height: var(--cc-sec-h); padding: var(--cc-sec-pad) !important; margin: 4px 0 26px !important;
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important;
+  border: none !important; border-radius: var(--cc-radius-pill) !important; box-shadow: none !important;
+  font-size: var(--cc-sec-fs) !important; font-weight: var(--cc-sec-fw); letter-spacing: var(--cc-sec-ls); text-transform: uppercase;
+}
+html[data-cc-page="vmtemplates"] #displaybox div.title i { color: inherit !important; }
+html[data-cc-page="vmtemplates"] #displaybox .cc-vmt-group {
+  position: relative; display: flex; flex-wrap: wrap; gap: 6px; box-sizing: border-box; margin: 0 0 40px; padding: 24px 12px 12px;
+  background: var(--cc-surface-2, #222222); border-radius: var(--cc-radius-card); box-shadow: var(--cc-elev-1);
+}
+html[data-cc-page="vmtemplates"] #displaybox .cc-vmt-bare { padding-top: 12px; }
+html[data-cc-page="vmtemplates"] #displaybox .cc-vmt-group > .vmheader {
+  position: absolute; top: -11px; left: 18px; display: inline-flex; align-items: center; box-sizing: border-box;
+  min-height: var(--cc-sec-h); padding: var(--cc-sec-pad); border-radius: var(--cc-radius-pill);
+  background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616));
+  font-size: var(--cc-sec-fs); font-weight: var(--cc-sec-fw); letter-spacing: var(--cc-sec-ls); text-transform: uppercase; line-height: 1;
+}
+html[data-cc-page="vmtemplates"] #displaybox .cc-vmt-bare > .vmheader { display: none; }
+html[data-cc-page="vmtemplates"] #displaybox .cc-vmt-group > .vmtemplate { width: auto; height: auto; margin: 0; }
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate > a {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; box-sizing: border-box; width: 112px; height: 100%; padding: 10px 6px;
+  border-radius: var(--cc-radius-card); color: var(--cc-text, #e6e6e6) !important; text-decoration: none !important; outline: none;
+  transition: background-color .12s;
+}
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate > a > span {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  width: var(--cc-logo-box, 78px); height: var(--cc-logo-box, 78px); border-radius: var(--cc-radius-control);
+  background: var(--cc-chip); transition: background-color .12s;
+}
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate img { width: 48px; height: 48px; object-fit: contain; }
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate p { margin: 0; font-size: var(--cc-text-subline); line-height: 1.3; text-align: center; color: inherit; }
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate > a:is(:hover, :focus-visible) { background: var(--cc-chip); }
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate > a:is(:hover, :focus-visible) > span { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); }
+html[data-cc-page="vmtemplates"] #displaybox .vmtemplate > a:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent); }
+/* three tiles to a row on a phone */
+@media (max-width: 600px) { html[data-cc-page="vmtemplates"] #displaybox .vmtemplate > a { width: 96px; } }
+/* The three actions under the cards are badges, neutral at rest and the colour mode under the
+   pointer, instead of Unraid's framed capitals. */
+html[data-cc-page="vmtemplates"] #displaybox center { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+html[data-cc-page="vmtemplates"] #displaybox center > button {
+  display: inline-flex; align-items: center; box-sizing: border-box; height: var(--cc-md-h); padding: var(--cc-md-btnpad) !important; margin: 0 !important; min-width: 0 !important;
+  background: var(--cc-chip) !important; color: var(--cc-text, #e6e6e6) !important; background-image: none !important;
+  border: none !important; outline: none !important; box-shadow: none !important; border-radius: var(--cc-radius-pill) !important;
+  font-size: var(--cc-md-fs) !important; font-weight: 600 !important; text-transform: none !important; letter-spacing: normal !important;
+  cursor: pointer; transition: background-color .12s, color .12s;
+}
+html[data-cc-page="vmtemplates"] #displaybox center > button:hover { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)) !important; color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)) !important; }
+html[data-cc-page="vmtemplates"] #displaybox center > button:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--cc-accent, #FCC419) 45%, transparent) !important; }
 
 /* Disk Stats (/Stats). The Shares area already restyles its tab bar and control strip; this adds
    the bars, the legend and the chart. The bar colours keep their meaning: the normal share is the
