@@ -2697,7 +2697,7 @@
     }
     var opts = [["list", T("Liste", "List"), "IconViewList"], ["tiles", T("Kacheln", "Tiles"), "IconViewGrid"]];
     var cur = get("cc.diskview", "tiles") === "list" ? "list" : "tiles";
-    var prev = viewPreview(opts, diskSketch), slot = el("div", "cc-set-viewslot");
+    var prev = viewPreview(opts, diskSketch), slot = el("div", "cc-set-viewslot cc-set-diskview");
     slot.appendChild(dropRow(label, opts, cur, function (v) {
       set("cc.diskview", v);
       ["array", "pools", "boot", "ud"].forEach(function (k) { del("cc.diskview." + k); });
