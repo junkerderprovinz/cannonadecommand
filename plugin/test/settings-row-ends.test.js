@@ -35,5 +35,15 @@ console.log('\nNo control waits under a name of its own');
   ok('the backup buttons stand together at the end of their row', /bend\.appendChild\(ex\); bend\.appendChild\(im\); bend\.appendChild\(rs\);\s*brow\.appendChild\(lblw\); brow\.appendChild\(bend\);/.test(settings));
 }
 
+console.log('\nThe column matrix ends its switches at the card\'s right edge');
+{
+  const tbl = { tag: 'table', classes: ['cc-set-tbl'], inside: ['#cc-settings', '.cc-set-card'] };
+  const cell = { tag: 'td', classes: ['cc-set-chk'], inside: ['#cc-settings', '.cc-set-card', '.cc-set-tbl'] };
+  const sw = { tag: 'input', classes: ['cc-cb'], attrs: { type: 'checkbox' }, inside: ['#cc-settings', '.cc-set-card', '.cc-set-tbl', '.cc-set-chk'] };
+  ok('the table spans the card', val(win(page, tbl, 'width')) === '100%' && val(win(page, tbl, 'max-width')) === '(none)');
+  ok('a switch cell has no padding on its right and sets its switch at its end', /^5px 0 5px 28px/.test(val(win(page, cell, 'padding'))) && val(win(page, cell, 'text-align')) === 'right');
+  ok('the switch drops the margin Unraid gives a checkbox', val(win(page, sw, 'margin')) === '0');
+}
+
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));
 process.exit(fail ? 1 : 0);
