@@ -273,6 +273,33 @@ console.log('\nThe capacity has a badge of its own');
   ok('the drawing keeps a margin to the edge of its well', /\.cc-dk-art \{[^}]*height: 140px;/.test(css) && /svg\.cc-dk-drive \{ position: absolute; inset: 14px 12px;/.test(css));
 }
 
+console.log('\nThe array is a vessel on the left of its card');
+{
+  const made = [];
+  const kid = () => ({ textContent: '', attrs: {}, getAttribute(k) { return this.attrs[k] ?? null; }, setAttribute(k, v) { this.attrs[k] = v; } });
+  const box = () => { const b = kid(); b.parts = { '[data-f="vpct"]': kid() }; b.querySelector = (s) => b.parts[s]; b.insertBefore = () => {}; b.style = { setProperty() {}, removeProperty() {} }; return b; };
+  const host = { kids: [], querySelector() { return this.kids[0] || null; }, insertBefore(n) { this.kids.unshift(n); }, removeChild(n) { this.kids.splice(this.kids.indexOf(n), 1); } };
+  const pictures = { vessel(o) { const v = { el: {}, o, level: null, tone: null, setLevel(s) { v.level = s; return v; }, setTone(t) { v.tone = t; return v; } }; made.push(v); return v; } };
+  const src = [grabFn(js, 'arrayVessel'), grabFn(js, 'setText'), 'var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc')].join('\n') + '\nreturn arrayVessel;';
+  const arrayVessel = new Function('window', 'el', 'colourAt', 'LANG', src)({ CCPictures: pictures }, () => box(), () => '', 'de');
+  const fs1 = { pct: 84.4, used: '43.9 TB', size: '52 TB' };
+  arrayVessel(host, fs1);
+  const v = made[0];
+  ok('it is built with the array\'s used share and a label', made.length === 1 && Math.abs(v.o.share - 0.844) < 1e-9 && v.o.label === 'Füllstand des Arrays');
+  ok('below 90 % it takes the accent', v.tone === 'accent' && host.kids[0].parts['[data-f="vpct"]'].textContent === '84');
+  ok('its bubble names used and size', host.kids[0].attrs['data-tip'] === '43.9 TB von 52 TB belegt');
+  arrayVessel(host, { pct: 90, used: '', size: '' });
+  ok('from 90 % it turns orange, on the same vessel', made.length === 1 && v.tone === 'warn' && v.level === 0.9);
+  arrayVessel(host, { pct: 95, used: '', size: '' });
+  ok('95 % is still orange', v.tone === 'warn');
+  arrayVessel(host, { pct: 95.2, used: '', size: '' });
+  ok('past 95 % it turns red', v.tone === 'err');
+  arrayVessel(host, null);
+  ok('without a file system the vessel goes', host.kids.length === 0);
+  ok('the render feeds it from the totals row each time', /arrayVessel\(host, data\.total && data\.total\.fs\);/.test(js));
+  ok('it stands left of the disks, and above them on a phone', /\.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ display: grid; grid-template-columns: auto minmax\(0, 1fr\);/.test(css) && /@media \(max-width: 600px\) \{\s*html\.cc-dk-on #displaybox \.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
+}
+
 console.log('\ndisks.php reads emhttp\'s own files');
 {
   let php = null;

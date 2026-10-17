@@ -21,7 +21,7 @@
       tempTip: "Warnung ab %w, kritisch ab %c", tempNone: "Meldet keine Temperatur", tempDown: "Ruht und misst gerade nicht",
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
       member: "Gehört zum Pool %p", details: "Details", aopArray: "Array", aopDisks: "Platten", aopSystem: "System",
-      spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten",
+      spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten", arrayFill: "Füllstand des Arrays",
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
       resting: "Spun down", used: "used", free: "free", of: "of", temp: "Temperature", read: "Read", write: "Write", errors: "errors",
@@ -29,7 +29,7 @@
       smartFailTip: "The SMART self-assessment failed", parity: "Parity valid, protects %n disks",
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
-      member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System",
+      member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System", arrayFill: "Array fill level",
       hdd: "Hard disk", ssd: "SATA SSD", nvme: "NVMe SSD", usb: "USB flash drive" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
@@ -497,6 +497,26 @@
     if (f && window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
   }
 
+  // The array's fill level as a vessel on the left of its card (GlimStone: "A fill level is a
+  // vessel"), orange from 90 % and red past 95 %. It is built once, so its liquid keeps sloshing,
+  // and follows the numbers each time Unraid refills the table.
+  function arrayVessel(host, fs) {
+    var box = host.querySelector(":scope > .cc-dk-vessel");
+    if (!fs || !window.CCPictures) { if (box) host.removeChild(box); return; }
+    if (!box) {
+      box = el("div", "cc-dk-vessel", '<span class="cc-dk-vpct"><b data-f="vpct"></b> %</span><span class="cc-dk-vlbl">' + esc(t("used")) + "</span>");
+      box.__ccVessel = window.CCPictures.vessel({ share: fs.pct / 100, label: t("arrayFill") });
+      box.insertBefore(box.__ccVessel.el, box.firstChild);
+      host.insertBefore(box, host.firstChild);
+    }
+    box.__ccVessel.setLevel(fs.pct / 100).setTone(fs.pct > 95 ? "err" : fs.pct >= 90 ? "warn" : "accent");
+    setText(box.querySelector('[data-f="vpct"]'), String(Math.round(fs.pct)));
+    var tip = fs.used + " " + t("of") + " " + fs.size + " " + t("used");
+    if (box.getAttribute("data-tip") !== tip) box.setAttribute("data-tip", tip);
+    var c = colourAt(0);
+    if (c) box.style.setProperty("--cc-dk-c", c); else box.style.removeProperty("--cc-dk-c");
+  }
+
   // The four sections, each found by the tbody Unraid fills and the box the list view shows.
   function sections() {
     var out = [];
@@ -689,7 +709,7 @@
     var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
     grid.style.setProperty("--cc-dk-n", data.disks.length);
     fillGrid(grid, cardsOf(data.disks, 0), colourAt);
-    if (S.key === "array") strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : "");
+    if (S.key === "array") { strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : ""); arrayVessel(host, data.total && data.total.fs); }
     if (S.key === "boot") notesStrip(host, data.notes);
   }
 
