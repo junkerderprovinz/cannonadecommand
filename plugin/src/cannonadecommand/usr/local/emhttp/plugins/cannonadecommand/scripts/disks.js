@@ -338,15 +338,15 @@
   var clipN = 0;
   function drawSsd() {
     var id = "cc-dk-clip" + (++clipN), pins = "";
-    for (var i = 0; i < 9; i++) pins += '<rect x="172" y="' + (42 + i * 6) + '" width="6" height="3" fill="var(--cc-dk-gold)"/>';
-    return '<svg class="cc-dk-drive" viewBox="0 0 200 136" aria-hidden="true"><defs><clipPath id="' + id + '"><rect x="34" y="28" width="122" height="80" rx="5"/></clipPath></defs>' +
-      '<rect x="20" y="16" width="150" height="104" rx="9" fill="url(#cc-dk-metal)"/><rect x="170" y="38" width="10" height="60" rx="2" fill="#1b1b1b"/>' + pins +
-      '<rect x="34" y="28" width="122" height="80" rx="5" fill="#141414"/>' +
-      '<rect class="cc-dk-st" x="34" y="28" width="122" height="24" rx="5"/><rect class="cc-dk-st" x="34" y="44" width="122" height="8"/>' +
-      '<text class="cc-dk-ink" x="44" y="45" font-size="12" font-weight="800" letter-spacing="1.5">SSD</text>' +
-      '<rect class="cc-dk-bar" x="44" y="64" width="70" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n2" x="44" y="76" width="96" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n3" x="44" y="88" width="52" height="5" rx="2.5"/>' +
-      '<g clip-path="url(#' + id + ')"><rect class="cc-dk-sweep" x="34" y="28" width="56" height="80" fill="url(#cc-dk-sweep)"/></g>' +
-      '<circle class="cc-dk-led" cx="156" cy="112" r="3"/></svg>';
+    for (var i = 0; i < 9; i++) pins += '<rect x="22" y="' + (42 + i * 6) + '" width="6" height="3" fill="var(--cc-dk-gold)"/>';
+    return '<svg class="cc-dk-drive" viewBox="0 0 200 136" aria-hidden="true"><defs><clipPath id="' + id + '"><rect x="44" y="28" width="122" height="80" rx="5"/></clipPath></defs>' +
+      '<rect x="30" y="16" width="150" height="104" rx="9" fill="url(#cc-dk-metal)"/><rect x="20" y="38" width="10" height="60" rx="2" fill="#1b1b1b"/>' + pins +
+      '<rect x="44" y="28" width="122" height="80" rx="5" fill="#141414"/>' +
+      '<rect class="cc-dk-st" x="44" y="28" width="122" height="24" rx="5"/><rect class="cc-dk-st" x="44" y="44" width="122" height="8"/>' +
+      '<text class="cc-dk-ink" x="54" y="45" font-size="12" font-weight="800" letter-spacing="1.5">SSD</text>' +
+      '<rect class="cc-dk-bar" x="54" y="64" width="70" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n2" x="54" y="76" width="96" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n3" x="54" y="88" width="52" height="5" rx="2.5"/>' +
+      '<g clip-path="url(#' + id + ')"><rect class="cc-dk-sweep" x="44" y="28" width="56" height="80" fill="url(#cc-dk-sweep)"/></g>' +
+      '<circle class="cc-dk-led" cx="166" cy="112" r="3"/></svg>';
   }
   // Dots in the card colour that run into a flash drive one after another while it reads or writes.
   function flowDots(x, ys) {
