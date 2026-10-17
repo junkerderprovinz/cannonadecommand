@@ -102,6 +102,10 @@ console.log('\nEvery fill level CannonadeCommand draws sloshes');
   const bars = grabFn(header, 'ccStateBars');
   ok('the /Main usage bars while the Shares area restyles them', /CT\.slosh\(allBars\[s\], mainOn && !!allBars\[s\]\.closest\("#displaybox"\)\)/.test(bars) && /rt\.contains\("cc-shares-on"\) && rt\.contains\("cc-on-main"\)/.test(bars));
   ok('the array meter in the menu while the header area is on', /CT\.slosh\(meter, rt\.contains\("cc-header-on"\)\)/.test(bars));
+  const disks = read('scripts/disks.js'), sht = read('scripts/sharetiles.js');
+  ok('the bar on a /Main disk tile and on a single-disk pool', /f\.style\.width = [^;]+;\s*if \(window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(f\);/.test(grabFn(disks, 'patch')));
+  ok('the bar in the array and pool summary strips', /var f = n\.querySelector\("\.cc-dk-fill"\);\s*if \(f && window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(f\);/.test(grabFn(disks, 'strip')));
+  ok('the bar on a /Shares disk share tile, after each redraw of the card', /setHtml\(c, cardHtml\(sh, disk\)\);\s*var f = c\.querySelector\("\.cc-sht-fill"\);\s*if \(f && window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(f\);/.test(grabFn(sht, 'fillGrid')));
   ok('the menu meter clips what runs past its end', /html\.cc-header-on #menu \.usage-bar \{[^}]*overflow: hidden;/.test(read('sheets/CannonadeCommand.Header.css')));
 }
 
