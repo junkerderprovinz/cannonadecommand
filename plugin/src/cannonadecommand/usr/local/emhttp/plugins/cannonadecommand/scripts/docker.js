@@ -1753,8 +1753,23 @@
     pendingAction[name] = true; markTransient(name, action); flash(action + " " + name + "…");
     api("POST", "action", { name: name, action: action })
       .then(function () { delete pendingAction[name]; return load(); }) // cleared before the confirming load, so its sync updates this badge
-      .then(function () { flash(t("done")); })
+      .then(function () { flash(t("done")); confirmAction(name); })
       .catch(function (e) { delete pendingAction[name]; flash("Error: " + e.message, true, ctl); syncStateBadges(); });
+  }
+  // A drawn check where an action's progress showed, once it is done (GlimStone, "Drawn-checkmark").
+  // It leaves after a moment, since by then the result itself is on screen.
+  var CHECK_HOLD = 1600;
+  function confirmCheck(host, before) {
+    var mark = el("span", "cc-done-check");
+    host.insertBefore(mark, before || null);
+    window.CCPictures.drawCheck(mark, t("done"));
+    setTimeout(function () { if (mark.parentNode) mark.parentNode.removeChild(mark); }, CHECK_HOLD);
+  }
+  // A start, stop or restart showed its progress on the container's state badges, so the check
+  // stands beside each of them. A running container's badge is hidden on a card, and there the
+  // check takes its place.
+  function confirmAction(name) {
+    Array.prototype.slice.call(document.querySelectorAll('.cc-badge[data-name="' + CSS.escape(name) + '"]')).forEach(function (b) { confirmCheck(b.parentNode, b); });
   }
   function actionBtn(label, name, action, primary) { var b = el("button", "cc-abtn" + (primary ? " cc-abtn-primary" : ""), label); b.addEventListener("click", function (e) { e.stopPropagation(); doAction(name, action, b); }); return b; }
 
@@ -4161,12 +4176,13 @@
     // in the plan sticks.
     return { nodes: nodes };
   }
-  function savePlan(thenApply, ctl) { flash(t("saving")); api("PUT", "plan", collectPlan()).then(function () { if (thenApply) return apply(ctl); flash(t("saved")); }).catch(function (e) { flash("Error: " + e.message, true, ctl); }); }
+  function savePlan(thenApply, ctl) { flash(t("saving")); api("PUT", "plan", collectPlan()).then(function () { if (thenApply) return apply(ctl); flash(t("saved")); if (ctl) confirmCheck(ctl, ctl.firstChild); }).catch(function (e) { flash("Error: " + e.message, true, ctl); }); }
   // Persist this container's automation, the watchdog and schedules, together with the start
   // plan, then optionally run the plan. The config is PUT whole, so other containers' entries
   // and the notify block from the settings page are preserved. It is saved first and on its
   // own, because the automation is unrelated to the plan and a stale plan with a bad dependency
   // would otherwise take the watchdog and schedules down with it.
+  var SAVE_HOLD = 700;
   function saveEditor(name, wd, scheds, nursery, thenApply, ctl) {
     flash(t("saving"));
     // Read, modify and write: re-fetch the live config, replace only this container's watchdog
@@ -4185,10 +4201,18 @@
         return api("PUT", "config", config);
       })
       .then(function () { return api("PUT", "plan", collectPlan()); })
-      .then(function () { closePop(); if (mode === "list") reinjectRowBadges(); else renderCurrentView(); if (thenApply) return apply(ctl); flash(t("saved")); })
+      .then(function () {
+        // The check is drawn on the Save button and the window stays a moment for it.
+        var pop = openPop;
+        confirmCheck(ctl, ctl.firstChild);
+        setTimeout(function () { if (openPop === pop) closePop(); }, SAVE_HOLD);
+        if (mode === "list") reinjectRowBadges(); else renderCurrentView();
+        if (thenApply) return apply(ctl);
+        flash(t("saved"));
+      })
       .catch(function (e) { flash("Error: " + e.message, true, ctl); });
   }
-  function apply(ctl) { flash(t("startorder") + "…"); return api("POST", "apply").then(function () { return load(); }).then(function () { flash(t("done")); }).catch(function (e) { flash("Error: " + e.message, true, ctl); }); }
+  function apply(ctl) { flash(t("startorder") + "…"); return api("POST", "apply").then(function () { return load(); }).then(function () { flash(t("done")); if (ctl) confirmCheck(ctl, ctl.firstChild); }).catch(function (e) { flash("Error: " + e.message, true, ctl); }); }
   // A failure also shakes ctl, the control that was used, when the caller has one.
   function flash(msg, bad, ctl) {
     try {
@@ -4965,7 +4989,7 @@
           var btns = content.querySelectorAll("button, input[type=button], input[type=submit]");
           var row = btns.length ? btns[btns.length - 1].parentElement : content;
           if (sb.parentElement !== row) row.appendChild(sb);
-          if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = ccGlyph("Check"); } }
+          if (done) { sb.classList.add("cc-ctout-done"); if (sb.getAttribute("data-m") !== "done") { sb.setAttribute("data-m", "done"); sb.setAttribute("aria-label", "Fertig"); sb.innerHTML = ""; confirmCheck(sb); } }
           else { sb.classList.remove("cc-ctout-done"); if (sb.getAttribute("data-m") !== "run") { sb.setAttribute("data-m", "run"); sb.setAttribute("aria-label", "Läuft"); sb.innerHTML = "<span class='cc-loader cc-load-sm'><span class='o'><i></i></span><span class='in'><i></i></span></span>"; } }   // the sm tier, one size source with the loader engine in header.js
           // paintPopups() in header.js covers #cc-ctout-title, but nothing on this page calls
           // it, because the window is a plain navigation rather than a .sweet-alert that

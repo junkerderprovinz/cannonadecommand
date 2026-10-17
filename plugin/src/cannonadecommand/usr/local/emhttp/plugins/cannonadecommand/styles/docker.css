@@ -847,6 +847,11 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
 .cc-plan-scene-edge .cc-flow-line, .cc-plan-scene-head { fill: none; stroke: var(--cc-dim, #8a8a8a); stroke-opacity: .45; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .cc-plan-scene-on .cc-flow-line, .cc-plan-scene-on .cc-plan-scene-head { stroke: var(--cc-pic-c); stroke-opacity: .85; }
 .cc-plan-scene-edge:not(.cc-plan-scene-live) .cc-flow-packets { display: none; }
+/* The check a finished action draws where its progress showed: in the success colour beside a
+   state badge, in the ink of a button or status badge it stands in. */
+.cc-done-check { display: inline-flex; align-items: center; flex: none; color: var(--cc-ok-ink, #6fdc8c); font-size: var(--cc-text-body); line-height: 1; }
+:is(.cc-btn, #cc-ctout-status) > .cc-done-check { color: inherit; font-size: inherit; }
+.cc-btn > .cc-done-check { margin-inline-end: 5px; }
 /* every editor field in the same box: no border, a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: var(--cc-radius-control); padding: 5px 8px; font-size: var(--cc-text-meta); }
 /* Focus is a brightness step, never a ring, and it sets background-color rather than the
@@ -2157,6 +2162,8 @@ html.cc-ctout-on #displaybox .content > div:has(> button) > #cc-ctout-status {
 }
 html.cc-ctout-on #cc-ctout-status.cc-ctout-done { background: var(--cc-ok, #6fdc8c); color: var(--cc-ok-fg, #161616); }   /* done: a green badge with its check in the state ink */
 html.cc-ctout-on #cc-ctout-status .cc-glyph { font-size: var(--cc-text-body); }
+/* Once the drawn check has left, the finished badge goes with it. */
+html.cc-ctout-on #cc-ctout-status.cc-ctout-done:not(:has(.cc-done-check)) { visibility: hidden; }
 html.cc-ctout-on #displaybox .content span.system { background: transparent !important; color: #d6d6d6 !important; box-shadow: none !important; display: block; }
 html.cc-ctout-on .docker-install-blocker { background: transparent !important; }
 html.cc-ctout-on #displaybox .content .buttons,
