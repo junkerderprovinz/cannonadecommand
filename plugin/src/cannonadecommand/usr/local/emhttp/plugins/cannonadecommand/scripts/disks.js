@@ -338,7 +338,6 @@
       '<rect class="cc-dk-st" x="34" y="28" width="122" height="24" rx="5"/><rect class="cc-dk-st" x="34" y="44" width="122" height="8"/>' +
       '<text class="cc-dk-ink" x="44" y="45" font-size="12" font-weight="800" letter-spacing="1.5">SSD</text>' +
       '<rect class="cc-dk-bar" x="44" y="64" width="70" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n2" x="44" y="76" width="96" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n3" x="44" y="88" width="52" height="5" rx="2.5"/>' +
-      '<g clip-path="url(#' + id + ')"><rect class="cc-dk-sweep" x="34" y="28" width="56" height="80" fill="url(#cc-dk-sweep)"/></g>' +
       '<circle class="cc-dk-led" cx="156" cy="112" r="3"/></svg>';
   }
   function drawNvme() {
@@ -349,7 +348,7 @@
       '<rect x="44" y="55" width="24" height="26" rx="2" fill="var(--cc-dk-nand)"/><rect x="49" y="60" width="14" height="16" rx="1" fill="#222"/>' +
       '<rect class="cc-dk-st" x="74" y="51" width="104" height="34" rx="2"/>' +
       '<text class="cc-dk-ink" x="126" y="72.5" font-size="12" font-weight="800" letter-spacing="1" text-anchor="middle">NVMe</text>' +
-      '<circle class="cc-dk-flow cc-dk-st" cx="22" cy="60" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n2" cx="22" cy="68" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n3" cx="22" cy="76" r="1.8"/></svg>';
+      '<circle class="cc-dk-led" cx="186" cy="84" r="2.4"/></svg>';
   }
   function drawUsb() {
     return '<svg class="cc-dk-drive" viewBox="10 22 174 92" aria-hidden="true"><rect x="22" y="52" width="46" height="32" rx="2" fill="url(#cc-dk-conn)"/>' +
@@ -368,7 +367,6 @@
       '<radialGradient id="cc-dk-plat" cx=".42" cy=".38" r=".7"><stop offset="0" style="stop-color:var(--cc-dk-plat-a)"/><stop offset=".55" style="stop-color:color-mix(in srgb, var(--cc-dk-plat-a) 55%, var(--cc-dk-plat-b))"/><stop offset="1" style="stop-color:var(--cc-dk-plat-b)"/></radialGradient>' +
       '<linearGradient id="cc-dk-conn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6d6d6"/><stop offset=".5" stop-color="#9a9a9a"/><stop offset="1" stop-color="#c4c4c4"/></linearGradient>' +
       '<linearGradient id="cc-dk-plastic" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--cc-dk-plastic)"/><stop offset="1" style="stop-color:var(--cc-dk-plastic-b)"/></linearGradient>' +
-      '<linearGradient id="cc-dk-sweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
       "</defs></svg>";
     document.body.appendChild(box.firstChild);
   }

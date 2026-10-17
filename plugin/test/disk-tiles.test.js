@@ -110,13 +110,18 @@ console.log('\nThe motion stays inside the gate and stops at "off"');
 {
   const media = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
   const anims = [...css.matchAll(/^\s*(html[^\n{]*)\{[^}\n]*\banimation:\s*cc-dk-/gm)].map((m) => m[1]);
-  ok('there are animations', anims.length >= 6, anims.length);
+  ok('there are animations', anims.length >= 4, anims.length);
   ok('each one names the quiet level and none the lively one', anims.every((s) => /:not\(\[data-cc-motion="off"\]\)/.test(s)) && !/data-cc-motion="(wild|subtle)"\]/.test(css));
   ok('they all sit in the no-preference block', anims.every((s) => media.includes(s)));
   const tokens = read('sheets/CannonadeCommand.Tokens.css');
-  for (const d of ['spin', 'seek', 'swing', 'blink', 'flow', 'rise', 'stagger']) ok('the platter, arm, LED and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
+  for (const d of ['spin', 'seek', 'swing', 'blink', 'rise', 'stagger']) ok('the platter, arm, LED and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
   ok('the entrance ends at transform: none', /@keyframes cc-dk-in \{[^}]*\}[^}]*to \{ transform: none;/.test(css));
-  ok('a spun-down platter stops where it was', /\.cc-dk-card\.cc-dk-down \.cc-dk-plat \{ animation-play-state: paused; \}/.test(css));
+  ok('the platter waits paused and turns only while the disk reads or writes, so it stops where it was', /#displaybox \.cc-dk-plat \{ animation: cc-dk-spin var\(--cc-motion-disk-spin\) linear infinite paused; \}/.test(css) && /\.cc-dk-card\.cc-dk-busy:not\(\.cc-dk-down\) \.cc-dk-plat \{ animation-play-state: running; \}/.test(css));
+  const outside = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
+  ok('the LED blinks while busy, and outside the gate it is lit without blinking', /\.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ animation: cc-dk-blink/.test(media) && /html\.cc-dk-on #displaybox \.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ fill: var\(--cc-dk-c/.test(outside) && !/cc-dk-blink/.test(outside.replace(/@keyframes[^\n]*/g, '')));
+  ok('a resting disk dims its LED, a waiting one glows faintly', /\.cc-dk-card\.cc-dk-down \.cc-dk-led \{ opacity: \.45; \}/.test(css) && /\.cc-dk-card:not\(\.cc-dk-down\) \.cc-dk-led \{ fill: color-mix\(/.test(css));
+  ok('flash drives move nothing but their LED, and every drawing has one', !/cc-dk-(sweep|flow)|@keyframes cc-dk-bars/.test(css + js) && ['drawHdd', 'drawSsd', 'drawNvme', 'drawUsb'].every((n) => /class="cc-dk-led"/.test(grabFn(js, n))));
+  ok('the dial no drawing reads any more is gone', !/--cc-motion-disk-flow/.test(tokens));
 }
 
 console.log('\nThe readers follow Unraid\'s rows');
