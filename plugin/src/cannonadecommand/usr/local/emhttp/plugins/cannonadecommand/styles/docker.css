@@ -383,6 +383,11 @@ table:not(.cc-enh) #docker_list tr:is(.sortable, .folder-element) td.advanced:ha
 /* CPU, RAM and Bandwidth stacked one under the other, each on its own line */
 .cc-resgroup { flex-direction: column; align-items: flex-start; gap: 5px; }
 .cc-resline { display: inline-flex; align-items: center; gap: 5px; }
+/* A container that is not running has no values: its row shows one muted dash in place of the
+   three badges, and its card leaves the group out. */
+.cc-resgroup.cc-res-idle > .cc-resline { display: none; }
+.cc-resgroup.cc-res-idle::before { content: "-"; color: var(--cc-dim, #8a8a8a); }
+.cc-card-res.cc-resgroup.cc-res-idle { display: none !important; }
 /* Every cell of a list row is centred as one block, so the badges of a row share its middle. A
    group sitting inline would hang on the text baseline and add the line's descent below it, and
    the <br> Unraid leaves between its hidden CPU and RAM spans would open an empty line above the

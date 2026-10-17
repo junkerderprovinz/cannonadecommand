@@ -141,6 +141,7 @@
   var ccOrgView = null, ccOrgAvailable = false; // the cached docker.organizer GraphQL result; null while it is unloaded or unreachable
   var containers = [], containerNames = [], containersByName = {}, stats = {}, shiplog = {}, workingPlan = {}, lastRun = {}, iconCache = {};
   var netPrev = {}; // name to {rx,tx,t}, the previous cumulative counters, for the live rate
+  var netSeen = {}; // names whose live rate has been above zero since the page loaded
   // Whether the last /api/state reached the host daemon. The limits and bandwidth all need it
   // while the icon tint is pure client CSS, so a working tint with failing limits means the daemon
   // is unreachable rather than a broken feature, and the gear turns red and says so. null until
@@ -1444,11 +1445,13 @@
     var rmLabel = de ? "Entfernen" : "Remove";
     var rm = typeof window.rmContainer === "function" && cx.id ? actBtn("Trash", rmLabel, function () { window.rmContainer(name, cx.image, cx.id); }) : actBtnOff("Trash", rmLabel);
     rm.classList.add("cc-act-del"); r3.appendChild(rm);
-    var extras = [];
-    if (cx.tswebui) extras.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
-    cx.links.forEach(function (l2) { extras.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
-    if (extras.length && window.CCTheme && window.CCTheme.menu) {
-      var moreBtn = actBtn("More", de ? "Mehr" : "More", function () { window.CCTheme.menu(moreBtn, extras); });
+    if (window.CCTheme && window.CCTheme.menu) {
+      var moreBtn = actBtn("More", de ? "Mehr" : "More", function () {
+        var extras = limitItems(moreBtn, name);
+        if (cx.tswebui) extras.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
+        cx.links.forEach(function (l2) { extras.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
+        window.CCTheme.menu(moreBtn, extras);
+      });
       r3.appendChild(moreBtn);
     } else {
       r3.appendChild(actBtnOff("More", de ? "keine weiteren Aktionen" : "no more actions"));
@@ -1975,9 +1978,10 @@
     var ab2 = actionBars(c.name, c);
     var abrow = el("div", "cc-card-actbar"); abrow.appendChild(ab2.bar);
     wrap.appendChild(abrow);
-    // the same three limit gears injectRowBadges puts in a list row, so the card view can open
-    // the same editors
-    if (colOn("res")) {
+    // CPU, RAM and the network rate with the limit gears a list row carries. A container that is
+    // not running has no values to show, so its card carries only its state, and the card's menu
+    // opens the limit editors instead.
+    if (colOn("res") && c.state === "running") {
       var rg = el("div", "cc-rowbadges cc-resgroup cc-card-res"); rg.setAttribute(MARK, "1"); rg.dataset.name = c.name;
       var lm = limits[c.name] || {};
       var cpuB = badgeInfo("CPU", "…", "cpu");
@@ -2114,6 +2118,7 @@
     if (term && running) items.push({ glyph: "Code", label: de ? "Konsole" : "Console", run: function () { if (cx.shell) window.openTerminal("docker", name, cx.shell); else window.openTerminal("docker", name); } });
     if (cx.xml) items.push({ glyph: "Pencil", label: de ? "Bearbeiten" : "Edit", run: function () { editTemplate(cx.xml); } });
     if (running) items.push({ glyph: "Pause", label: t("pause"), run: function () { doAction(name, "pause"); } });
+    items = items.concat(limitItems(anchor, name));
     if (cx.tswebui) items.push({ glyph: "ExternalLink", label: "Tailscale WebUI", run: function () { window.open(cx.tswebui, "_blank"); } });
     cx.links.forEach(function (l2) { items.push({ glyph: l2.glyph, label: l2.tip, run: function () { window.open(l2.url, "_blank"); } }); });
     if (typeof window.rmContainer === "function" && cx.id) items.push({ glyph: "Trash", label: de ? "Entfernen" : "Remove", del: true, run: function () { window.rmContainer(name, cx.image, cx.id); } });
@@ -2859,7 +2864,16 @@
     // rate, as CPU and RAM show live usage, while the configured cap stays in its dot, its gear
     // colour and its tooltip.
     var cpuV = rg.querySelector(".cc-b-cpu .cc-b-v"), ramV = rg.querySelector(".cc-b-ram .cc-b-v"), bwV = rg.querySelector(".cc-b-bw .cc-b-v");
-    if (state !== "running") { if (cpuV) cpuV.textContent = "-"; if (ramV) ramV.textContent = "-"; if (bwV) bwV.textContent = "-"; return; }
+    // A container that is not running has no values: its row shows one dash in place of the
+    // group, its card leaves the group out, and both reach the limits through their menu.
+    rg.classList.toggle("cc-res-idle", state !== "running");
+    if (state !== "running") return;
+    // A card shows the rate once there has been traffic, or while a cap is set, so a quiet
+    // container does not carry a badge reading zero. The list keeps its column filled.
+    if (bwV && rg.classList.contains("cc-card-res")) {
+      var name = rg.dataset.name, line = bwV.closest(".cc-resline");
+      line.classList.toggle("cc-hidden", !netSeen[name] && !bwHasLimit(bandwidthFor(name)));
+    }
     if (cpuV) cpuV.textContent = s ? (s.cpu_percent || 0) + "%" : "…";
     if (ramV) ramV.textContent = s ? humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit) : "…";
     if (bwV) bwV.textContent = netRate(s);
@@ -2920,6 +2934,7 @@
           s._rxr = (s.net_rx - p.rx) / dt; s._txr = (s.net_tx - p.tx) / dt;
         }
         netPrev[nm] = { rx: s.net_rx || 0, tx: s.net_tx || 0, t: now };
+        if (s._rxr > 0 || s._txr > 0) netSeen[nm] = true;
       });
       // the folder tiles carry bars; a grid card shows its values in the resource badges below
       if (mode === "folder" && gridHolder) Array.prototype.slice.call(gridHolder.querySelectorAll(".cc-tile")).forEach(function (cd) { var s = stats[cd.dataset.name]; if (!s) return; var f = cd.querySelectorAll(".cc-gauge-fill"), v = cd.querySelectorAll(".cc-stat-val"); if (f[0]) f[0].style.width = Math.min(100, s.cpu_percent) + "%"; if (v[0]) v[0].textContent = (s.cpu_percent || 0) + "%"; if (f[1]) f[1].style.width = Math.min(100, s.mem_percent) + "%"; if (v[1]) v[1].textContent = humanBytes(s.mem_used) + " / " + humanBytes(s.mem_limit); });
@@ -3650,6 +3665,16 @@
     lb.setAttribute("data-tip", t("bandwidth") + " · " + (set ? t("cfgSet") : t("cfgUnset")));
     lb.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); openBandwidth(lb, name); });
     return gearKeys(lb);
+  }
+  // The three limit editors as menu entries, so they stay in reach where a card, a tile or the row
+  // of a stopped container shows no gear. The menu hands focus back to its own control, so the
+  // window opens from there.
+  function limitItems(anchor, name) {
+    return [
+      { glyph: "Gear", label: t("cpuLimit"), run: function () { openLimits(anchor, name, "cpu"); } },
+      { glyph: "Gear", label: t("ramLimit"), run: function () { openLimits(anchor, name, "ram"); } },
+      { glyph: "Gear", label: t("bandwidth"), run: function () { openBandwidth(anchor, name); } }
+    ];
   }
   // A gear opens a window, and focus comes back to it when the window closes, so it has to be
   // reachable from the keyboard in the first place.

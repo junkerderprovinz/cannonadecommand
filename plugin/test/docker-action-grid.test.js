@@ -4,7 +4,8 @@
 //   · an action that does not apply leaving a hole, so the rows of a list stop lining up
 //   · a stopped container offering its WebUI or console
 //   · Entfernen landing on the rainbow's red, or going red at all
-//   · Mehr still holding the console or the remove, now that both have a button of their own
+//   · Mehr still holding the console or the remove, now that both have a button of their own, or
+//     losing the limit editors a stopped container has no gear for
 //   · a bar that keeps its old buttons after a start or stop, or drops the keyboard focus
 //   · a gap between the buttons other than the one between the badges beside them
 const fs = require('fs');
@@ -57,12 +58,13 @@ const RB = JSON.parse(/var RB = (\[[^\]]+\]);/.exec(theme)[1]);
 const api = new Function('document', 'window', 'localStorage', 'getCtx', 'getC', 'RB', 'calls',
   'var LANG = "de", MARK = "data-cc", RB_PAL = RB, RB_OFFSET = 0, pendingAction = {};\n' +
   'function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls, n.cls = new Set(cls.split(" ")); if (txt != null) n.textContent = txt; return n; }\n' +
-  'function t(k) { return { restart: "Neustart", pause: "Pause", resume: "Fortsetzen", stop: "Stoppen", start: "Starten", updateCt: "Aktualisieren" }[k]; }\n' +
+  'function t(k) { return { restart: "Neustart", pause: "Pause", resume: "Fortsetzen", stop: "Stoppen", start: "Starten", updateCt: "Aktualisieren", cpuLimit: "CPU-Limit", ramLimit: "RAM-Limit", bandwidth: "Bandbreite" }[k]; }\n' +
+  'function openLimits(a, n, w) { calls.push(["limits", n, w]); } function openBandwidth(a, n) { calls.push(["bandwidth", n]); }\n' +
   'function ccGlyph(n) { return n; } function themingOn() { return true; } function effc() { return "#FCC419"; } function ccPalActive(p) { return p; }\n' +
   'function idealText(c) { return "#161616"; } function ctxFor() { return getCtx(); } function containerByName(n) { return getC()[n]; }\n' +
   'function glyphState() { return ""; } function doAction(n, a) { calls.push(["action", n, a]); }\n' +
   'function findRows() { return getC().__rows || []; } function rowName(tr) { return tr.name; }\n' +
-  [grab(js, 'actBtn'), grab(js, 'actBtnOff'), grab(js, 'tintAct'), grab(js, 'actionBars'), grab(js, 'syncActionBars')].join('\n') +
+  [grab(js, 'actBtn'), grab(js, 'actBtnOff'), grab(js, 'limitItems'), grab(js, 'tintAct'), grab(js, 'actionBars'), grab(js, 'syncActionBars')].join('\n') +
   '\nreturn { bars: actionBars, sync: syncActionBars };')(env.document, env.window, env.localStorage, () => ctx, () => containers, RB, calls);
 
 const rows = (bar) => bar.querySelectorAll('.cc-actrow').map((r) => r.kids.map((b) => b.innerHTML + (b.cls.has('cc-actoff') ? '-' : '')).join(' '));
@@ -81,7 +83,7 @@ console.log('\nThree rows, three, three and four');
   ok('Aktualisieren hands the container to Unraid\'s own update, which asks first', JSON.stringify(calls.shift()) === JSON.stringify(['update', 'web']));
   ok('Entfernen goes through Unraid\'s own remove dialog', JSON.stringify(calls.shift()) === JSON.stringify(['rm', 'web', 'abc']));
   b[9].click();
-  ok('Mehr holds only what has no button of its own', JSON.stringify(calls.shift()) === JSON.stringify(['menu', ['Tailscale WebUI', 'Support']]));
+  ok('Mehr holds the limit editors and what has no button of its own', JSON.stringify(calls.shift()) === JSON.stringify(['menu', ['CPU-Limit', 'RAM-Limit', 'Bandbreite', 'Tailscale WebUI', 'Support']]));
   ok('every live button carries its name', b.filter((x) => !x.cls.has('cc-actoff')).every((x) => x.attrs['aria-label'] && x.attrs['data-tip']));
 }
 
@@ -92,7 +94,7 @@ console.log('\nAn action that does not apply keeps its slot');
   ok('a paused one resumes from the pause slot', rows(api.bars('web', { state: 'paused' }, null).bar)[1] === 'Refresh Resume Stop');
   ctx = { webui: '', xml: '', tswebui: '', shell: '', id: '', image: '', links: [] };
   const bare = rows(api.bars('bare', { state: 'running' }, null).bar);
-  ok('no WebUI, no template, no id and no links: every slot stays, disabled', bare.join(' / ') === 'ExternalLink- Log Pencil- / Refresh Pause Stop / Code Download Trash- More-', bare.join(' / '));
+  ok('no WebUI, no template, no id and no links: every slot stays, disabled', bare.join(' / ') === 'ExternalLink- Log Pencil- / Refresh Pause Stop / Code Download Trash- More', bare.join(' / '));
   ok('so every row has three, three and four', bare.map((r) => r.split(' ').length).join('') === '334');
 }
 

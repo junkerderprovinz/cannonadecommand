@@ -201,7 +201,7 @@ console.log('\nThe sheet and the rows');
     /\.cc-rowmenu-it:is\(:hover, :focus-visible\) \{\s*background: var\(--cc-rb-c, var\(--cc-rbaccent, var\(--cc-accent, #FCC419\)\)\);\s*color: var\(--cc-rb-ct, var\(--cc-rbaccent-text, var\(--cc-accent-text, #161616\)\)\);/.test(tokens));
   const docker = read('scripts/docker.js'), vms = read('scripts/vms.js');
   for (const [name, src] of [['docker.js', docker], ['vms.js', vms]]) {
-    ok(name + ': More opens the shared menu', /actBtn\("More", [^\n]*window\.CCTheme\.menu\(moreBtn, extras\)/.test(src));
+    ok(name + ': More opens the shared menu', /actBtn\("More", [^\n]*(\n[^\n]*){0,6}window\.CCTheme\.menu\(moreBtn, extras\)/.test(src));
     ok(name + ': no extra block of buttons unfolds in the row', src.indexOf('cc-actmore') < 0 && src.indexOf('cc-acttoggle') < 0);
   }
   ok('docker.js: Remove is a button of the row, which takes the delete slot', /actBtn\("Trash", rmLabel, function \(\) \{ window\.rmContainer\(/.test(docker) && /rm\.classList\.add\("cc-act-del"\)/.test(docker));
