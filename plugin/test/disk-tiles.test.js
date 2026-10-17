@@ -110,18 +110,25 @@ console.log('\nThe motion stays inside the gate and stops at "off"');
 {
   const media = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
   const anims = [...css.matchAll(/^\s*(html[^\n{]*)\{[^}\n]*\banimation:\s*cc-dk-/gm)].map((m) => m[1]);
-  ok('there are animations', anims.length >= 4, anims.length);
+  ok('there are animations', anims.length >= 7, anims.length);
   ok('each one names the quiet level and none the lively one', anims.every((s) => /:not\(\[data-cc-motion="off"\]\)/.test(s)) && !/data-cc-motion="(wild|subtle)"\]/.test(css));
   ok('they all sit in the no-preference block', anims.every((s) => media.includes(s)));
   const tokens = read('sheets/CannonadeCommand.Tokens.css');
-  for (const d of ['spin', 'seek', 'swing', 'blink', 'rise', 'stagger']) ok('the platter, arm, LED and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
+  for (const d of ['spin', 'seek', 'swing', 'blink', 'flow', 'rise', 'stagger']) ok('the platter, arm, LED, data flow and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
   ok('the entrance ends at transform: none', /@keyframes cc-dk-in \{[^}]*\}[^}]*to \{ transform: none;/.test(css));
   ok('the platter waits paused and turns only while the disk reads or writes, so it stops where it was', /#displaybox \.cc-dk-plat \{ animation: cc-dk-spin var\(--cc-motion-disk-spin\) linear infinite paused; \}/.test(css) && /\.cc-dk-card\.cc-dk-busy:not\(\.cc-dk-down\) \.cc-dk-plat \{ animation-play-state: running; \}/.test(css));
   const outside = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
   ok('the LED blinks while busy, and outside the gate it is lit without blinking', /\.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ animation: cc-dk-blink/.test(media) && /html\.cc-dk-on #displaybox \.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ fill: var\(--cc-dk-c/.test(outside) && !/cc-dk-blink/.test(outside.replace(/@keyframes[^\n]*/g, '')));
   ok('a resting disk dims its LED, a waiting one glows faintly', /\.cc-dk-card\.cc-dk-down \.cc-dk-led \{ opacity: \.45; \}/.test(css) && /\.cc-dk-card:not\(\.cc-dk-down\) \.cc-dk-led \{ fill: color-mix\(/.test(css));
-  ok('flash drives move nothing but their LED, and every drawing has one', !/cc-dk-(sweep|flow)|@keyframes cc-dk-bars/.test(css + js) && ['drawHdd', 'drawSsd', 'drawNvme', 'drawUsb'].every((n) => /class="cc-dk-led"/.test(grabFn(js, n))));
-  ok('the dial no drawing reads any more is gone', !/--cc-motion-disk-flow/.test(tokens));
+  ok('every drawing keeps its LED', ['drawHdd', 'drawSsd', 'drawNvme', 'drawUsb'].every((n) => /class="cc-dk-led"/.test(grabFn(js, n))));
+  const flowDots = new Function(grabFn(js, 'flowDots') + '\nreturn flowDots;')();
+  ok('an SSD has a light that passes over its lines, an NVMe stick three dots from its contacts, a USB stick three beside its label', /class="cc-dk-sweep"/.test(grabFn(js, 'drawSsd')) && /id="cc-dk-sweep"/.test(grabFn(js, 'defs')) && /flowDots\(22, \[60, 68, 76\]\)/.test(grabFn(js, 'drawNvme')) && /flowDots\(66, \[50, 86, 50\]\)/.test(grabFn(js, 'drawUsb')) && (flowDots(22, [60, 68, 76]).match(/class="cc-dk-flow cc-dk-st( cc-dk-n[23])?"/g) || []).length === 3);
+  const busyOnly = ['cc-dk-sweep', 'cc-dk-bars', 'cc-dk-flow'].map((k) => [...media.matchAll(new RegExp('^\\s*(html[^\\n{]*)\\{[^}\\n]*animation: ' + k + ' ', 'gm'))].map((m) => m[1]));
+  ok('the data flows only while the drive reads or writes', busyOnly.every((l) => l.length === 1 && /\.cc-dk-card\.cc-dk-busy /.test(l[0])), busyOnly.join(' | '));
+  ok('each flow runs at the pace the rate sets', ['cc-dk-sweep', 'cc-dk-bars', 'cc-dk-flow'].every((k) => new RegExp('animation: ' + k + ' calc\\(var\\(--cc-motion-disk-flow\\) \\* var\\(--cc-dk-k, 1\\)').test(media)));
+  ok('outside the gate the light and the dots are hidden, so a still frame and an idle drive show neither', /html\.cc-dk-on #displaybox :is\(\.cc-dk-sweep, \.cc-dk-flow\) \{ opacity: 0; \}/.test(outside) && !/cc-dk-(sweep|bars|flow) /.test(outside.replace(/@keyframes[^\n]*/g, '')));
+  const v = (lvl) => { const m = new RegExp(lvl + ' \\{[^}]*--cc-motion-disk-flow:\\s*([^;]+);').exec(tokens); return m && m[1].trim(); };
+  ok('the flow dial moves at the lively levels and stands at "off" and outside the gate', v('html\\[data-cc-motion="off"\\]') === '60s' && /^html \{[^}]*--cc-motion-disk-flow:\s*60s;/m.test(tokens) && /--cc-motion-disk-flow:\s*\.9s;/.test(tokens) && /--cc-motion-disk-flow:\s*2\.4s;/.test(tokens));
 }
 
 console.log('\nThe readers follow Unraid\'s rows');
