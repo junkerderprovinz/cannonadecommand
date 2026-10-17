@@ -140,15 +140,18 @@ html.cc-shares-on #displaybox table.unraid.share_status .cc-b.cc-b-name:hover { 
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name,
 html.cc-shares-on #displaybox table.unraid.share_status a.cc-b-name:hover { text-decoration: none; }
 
-/* The protection state is a disk-style dot at the start of the name cell. Its colours stay
-   semantic (green protected, orange unprotected), and it has no .cc-b class, so paintRows leaves it
-   alone. It stays round in every shape, being a dot. */
-html.cc-shares-on #displaybox .cc-dot {
-  display: inline-block; width: 10px; height: 10px; flex: 0 0 auto;
-  border-radius: 50%; margin-right: 8px; vertical-align: middle;
+/* The protection state is a shield before the share's name, in the list and on the tiles alike: a
+   check while Unraid counts every file protected, an exclamation mark while some are not. Its
+   colours stay semantic in every colour mode, and it has no .cc-b class, so paintRows leaves it
+   alone. */
+html.cc-shares-on #displaybox .cc-shield {
+  display: inline-flex; flex: none; align-items: center; margin-right: 8px; vertical-align: middle;
+  font-size: var(--cc-text-title); line-height: 1; color: var(--cc-text-dim2);
+  border-radius: var(--cc-radius-control);
 }
-html.cc-shares-on #displaybox .cc-dot-prot { background: var(--cc-ok, #6fdc8c); }
-html.cc-shares-on #displaybox .cc-dot-unprot { background: var(--cc-warn, #ff832b); }
+html.cc-shares-on #displaybox .cc-shield-ok { color: var(--cc-ok-ink, #6fdc8c); }
+html.cc-shares-on #displaybox .cc-shield-warn { color: var(--cc-warn-ink, #ff832b); }
+html.cc-shares-on #displaybox .cc-shield:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--cc-shr-accent, #FCC419); }
 /* The native disk orbs (i.fa-circle.orb in the device column) take the same shape. A font glyph
    cannot change form, so it collapses to font-size 0 and the box paints currentColor, still driven
    by the orb colour classes. */
@@ -1724,9 +1727,7 @@ html.cc-shares-on.cc-sht-on #displaybox .cc-sht-nb {
   border-radius: var(--cc-radius-pill); background: var(--cc-sht-c, var(--cc-shr-accent, #FCC419)); color: var(--cc-sht-ct, var(--cc-shr-accent-text, #161616));
   font-size: var(--cc-text-body); font-weight: 700;
 }
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-dot { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cc-text-dim2); }
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-dot.cc-sht-ok { background: var(--cc-ok); }
-html.cc-shares-on.cc-sht-on #displaybox .cc-sht-dot.cc-sht-warn { background: var(--cc-warn); }
+html.cc-shares-on.cc-sht-on #displaybox .cc-sht-title > .cc-shield { margin-right: 0; }   /* the title's gap spaces it */
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-size { display: inline-flex; gap: 10px; white-space: nowrap; font-size: var(--cc-text-meta); color: var(--cc-text-hint); font-variant-numeric: tabular-nums; }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-size b { color: var(--cc-text); font-weight: 600; }
 html.cc-shares-on.cc-sht-on #displaybox .cc-sht-cmt { margin-top: -4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--cc-text-subline); color: var(--cc-text-dim); }

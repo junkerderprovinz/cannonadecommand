@@ -51,9 +51,9 @@ const TOKEN = /^(var\(--cc-radius-(card|control|pill)\)|calc\(var\(--cc-radius-(
 // GlimStone keeps the colour picker's dot at 50% for the same reason.
 const ROUND = [
   '.cc-ct-dotrow > .cc-badge', '.cc-tile-dot', '.cc-cfg', '.cc-ip-dot', '.cc-req::after', '#cc-ctout-status',
-  '.cc-isl-dot', '.cc-nchan-loader', '.cc-dot', 'i.fa-circle.orb', '.cc-status-dot', '.cc-loader > span',
+  '.cc-isl-dot', '.cc-nchan-loader', 'i.fa-circle.orb', '.cc-status-dot', '.cc-loader > span',
   '.cc-info:focus-visible', '.cc-acctinfo', '.cc-toolsinfo', '.popupAuthorIcon img', 'input[type="radio"]',
-  '.inner > span.state.cc-badge', '.cc-aop-ok::before', '.cc-dk-dot', '.cc-sht-dot', '.cc-sn-ok',
+  '.inner > span.state.cc-badge', '.cc-aop-ok::before', '.cc-dk-dot', '.cc-sn-ok',
 ];
 function radiusOk(sel, value) {
   const v = value.replace(/\s*!important$/, '').trim();
