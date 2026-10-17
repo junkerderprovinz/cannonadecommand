@@ -1112,60 +1112,119 @@
     });
   }
   // Sections mode only: the UD title bar's control cluster (the span/div.right elements holding
-  // gear, refresh and the three switchButtons) moves into the UD section's .cc-card-head and the
-  // emptied bar is hidden via .cc-ud-moved. Like ccDiskioMove this moves rather than clones, so
-  // UD's jQuery bindings ride along; ccUdCtrlsHome puts the cluster back before any teardown that
-  // deletes card heads.
+  // gear, refresh and the three switchButtons) leaves the bar, and the emptied bar is hidden via
+  // .cc-ud-moved. While UD's parts are tile cards (disks.js puts them in .cc-dk-udrow inside a
+  // .cc-dk-box) the cluster is a card of its own at the end of their row, one line per control;
+  // otherwise it sits in the UD section's .cc-card-head. Like ccDiskioMove this moves rather than
+  // clones, so UD's jQuery bindings ride along; ccUdCtrlsHome puts the cluster back before any
+  // teardown that deletes card heads.
   function ccUdCtrlsMove() {
     try {
       if (g("cc.sections.main", "0") === "0") return;
-      var uda = document.querySelector("#displaybox input.disks-switch, #displaybox input.shares-switch, #displaybox input.historical-switch, #displaybox a[onclick^='rescan_disks'], #displaybox a[href*='UnassignedDevicesSettings']");
-      var bar = uda && uda.closest ? uda.closest("div.title") : null; if (!bar || bar.getAttribute("data-cc-ud-moved")) return;
-      var sec = bar.closest("section[data-cc-card]"); var head = sec && sec.querySelector(":scope > .cc-card-head"); if (!head) return;
-      var wrap = el("span", "cc-ud-ctrls"); wrap.setAttribute("data-cc-ud-ctrls", "1");
-      var kids = Array.prototype.slice.call(bar.children);
-      for (var i = 0; i < kids.length; i++) {
-        var k = kids[i];
-        if (k.classList && (k.classList.contains("left") || k.classList.contains("leftTitleUD"))) continue;   // the heading host stays (hidden by CSS)
-        if (k.tagName === "A" || (k.querySelector && k.querySelector("a, input[type='checkbox'], .switch-button-background"))) wrap.appendChild(k);
+      var wrap = document.querySelector("#displaybox .cc-ud-ctrls[data-cc-ud-ctrls]"), bar;
+      if (wrap) bar = document.querySelector("#displaybox div.title[data-cc-ud-moved]");
+      else {
+        var uda = document.querySelector("#displaybox input.disks-switch, #displaybox input.shares-switch, #displaybox input.historical-switch, #displaybox a[onclick^='rescan_disks'], #displaybox a[href*='UnassignedDevicesSettings']");
+        bar = uda && uda.closest ? uda.closest("div.title") : null;
       }
-      if (!wrap.firstChild) return;
-      // Stamp cc-ud-icon on every non-switch anchor that has content, since the glyph can be the
-      // anchor's own text rather than an <i>. An empty anchor (each toggle span carries one) would
-      // render as a blank accent square between the toggle and its label.
-      var as = wrap.querySelectorAll("a");
-      for (var ai = 0; ai < as.length; ai++) {
-        var aEl = as[ai], hasGlyph = !!((aEl.textContent || "").trim() || aEl.querySelector("i, img, span, svg, b"));
-        if (!aEl.closest("[class*='switch']") && hasGlyph) aEl.classList.add("cc-ud-icon");
-        else aEl.classList.remove("cc-ud-icon");   // drop a stale stamp
-      }
-      // each toggle gets its label as plain hover text rather than a balloon
-      for (var tw = 0; tw < wrap.children.length; tw++) {
-        var wch = wrap.children[tw], wl = wch.querySelector ? wch.querySelector(".switch-button-label") : null;
-        if (wl && !wch.getAttribute("title")) wch.setAttribute("title", (wl.textContent || "").trim());
-      }
-      // the icons too: without a title of their own, derive one from the glyph (gear for settings,
-      // circling arrows for refresh)
-      for (var ti = 0; ti < as.length; ti++) {
-        var ta = as[ti];
-        if (!ta.classList.contains("cc-ud-icon") || ta.getAttribute("title")) continue;
-        var cls = ((ta.querySelector("i, span") || {}).className || "") + " " + (ta.className || "");
-        if (/gear|cog|setting/i.test(cls)) ta.setAttribute("title", LANG === "de" ? "Unassigned-Devices-Einstellungen" : "Unassigned Devices settings");
-        else if (/refresh|sync|rotate/i.test(cls)) ta.setAttribute("title", LANG === "de" ? "Datenträger neu einlesen" : "Refresh disks");
-      }
-      head.appendChild(wrap); bar.setAttribute("data-cc-ud-moved", "1"); bar.classList.add("cc-ud-moved");
-      ccUdCtrlsMeasure(sec, wrap);
+      var sec = bar && bar.closest("section[data-cc-card]"); if (!sec) return;
+      var row = sec.classList.contains("cc-dk-box") ? sec.querySelector(":scope > .cc-dk-udrow") : null;
+      var host = row ? ccUdPanel(row) : sec.querySelector(":scope > .cc-card-head"); if (!host) return;
+      if (!wrap) { wrap = ccUdCtrlsGather(bar); if (!wrap) return; }
+      if (wrap.parentNode !== host) host.appendChild(wrap);
+      ccUdLabels(wrap, !!row);
+      if (!row) ccUdPanelDrop();
     } catch (e) {}
   }
-  // The cluster stands at the right end of the first badge line, and Disks.css keeps that much room
-  // beside the badge of the card that ends there.
-  var ccUdCtrlsRo = null;
-  function ccUdCtrlsMeasure(sec, wrap) {
-    if (ccUdCtrlsRo) { ccUdCtrlsRo.disconnect(); ccUdCtrlsRo = null; }
-    if (!sec) return;
-    if (!wrap) { sec.style.removeProperty("--cc-ud-ctrls-w"); return; }
-    ccUdCtrlsRo = new ResizeObserver(function (en) { sec.style.setProperty("--cc-ud-ctrls-w", Math.ceil(en[0].contentRect.width) + "px"); });
-    ccUdCtrlsRo.observe(wrap);
+  function ccUdCtrlsGather(bar) {
+    var wrap = el("span", "cc-ud-ctrls"); wrap.setAttribute("data-cc-ud-ctrls", "1");
+    var kids = Array.prototype.slice.call(bar.children);
+    for (var i = 0; i < kids.length; i++) {
+      var k = kids[i];
+      if (k.classList && (k.classList.contains("left") || k.classList.contains("leftTitleUD"))) continue;   // the heading host stays (hidden by CSS)
+      if (k.tagName === "A" || (k.querySelector && k.querySelector("a, input[type='checkbox'], .switch-button-background"))) wrap.appendChild(k);
+    }
+    if (!wrap.firstChild) return null;
+    // Stamp cc-ud-icon on every non-switch anchor that has content, since the glyph can be the
+    // anchor's own text rather than an <i>. An empty anchor (each toggle span carries one) would
+    // render as a blank accent square between the toggle and its label.
+    var as = wrap.querySelectorAll("a");
+    for (var ai = 0; ai < as.length; ai++) {
+      var aEl = as[ai], hasGlyph = !!((aEl.textContent || "").trim() || aEl.querySelector("i, img, span, svg, b"));
+      if (!aEl.closest("[class*='switch']") && hasGlyph) aEl.classList.add("cc-ud-icon");
+      else aEl.classList.remove("cc-ud-icon");   // drop a stale stamp
+    }
+    // each toggle gets its label as plain hover text rather than a balloon
+    for (var tw = 0; tw < wrap.children.length; tw++) {
+      var wch = wrap.children[tw], wl = wch.querySelector ? wch.querySelector(".switch-button-label") : null;
+      if (wl && !wch.getAttribute("title")) wch.setAttribute("title", (wl.textContent || "").trim());
+    }
+    // the icons too: without a title of their own, derive one from the glyph (gear for settings,
+    // circling arrows for refresh)
+    for (var ti = 0; ti < as.length; ti++) {
+      var ta = as[ti];
+      if (!ta.classList.contains("cc-ud-icon") || ta.getAttribute("title")) continue;
+      var cls = ((ta.querySelector("i, span") || {}).className || "") + " " + (ta.className || "");
+      if (/gear|cog|setting/i.test(cls)) ta.setAttribute("title", LANG === "de" ? "Unassigned-Devices-Einstellungen" : "Unassigned Devices settings");
+      else if (/refresh|sync|rotate/i.test(cls)) ta.setAttribute("title", LANG === "de" ? "Datenträger neu einlesen" : "Refresh disks");
+    }
+    bar.setAttribute("data-cc-ud-moved", "1"); bar.classList.add("cc-ud-moved");
+    return wrap;
+  }
+  // The controls' card is headed like UD's three by a badge in a div.title, so their card and
+  // badge rules in Disks.css and the badge painting draw it too. It stays the last card of the row.
+  function ccUdPanel(row) {
+    var p = row.querySelector(":scope > .cc-ud-panel");
+    if (!p) {
+      p = el("div", "cc-ud-panel");
+      var b = el("span", "cc-b cc-ud-h");
+      b.classList.toggle("cc-ink-dark", idealText(mainAccent()) !== "#fff");
+      b.appendChild(el("span", "cc-b-v", "Unassigned Devices"));
+      p.appendChild(el("div", "title")).appendChild(el("span", "left")).appendChild(b);
+    }
+    if (p !== row.lastElementChild) row.appendChild(p);
+    return p;
+  }
+  function ccUdPanelDrop() {
+    var p = document.querySelector("#displaybox .cc-ud-panel");
+    if (p) p.parentNode.removeChild(p);
+  }
+  // Each control's name and (i) in the card, found by what the control is rather than by UD's
+  // English tooltip; a control this list does not know is named by that tooltip.
+  var UD_NAMES = [
+    ["a[href*='UnassignedDevicesSettings']", "Unassigned-Devices-Einstellungen", "Unassigned Devices settings", "Öffnet die Einstellungsseite von Unassigned Devices.", "Opens the Unassigned Devices settings page."],
+    ["a[onclick^='rescan_disks']", "Datenträger neu einlesen", "Refresh disks", "Sucht neu nach Datenträgern und lädt die Konfiguration von Unassigned Devices neu.", "Scans for disks again and reloads the Unassigned Devices configuration."],
+    ["input.historical-switch", "Historische Geräte anzeigen", "Show historical devices", "Zeigt oder verbirgt die Karte mit den Geräten, die schon einmal angeschlossen waren.", "Shows or hides the card with the devices that were connected before."],
+    ["input.shares-switch", "Freigaben anzeigen", "Show shares", "Zeigt oder verbirgt die Karte mit den Netzwerk- und ISO-Freigaben.", "Shows or hides the card with the network and ISO shares."],
+    ["input.disks-switch", "Datenträger anzeigen", "Show disks", "Zeigt oder verbirgt die Karte mit den nicht zugewiesenen Datenträgern.", "Shows or hides the card with the unassigned disks."]
+  ];
+  function ccUdName(unit) {
+    var de = LANG === "de";
+    for (var i = 0; i < UD_NAMES.length; i++) {
+      var n = UD_NAMES[i];
+      if (unit.querySelector(n[0])) return { label: de ? n[1] : n[2], tip: de ? n[3] : n[4] };
+    }
+    var t = unit.querySelector("[title], [data-cc-tip]");
+    var own = t && (t.getAttribute("title") || t.getAttribute("data-cc-tip"));
+    return own ? { label: own, tip: "" } : null;
+  }
+  // A control's line is the largest box around it that holds no other control: UD boxes each one,
+  // the switch's hidden input and labels included, in a div.right.ud.
+  function ccUdLabels(wrap, on) {
+    var ctrls = wrap.querySelectorAll("a.cc-ud-icon, .switch-button-background");
+    for (var i = 0; i < ctrls.length; i++) {
+      var unit = ctrls[i];
+      while (unit.parentNode !== wrap && unit.parentNode.querySelectorAll("a.cc-ud-icon, .switch-button-background").length === 1) unit = unit.parentNode;
+      if (unit === ctrls[i]) continue;
+      var lbl = unit.querySelector(":scope > .cc-ud-lbl");
+      if (!on) { if (lbl) unit.removeChild(lbl); unit.classList.remove("cc-ud-unit"); continue; }
+      if (lbl) continue;
+      var name = ccUdName(unit); if (!name) continue;
+      lbl = el("span", "cc-ud-lbl");
+      lbl.appendChild(el("span", null, name.label));
+      if (name.tip) lbl.appendChild(ccInfoIcon(name.tip));
+      unit.insertBefore(lbl, unit.firstChild); unit.classList.add("cc-ud-unit");
+    }
   }
   // UD's loose text buttons float detached in the CC layout and duplicate the gear and refresh
   // icons, so they are hidden wherever they ended up.
@@ -1183,7 +1242,7 @@
           // textContent equals a target; stamping one would hide the icon. The icon and its
           // insides stay untouched, and a stamp already sitting on them is removed.
           if (e2.classList.contains("cc-ud-icon") || (e2.closest && e2.closest("a.cc-ud-icon"))) { e2.classList.remove("cc-ud-hidden"); continue; }
-          if (e2.classList.contains("cc-ud-hidden")) continue;
+          if (e2.classList.contains("cc-ud-hidden") || e2.closest(".cc-ud-lbl")) continue;   // the controls card names its lines in the same words
           if (e2.querySelector(".switch-button-background, a.cc-ud-icon, input")) continue;   // never a container of real controls
           var t2 = ((e2.value || e2.textContent || "") + "").replace(new RegExp(String.fromCharCode(160), "g"), " ").replace(/\s+/g, " ").trim().toUpperCase();
           if (t2 === "UNASSIGNED DEVICES SETTINGS" || t2 === "REFRESH DISKS AND CONFIGURATION") e2.classList.add("cc-ud-hidden");
@@ -1240,11 +1299,12 @@
   }
   function ccUdCtrlsHome() {
     try {
-      var wrap = document.querySelector("#displaybox .cc-card-head .cc-ud-ctrls[data-cc-ud-ctrls]"); if (!wrap) return;
+      var wrap = document.querySelector("#displaybox .cc-ud-ctrls[data-cc-ud-ctrls]"); if (!wrap) return;
       var bar = document.querySelector("#displaybox div.title[data-cc-ud-moved]");
+      ccUdLabels(wrap, false);
       if (bar) { while (wrap.firstChild) bar.appendChild(wrap.firstChild); bar.removeAttribute("data-cc-ud-moved"); bar.classList.remove("cc-ud-moved"); }
-      ccUdCtrlsMeasure(wrap.closest("section[data-cc-card]"), null);
       wrap.parentNode.removeChild(wrap);
+      ccUdPanelDrop();
     } catch (e) {}
   }
   // Moves the native [title] balloons on /Main over to the floating CC bubble, which header.js
@@ -2062,7 +2122,7 @@
         // headers would linger as stray unstyled divs, so they and their markers go as well.
         try {
           ccDiskioHome();   // the diskio switch sits inside the first .cc-card-head, which the loop below removes
-          ccUdCtrlsHome();  // same for the UD cluster parked in the UD section's head
+          ccUdCtrlsHome();  // same for the UD cluster parked in the UD section's head or in its own card
           var stray = document.querySelectorAll("#displaybox .cc-card-head, #displaybox .cc-card-note");
           for (var s = 0; s < stray.length; s++) stray[s].parentNode.removeChild(stray[s]);
           // Unhide the carded native SMB sub-heading. Its hide rule is gated on cc-shares-on, so

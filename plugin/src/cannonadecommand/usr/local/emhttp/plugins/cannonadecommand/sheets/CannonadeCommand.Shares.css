@@ -563,8 +563,9 @@ html.cc-shares-on.cc-on-main #displaybox button:not([role="tab"]):disabled {
 }
 /* Unassigned Devices: badges instead of heading bars. Native div.title is already a centred flex
    row, so removing only the fill and line keeps the gear, refresh and toggles centred. Only the
-   four UD title bars; the native /Main group titles stay. */
+   four UD title bars and the one of the controls' card; the native /Main group titles stay. */
 html.cc-shares-on.cc-on-main #displaybox div.title.ud,
+html.cc-shares-on.cc-on-main #displaybox .cc-ud-panel > div.title,
 html.cc-shares-on.cc-on-main #displaybox .show-disks > div.title.shift,
 html.cc-shares-on.cc-on-main #displaybox .show-shares > div.title.shift,
 html.cc-shares-on.cc-on-main #displaybox .show-historical > div.title.shift {
