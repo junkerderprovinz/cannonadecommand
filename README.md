@@ -186,6 +186,19 @@ Docker, Plugins, VMs, Settings) on or off independently, each with its own style
 - Logo background (per area, in the View card): put the container / plugin / VM /
   category logo on a coloured accent badge and recolour it monochrome black or white
   for contrast, or leave it natural.
+- Tile views beyond Docker: the disks on **Start (Main)**, the shares on **Shares**,
+  the plugins and the VMs can each be shown as tiles. On Start, array, pools, boot,
+  Unassigned Devices and the array operations sit in cards of their own, and a disk
+  tile only mentions SMART, errors and rates when there is something to say.
+- Small animated pictures where something happens: the array's fill level is a
+  vessel that sloshes, a disk's platter turns while it reads or writes, data flows
+  through SSD, NVMe and USB drives, the mover sends packets from the pools into the
+  array, and a running parity check shows a progress ring. The start plan window
+  draws the container's own dependency chain lighting up in start order. All of it
+  follows the motion setting and rests when your system asks for reduced motion.
+- Unraid's own settings pages, share pages, the container form and the VM editor
+  are laid out as cards with switches instead of checkboxes, keeping Unraid's field
+  order, and every field gets an (i) that explains it.
 
 </details>
 
@@ -225,11 +238,12 @@ restarted automatically.
 ## 5. The settings page
 
 **Settings → Utilities → CannonadeCommand** holds the appearance settings (accent
-colour with an embedded picker, rainbow palette, density, column defaults), the
-bandwidth interface (blank = auto-detected from the container's default route),
-notifications, and the diagnostics card with the engine's recent limit
-operations. Settings are mirrored into the engine config, so every browser and
-origin sees the same configuration.
+colour with an embedded picker, rainbow palette, shape, motion, density, column
+defaults), one tab per area, the list of containers pinned to their original logo,
+the bandwidth interface (blank = auto-detected from the container's default route)
+and notifications. Every row has an (i) that explains it, and rows that depend on a
+switch stay locked while it is off. Settings are mirrored into the engine config, so
+every browser and origin sees the same configuration, and only what changed is sent.
 
 <br>
 
