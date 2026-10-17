@@ -14,9 +14,11 @@
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
   var TXT = {
     de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", browse: "Durchsuchen", compute: "Berechnen", recompute: "Neu berechnen", settings: "Einstellungen",
-      used: "belegt", free: "frei", of: "von", off: "aus", outside: "Liegt außerhalb der zugewiesenen Datenträger" },
+      used: "belegt", free: "frei", of: "von", off: "aus", outside: "Liegt außerhalb der zugewiesenen Datenträger",
+      protected: "Geschützt", partly: "Nicht alles geschützt", unknown: "Schutz unbekannt" },
     en: { view: "View", list: "List", tiles: "Tiles", browse: "Browse", compute: "Compute", recompute: "Compute again", settings: "Settings",
-      used: "used", free: "free", of: "of", off: "off", outside: "Lies outside the designated disks" }
+      used: "used", free: "free", of: "of", off: "off", outside: "Lies outside the designated disks",
+      protected: "Protected", partly: "Not fully protected", unknown: "Protection unknown" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
 
@@ -155,13 +157,19 @@
     var off = !v || v === "-";
     return '<span class="cc-sht-chip' + (off ? " cc-sht-off" : "") + '">' + proto + " <b>" + esc(off ? t("off") : v) + "</b></span>";
   }
+  // Unraid's protection orb becomes a shield before the name, with the orb's own words as its bubble.
+  function shield(sh) {
+    if (!sh.prot) return "";
+    var tip = sh.protTip || t({ ok: "protected", warn: "partly", idle: "unknown" }[sh.prot]);
+    return '<span class="cc-shield cc-shield-' + sh.prot + '" role="img" tabindex="0" data-tip="' + esc(tip) + '" aria-label="' + esc(tip) + '">' +
+      glyph({ ok: "ShieldOn", warn: "ShieldAlert", idle: "Shield" }[sh.prot]) + "</span>";
+  }
   function cornerBtn(kind, label) { return '<span class="cc-sht-cb" role="button" tabindex="0" data-act="' + kind + '">' + esc(label) + "</span>"; }
   // Reading order: the name with its size and the actions in the top corner, the comment, where
   // the share lives and how it is exported, the per-disk split, and Compute in the bottom corner.
   // Compute and Recompute run the same computeShare, so the corner holds whichever the row offers.
   function cardHtml(sh, disk) {
     var acts = (sh.browse ? act("browse", t("browse"), "Folder") : "") + act("open", t("settings"), "Gear");
-    var dot = sh.prot ? '<span class="cc-sht-dot cc-sht-' + sh.prot + '"' + (sh.protTip ? ' data-tip="' + esc(sh.protTip) + '"' : "") + "></span>" : "";
     var pct = usage(sh, disk);
     var used = pct != null ? "<span><b>" + esc(Math.round(pct)) + " %</b> " + esc(t("of") + " " + sh.size + " " + t("used")) + "</span>"
       : sh.size ? "<span><b>" + esc(sh.size) + "</b> " + esc(t("used")) + "</span>" : "";
@@ -172,7 +180,7 @@
     var parts = sh.parts.map(function (p) {
       return '<span class="cc-sht-part' + (p.outside ? " cc-sht-warn" : "") + '"' + (p.outside ? ' data-tip="' + esc(t("outside")) + '"' : "") + ">" + esc(p.name) + " <b>" + esc(p.size) + "</b></span>";
     }).join("");
-    return '<div class="cc-sht-head"><span class="cc-sht-title">' + dot + '<span class="cc-sht-nb">' + esc(sh.name) + "</span>" +
+    return '<div class="cc-sht-head"><span class="cc-sht-title">' + shield(sh) + '<span class="cc-sht-nb">' + esc(sh.name) + "</span>" +
       (used || free ? '<span class="cc-sht-size">' + used + free + "</span>" : "") + '</span><span class="cc-sht-acts">' + acts + "</span></div>" +
       (sh.comment ? '<div class="cc-sht-cmt">' + esc(sh.comment) + "</div>" : "") +
       '<div class="cc-sht-chips">' +

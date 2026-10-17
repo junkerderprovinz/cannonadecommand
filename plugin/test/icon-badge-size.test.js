@@ -1,8 +1,8 @@
 // A square icon badge has one size across the plugin, --cc-icon-badge, whatever its role: the
-// row actions, the limit gear, the day chip and its delete, the Plugins trash and the /Main icon
-// tiles. GlimStone tried a size per role and rejected it, because the roles meet on one card and
-// read as three sizes. This fails if a badge falls back to its own number or a second stage
-// appears.
+// row actions, the limit gear, the day chip and its delete, the Plugins trash, the /Main icon
+// tiles and the sort reset in a list head. GlimStone tried a size per role and rejected it,
+// because the roles meet on one card and read as three sizes. This fails if a badge falls back to
+// its own number or a second stage appears.
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'src', 'cannonadecommand', 'usr', 'local', 'emhttp', 'plugins', 'cannonadecommand');
@@ -22,9 +22,9 @@ function rules(css) {
   return out;
 }
 
-const SHEETS = ['styles/docker.css', 'sheets/CannonadeCommand.VmTab.css', 'sheets/CannonadeCommand.Shares.css'];
+const SHEETS = ['styles/docker.css', 'sheets/CannonadeCommand.VmTab.css', 'sheets/CannonadeCommand.Shares.css', 'sheets/CannonadeCommand.Tokens.css'];
 // The last compound of a selector that names one of the square icon badges.
-const BADGE = /(\.cc-actbtn|\.cc-limbtn|\.cc-day|\.cc-sched-x|\.cc-b-delicon|a\.cc-ud-icon|a\.cc-ibtn|i\.fa-gears(\[disabled\]|\.disabled)?|:is\(i\.fa-remove, i\.fa-times, i\.fa-trash, i\.fa-trash-o, i\.fa-ban\))$/;
+const BADGE = /(\.cc-actbtn|\.cc-sortreset:not\(\[hidden\]\)|\.cc-limbtn|\.cc-day|\.cc-sched-x|\.cc-b-delicon|a\.cc-ud-icon|a\.cc-ibtn|i\.fa-gears(\[disabled\]|\.disabled)?|:is\(i\.fa-remove, i\.fa-times, i\.fa-trash, i\.fa-trash-o, i\.fa-ban\))$/;
 const SIZE = /var\(--cc-icon-badge, 26px\)/;
 
 console.log('\nOne token, one value');
@@ -55,7 +55,7 @@ for (const f of SHEETS) {
   ok(path.basename(f) + ': no icon badge has its own size', bad.length === 0, bad.join(' | '));
 }
 for (const want of ['docker.css .cc-actbtn', 'docker.css .cc-limbtn', 'docker.css .cc-sched-x', 'docker.css .cc-day', 'docker.css .cc-b-delicon',
-  'CannonadeCommand.VmTab.css .cc-actbtn', 'CannonadeCommand.VmTab.css .cc-limbtn', 'CannonadeCommand.Shares.css a.cc-ud-icon', 'CannonadeCommand.Shares.css i.fa-gears']) {
+  'CannonadeCommand.VmTab.css .cc-actbtn', 'CannonadeCommand.VmTab.css .cc-limbtn', 'CannonadeCommand.Shares.css a.cc-ud-icon', 'CannonadeCommand.Shares.css i.fa-gears', 'CannonadeCommand.Tokens.css .cc-sortreset:not([hidden])']) {
   ok(want + ' is sized by the token', seen.has(want), [...seen].join(' | '));
 }
 {

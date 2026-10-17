@@ -65,7 +65,7 @@
   }
   // i18n as in docker.js: German when the page language is, else English
   var LANG = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
-  var T = { de: { browse: "Durchsuchen", protected: "Geschützt", unprotected: "Ungeschützt", protection: "Schutz", copy: "Einstellungen kopieren" }, en: { browse: "Browse", protected: "Protected", unprotected: "Unprotected", protection: "Protection", copy: "Copy settings" } };
+  var T = { de: { browse: "Durchsuchen", protected: "Geschützt", partly: "Nicht alles geschützt", unknown: "Schutz unbekannt", protection: "Schutz", copy: "Einstellungen kopieren" }, en: { browse: "Browse", protected: "Protected", partly: "Not fully protected", unknown: "Protection unknown", protection: "Protection", copy: "Copy settings" } };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   function el(tag, cls, txt) { var n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; }
   // File manager: badges the owner, permission, size and date values. The page deletes and moves
@@ -199,18 +199,21 @@
     while (td.firstChild) v.appendChild(td.firstChild); // moved, so links and orbs keep working
     b.appendChild(v); td.appendChild(b);
   }
-  // Turns the protection orb (green-orb protected, yellow-orb or fa-warning unprotected) into a
-  // disk-style dot for the name cell, keeping the orb's tooltip. Returns null without an orb.
+  // Turns the protection orb (green-orb protected, yellow-orb or fa-warning not fully protected)
+  // into the shield the share tiles draw, with the orb's own words as its bubble. Returns null
+  // without an orb.
   function statusPill(name) {
     var orb = name.querySelector("i.orb, i.green-orb, i.yellow-orb");
     if (!orb) return null;
-    var cn = orb.className || "", green = /green-orb/.test(cn), yellow = /yellow-orb|fa-warning/.test(cn);
-    if (!green && !yellow) return null;
-    var sb = el("span", "cc-dot " + (green ? "cc-dot-prot" : "cc-dot-unprot"));
-    sb.title = t(green ? "protected" : "unprotected");
+    var cn = orb.className || "", st = /green-orb/.test(cn) ? "ok" : /yellow-orb|fa-warning/.test(cn) ? "warn" : "idle";
     var infoA = orb.closest("a"); // a.info.nohand
-    if (infoA) { var ti = infoA.getAttribute("title"); if (ti) sb.title = ti; infoA.style.setProperty("display", "none", "important"); }
-    else orb.style.setProperty("display", "none", "important");
+    var words = infoA && infoA.querySelector("span");
+    var tip = (words && words.textContent.trim()) || t({ ok: "protected", warn: "partly", idle: "unknown" }[st]);
+    var sb = el("span", "cc-shield cc-shield-" + st);
+    sb.setAttribute("role", "img"); sb.setAttribute("tabindex", "0");
+    sb.setAttribute("data-tip", tip); sb.setAttribute("aria-label", tip);
+    sb.innerHTML = window.CCTheme && window.CCTheme.glyph ? window.CCTheme.glyph({ ok: "ShieldOn", warn: "ShieldAlert", idle: "Shield" }[st]) : "";
+    (infoA || orb).style.setProperty("display", "none", "important");
     return sb;
   }
   // The share-name link becomes a large badge with its href intact.
