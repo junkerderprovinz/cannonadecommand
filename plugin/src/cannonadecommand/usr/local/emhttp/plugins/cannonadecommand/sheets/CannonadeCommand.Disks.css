@@ -55,24 +55,10 @@ html.cc-dk-on #displaybox .cc-dk-movepool { fill: var(--cc-dk-c, var(--cc-shr-ac
 html.cc-dk-on #displaybox .cc-dk-movename { fill: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); font-size: var(--cc-text-meta); font-weight: 600; }
 html.cc-dk-on #displaybox .cc-dk-movedest { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: var(--cc-text-meta); }
 /* Unassigned Devices' disks, network shares and past devices are three cards of their own, each
-   under its own badge, so the section itself draws no card and its badge stays hidden. Its one
-   column is as wide as the cards, and UD's controls, which stay in that head, sit at the right end
-   of their badge line: a placed absolute child of a grid takes its grid area as containing block.
-   The cards' badge lines are raised to z-index 1 and come later, so the head stacks above them or
-   the last one swallows every click on the controls. */
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) {
-  display: grid !important; grid-template-columns: minmax(0, max-content); padding: 0; background: none;
-}
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) > .cc-card-head {
-  grid-area: 1 / 1 / 2 / 2; inset: 0 0 auto; transform: none; max-width: none; height: 0; min-height: 0; padding: 0; visibility: hidden; z-index: 2;
-}
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 0; right: 0; transform: translateY(-50%); visibility: visible; }
-/* On a phone the UD controls do not fit beside a badge and take a row of their own above the cards. */
-@media (max-width: 600px) {
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) { grid-template-columns: minmax(0, 1fr); padding-top: 50px; }
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) > .cc-card-head { grid-area: auto; }
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { transform: none; }
-}
+   under its own badge, and its controls are a fourth, so the section itself draws no card and its
+   head goes with the badge it would show. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) { padding: 0; background: none; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) > .cc-card-head { display: none; }
 /* In section view the pools and the boot device stand side by side while the page has room, each
    section under its own badge, as wide as its cards and as tall as the row; every other section
    keeps the whole row. */
@@ -105,15 +91,20 @@ html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow .s
   position: relative; z-index: 1; height: auto; margin: calc(var(--cc-sec-h, 22px) / -2) 0 13px !important; padding: 0;   /* Shares.css sets the top margin with !important */
 }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow div.title > span.left { flex-wrap: wrap; row-gap: 6px; }
-/* UD's controls end the first badge line, where the last card ends while all three fit in a row,
-   so its badge line keeps their width (--cc-ud-ctrls-w, measured by shares.js) and a row gap free.
-   The card grows for it instead of the badge running under the toggles. The popup look pads every
-   title with !important. */
-@media not all and (max-width: 600px) {
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > :last-child div.title { padding-right: calc(var(--cc-ud-ctrls-w, 0px) + 8px) !important; }
+/* The controls' card (shares.js) holds one line per control, its name and (i) at the start and
+   the control at the end, as on the settings page. Shares.css lines the controls up in a row for
+   the card head of the list view, so their boxes are reset here. */
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .cc-ud-panel { flex: none; max-width: 100%; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-ud-panel .cc-ud-ctrls,
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-ud-panel .cc-ud-ctrls > * { display: flex !important; flex-direction: column; align-items: stretch; gap: 8px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-ud-panel .cc-ud-unit { display: flex !important; flex-direction: row; align-items: center; gap: 0; min-height: 30px; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-ud-panel .cc-ud-lbl {
+  display: inline-flex; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; margin-right: 16px; color: var(--cc-text); font-size: var(--cc-text-body);
 }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-ud-panel .cc-ud-lbl .cc-info { margin-left: 0; }
 @media (max-width: 600px) {
-  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * { flex: 1 1 100%; }
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > *,
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .cc-ud-panel { flex: 1 1 100%; }
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { max-width: none; }
 }
 html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.usb_absent) { display: block; max-width: 100%; overflow-x: auto; }
