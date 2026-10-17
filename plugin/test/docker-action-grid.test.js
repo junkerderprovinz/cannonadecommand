@@ -4,7 +4,7 @@
 //   · an action that does not apply leaving a hole, so the rows of a list stop lining up
 //   · a stopped container offering its WebUI or console
 //   · Entfernen landing on the rainbow's red, or going red at all
-//   · Mehr still holding the console or the remove, now that both have a button of their own, or
+//   · Mehr holding the console or the remove although both have a button of their own, or
 //     losing the limit editors a stopped container has no gear for
 //   · a bar that keeps its old buttons after a start or stop, or drops the keyboard focus
 //   · a gap between the buttons other than the one between the badges beside them
