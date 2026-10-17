@@ -11,6 +11,8 @@ Link="cc-tokens-hook"
    :95+, so the tokens exist first. Link="cc-tokens-hook" renders a bare <div>, no icon.
 
    cc-theme.js loads synchronously rather than deferred, so window.CCTheme (idealText, the
-   persisted rainbow seed, palette/rbColor) exists before the deferred area scripts run. */
+   persisted rainbow seed, palette/rbColor) exists before the deferred area scripts run.
+   sortreset.js turns Unraid's "Reset sorting" icon on the Docker and VM lists into a CC badge. */
 ?>
 <script src="<?autov('/plugins/cannonadecommand/scripts/cc-theme.js')?>"></script>
+<script defer src="<?autov('/plugins/cannonadecommand/scripts/sortreset.js')?>"></script>

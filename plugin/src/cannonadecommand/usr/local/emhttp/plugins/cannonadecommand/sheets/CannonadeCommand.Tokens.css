@@ -816,6 +816,20 @@ html.cc-badge-glass.cc-plugins-iconbg .cc-plugico > * { position: relative; z-in
    shadow above, as the wash on the other badges does. */
 html :is(.cc-actbtn:not(.cc-actoff), .cc-limbtn):hover { box-shadow: inset 0 0 0 100vmax var(--cc-hover-wash) !important; }
 
+/* Unraid's "Reset sorting" icon in the first head of the Docker and VM lists gives way to a badge
+   (sortreset.js), shown only while the list is in an order of the user's own. It rests on the
+   neutral chip like the row actions and takes the accent when pointed at. */
+.cc-sortreset { display: none; }
+html.cc-popups-on a#resetsort.cc-sortreset-native { display: none !important; }
+html.cc-popups-on .cc-sortreset:not([hidden]) {
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; box-sizing: border-box;
+  width: var(--cc-icon-badge, 26px); height: var(--cc-icon-badge, 26px); margin: -4px 8px -4px 0;
+  border-radius: var(--cc-radius-pill); background: var(--cc-surface-3, #2e2e2e); color: var(--cc-text-chip, #cfcfcf);
+  font-size: var(--cc-text-subline); cursor: pointer; transition: background-color var(--cc-motion-control-dur, 0s), color var(--cc-motion-control-dur, 0s);
+}
+html.cc-popups-on .cc-sortreset:hover { background: var(--cc-rbaccent, var(--cc-accent, #FCC419)); color: var(--cc-rbaccent-text, var(--cc-accent-text, #161616)); }
+html.cc-popups-on .cc-sortreset:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--cc-rbaccent, var(--cc-accent, #FCC419)); }
+
 /* Unraid's quick-scroll arrows (a.move_to_end, a.back_to_top, fixed bottom right, stock red): small
    chips at the pill radius in the bottom right corner of the content. They stand on whatever is
    docked at the viewport's bottom edge, the fixed footer or the Docker action bar, which header.js
