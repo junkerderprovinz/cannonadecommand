@@ -57,12 +57,14 @@ html.cc-dk-on #displaybox .cc-dk-movedest { display: flex; flex-direction: colum
 /* Unassigned Devices' disks, network shares and past devices are three cards of their own, each
    under its own badge, so the section itself draws no card and its badge stays hidden. Its one
    column is as wide as the cards, and UD's controls, which stay in that head, sit at the right end
-   of their badge line: a placed absolute child of a grid takes its grid area as containing block. */
+   of their badge line: a placed absolute child of a grid takes its grid area as containing block.
+   The cards' badge lines are raised to z-index 1 and come later, so the head stacks above them or
+   the last one swallows every click on the controls. */
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) {
   display: grid !important; grid-template-columns: minmax(0, max-content); padding: 0; background: none;
 }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .cc-dk-udrow) > .cc-card-head {
-  grid-area: 1 / 1 / 2 / 2; inset: 0 0 auto; transform: none; max-width: none; height: 0; min-height: 0; padding: 0; visibility: hidden;
+  grid-area: 1 / 1 / 2 / 2; inset: 0 0 auto; transform: none; max-width: none; height: 0; min-height: 0; padding: 0; visibility: hidden; z-index: 2;
 }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { top: 0; right: 0; transform: translateY(-50%); visibility: visible; }
 /* On a phone the UD controls do not fit beside a badge and take a row of their own above the cards. */
