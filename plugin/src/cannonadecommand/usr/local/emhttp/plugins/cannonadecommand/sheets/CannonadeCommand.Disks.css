@@ -40,25 +40,6 @@ html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .c
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-host[data-cc-dk="array"] {
   box-sizing: border-box; width: fit-content; max-width: 100%; margin: 0; padding: 24px 16px 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
 }
-/* The array's vessel stands left of its disks and its summary strip, its percentage under it. On
-   a phone it lies in a row of its own above the disks. */
-html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"]:has(> .cc-dk-vessel) { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 20px; }
-html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"] > .cc-dk-vessel ~ * { grid-column: 2; }
-html.cc-dk-on #displaybox .cc-dk-vessel {
-  --cc-pic-c: var(--cc-dk-c, var(--cc-shr-accent, #FCC419));
-  grid-row: 1 / span 2; align-self: center; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 88px;
-  font-size: var(--cc-text-subline); color: var(--cc-text-hint); font-variant-numeric: tabular-nums;
-}
-html.cc-dk-on #displaybox .cc-dk-vessel > .cc-vessel { width: 88px; height: 104px; margin-bottom: 6px; }
-html.cc-dk-on #displaybox .cc-dk-vpct { color: var(--cc-text); font-size: var(--cc-text-title); }
-html.cc-dk-on #displaybox .cc-dk-vpct b { font-weight: 700; }
-html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-host:not(:hover) > .cc-dk-vessel { --cc-pic-c: var(--cc-text-dim); }
-@media (max-width: 600px) {
-  html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"]:has(> .cc-dk-vessel) { grid-template-columns: minmax(0, 1fr); }
-  html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"] > .cc-dk-vessel ~ * { grid-column: 1; }
-  html.cc-dk-on #displaybox .cc-dk-vessel { grid-row: auto; flex-direction: row; align-self: start; gap: 8px; margin-bottom: 12px; }
-  html.cc-dk-on #displaybox .cc-dk-vessel > .cc-vessel { width: 44px; height: 52px; margin: 0 4px 0 0; }
-}
 /* While the mover runs, a strip under the pools shows its picture: the pools as badges, a line
    from each to the array's vessel, packets on the lines. */
 html.cc-dk-on #displaybox .cc-dk-move {
@@ -224,6 +205,15 @@ html.cc-dk-on #displaybox .cc-dk-art { position: relative; height: 140px; backgr
 html.cc-dk-on #displaybox .cc-dk-art svg.cc-dk-drive { position: absolute; inset: 14px 12px; width: calc(100% - 24px); height: calc(100% - 28px); }
 html.cc-dk-on #displaybox .cc-dk-art text { font-family: inherit; }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down svg.cc-dk-drive { opacity: .62; }
+/* The array's own card stands first among its disks, its vessel where a disk has its drawing. It
+   opens nothing, so it keeps the plain cursor and its surface under the pointer. */
+html.cc-dk-on #displaybox .cc-dk-total { cursor: default; }
+html.cc-dk-on #displaybox .cc-dk-total:is(:hover, :focus-within) { background: var(--cc-dk-card); }
+html.cc-dk-on #displaybox .cc-dk-total .cc-vessel {
+  --cc-pic-c: var(--cc-dk-c, var(--cc-shr-accent, #FCC419));
+  position: absolute; inset: 0; width: 88px; height: 104px; margin: auto;
+}
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-total:not(:hover):not(:focus-within) .cc-vessel { --cc-pic-c: var(--cc-text-dim); }
 
 /* The action badges show on hover and keyboard focus, and always on a touch screen. */
 html.cc-dk-on #displaybox .cc-dk-acts {

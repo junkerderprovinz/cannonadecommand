@@ -300,31 +300,92 @@ console.log('\nA card shows only what deviates');
   ok('read and write show only while the disk is busy, the temperature always', /<div class="cc-dk-rate">' \+ esc\(t\("read"\)\)/.test(js) && /<div class="cc-dk-rate">' \+ esc\(t\("write"\)\)/.test(js) && /html\.cc-dk-on #displaybox \.cc-dk-card:not\(\.cc-dk-busy\) \.cc-dk-rate \{ display: none; \}/.test(css) && /<div>' \+ esc\(t\("temp"\)\)/.test(js));
 }
 
-console.log('\nThe array is a vessel on the left of its card');
+console.log('\nThe array is a card of its own, first among its disks, with a vessel for its drawing');
 {
+  // A DOM just big enough for the card: innerHTML, a class or data-f lookup, classList and style.
+  const dom = (tag) => {
+    const n = { tagName: tag.toUpperCase(), attrs: {}, children: [], parentNode: null, textContent: '', listeners: {} };
+    n.style = { props: {}, setProperty(k, v) { this.props[k] = v; }, removeProperty(k) { delete this.props[k]; } };
+    n.setAttribute = (k, v) => { n.attrs[k] = String(v); };
+    n.getAttribute = (k) => (k in n.attrs ? n.attrs[k] : null);
+    Object.defineProperty(n, 'className', { get: () => n.attrs.class || '', set: (v) => { n.attrs.class = v; } });
+    const has = (c) => (' ' + (n.attrs.class || '') + ' ').includes(' ' + c + ' ');
+    n.classList = { contains: has, add: (c) => { if (!has(c)) n.attrs.class = ((n.attrs.class || '') + ' ' + c).trim(); }, remove: (c) => { n.attrs.class = (' ' + (n.attrs.class || '') + ' ').replace(' ' + c + ' ', ' ').trim(); } };
+    n.classList.toggle = (c, on) => { if (on) n.classList.add(c); else n.classList.remove(c); };
+    n.appendChild = (c) => n.insertBefore(c, null);
+    n.insertBefore = (c, ref) => { if (c.parentNode) c.parentNode.removeChild(c); const i = ref ? n.children.indexOf(ref) : n.children.length; n.children.splice(i, 0, c); c.parentNode = n; return c; };
+    n.removeChild = (c) => { n.children.splice(n.children.indexOf(c), 1); c.parentNode = null; return c; };
+    n.addEventListener = (k, f) => { n.listeners[k] = f; };
+    const match = (sel) => { const m = /^\[data-f="(\w+)"\]$/.exec(sel); return m ? (c) => c.attrs['data-f'] === m[1] : (c) => c.classList.contains(sel.slice(1)); };
+    n.querySelector = (sel) => {
+      const direct = /^:scope > (.+)$/.exec(sel), pred = match(direct ? direct[1] : sel);
+      const go = (p) => { for (const c of p.children) { if (pred(c)) return c; if (!direct) { const r = go(c); if (r) return r; } } return null; };
+      return go(n);
+    };
+    Object.defineProperty(n, 'innerHTML', {
+      set(html) {
+        n.children = [];
+        const re = /<\/([a-z]+)\s*>|<([a-z]+)((?:\s+[^\s=>/]+(?:="[^"]*")?)*)\s*(\/?)>|[^<]+/g;
+        let cur = n, m;
+        while ((m = re.exec(html))) {
+          if (m[1]) { cur = cur.parentNode; continue; }
+          if (!m[2]) { cur.textContent += m[0]; continue; }
+          const c = dom(m[2]);
+          (m[3] || '').replace(/([^\s=]+)="([^"]*)"/g, (x, k, v) => { c.attrs[k] = v; });
+          cur.appendChild(c);
+          if (!m[4] && !/^(path|circle)$/.test(m[2])) cur = c;
+        }
+      }
+    });
+    return n;
+  };
   const made = [];
-  const kid = () => ({ textContent: '', attrs: {}, getAttribute(k) { return this.attrs[k] ?? null; }, setAttribute(k, v) { this.attrs[k] = v; } });
-  const box = () => { const b = kid(); b.parts = { '[data-f="vpct"]': kid() }; b.querySelector = (s) => b.parts[s]; b.insertBefore = () => {}; b.style = { setProperty() {}, removeProperty() {} }; return b; };
-  const host = { kids: [], querySelector() { return this.kids[0] || null; }, insertBefore(n) { this.kids.unshift(n); }, removeChild(n) { this.kids.splice(this.kids.indexOf(n), 1); } };
-  const pictures = { vessel(o) { const v = { el: {}, o, level: null, tone: null, setLevel(s) { v.level = s; return v; }, setTone(t) { v.tone = t; return v; } }; made.push(v); return v; } };
-  const src = [grabFn(js, 'arrayVessel'), grabFn(js, 'fillTone'), grabFn(js, 'setText'), 'var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc')].join('\n') + '\nreturn arrayVessel;';
-  const arrayVessel = new Function('window', 'el', 'colourAt', 'LANG', src)({ CCPictures: pictures }, () => box(), () => '', 'de');
-  const fs1 = { pct: 84.4, used: '43.9 TB', size: '52 TB' };
-  arrayVessel(host, fs1);
+  const pictures = { vessel(o) { const v = { el: dom('span'), o, level: null, tone: null, setLevel(s) { v.level = s; return v; }, setTone(t) { v.tone = t; return v; } }; made.push(v); return v; } };
+  const helpers = ['totalCard', 'fillTone', 'setText', 'setHtml', 't', 'esc', 'fill', 'el', 'cap', 'bytes', 'clean', 'rate', 'lvl', 'ink'];
+  const src = ['var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabVar(js, 'POW'), grabVar(js, 'INFO')].concat(helpers.map((n) => grabFn(js, n))).join('\n') + '\nreturn totalCard;';
+  const totalCard = new Function('window', 'document', 'LANG', 'nf', src)({ CCPictures: pictures }, { createElement: dom }, 'de', { format: String });
+  const grid = dom('div');
+  const total = { label: 'Array aus fünf Datenträgern', temp: { shown: 34, c: 34, unit: 'C' }, rdText: '0.0 B/s', wrText: '0.0 B/s', fs: { size: '52 TB', used: '43.9 TB', free: '8.12 TB', pct: 84.4 } };
+  const c = totalCard(grid, total, '');
+  grid.appendChild(c);
   const v = made[0];
-  ok('it is built with the array\'s used share and a label', made.length === 1 && Math.abs(v.o.share - 0.844) < 1e-9 && v.o.label === 'Füllstand des Arrays');
-  ok('below 90 % it takes the accent', v.tone === 'accent' && host.kids[0].parts['[data-f="vpct"]'].textContent === '84');
-  ok('its bubble names used and size', host.kids[0].attrs['data-tip'] === '43.9 TB von 52 TB belegt');
-  arrayVessel(host, { pct: 90, used: '', size: '' });
-  ok('from 90 % it turns orange, on the same vessel', made.length === 1 && v.tone === 'warn' && v.level === 0.9);
-  arrayVessel(host, { pct: 95, used: '', size: '' });
+  const f = (k) => c.querySelector('[data-f="' + k + '"]');
+  ok('a card like a disk\'s: the drawing well, the name row, the use row and the readings', c.classList.contains('cc-dk-card') && c.classList.contains('cc-dk-total') && ['cc-dk-art', 'cc-dk-namerow', 'cc-dk-model', 'cc-dk-use', 'cc-dk-io'].every((k) => !!c.querySelector('.' + k)));
+  ok('the vessel stands in the drawing well, with the array\'s share and a label', c.querySelector('.cc-dk-art').children[0] === v.el && Math.abs(v.o.share - 0.844) < 1e-9 && Math.abs(v.level - 0.844) < 1e-9 && v.o.label === 'Füllstand des Arrays');
+  ok('its badge says Array beside the whole size', c.querySelector('.cc-dk-nb').textContent === 'Array' && f('cap').textContent === '52 TB');
+  ok('Unraid\'s label stands where a disk names its model', f('label').textContent === 'Array aus fünf Datenträgern');
+  ok('used, share and free read as on a disk card, the bar at the share', f('used').textContent === '43.9 TB' && f('pct').textContent === '84' && f('free').textContent === '8.12 TB frei' && f('fill').style.width === '84.4%' && f('fill').classList.contains('cc-dk-warn'));
+  ok('the bubble names used and size and when the vessel changes colour', f('tip').getAttribute('data-tip') === '43.9 TB von 52 TB belegt. Ab 90 % wird das Gefäß orange, über 95 % rot.');
+  ok('the temperature is the average, and says so in its bubble', /Ø 34 °C/.test(f('temp').__ccHtml) && f('temp').getAttribute('data-tip') === 'Mittelwert der Datenträger, die gerade eine Temperatur melden');
+  ok('below 90 % the vessel takes the accent, and an idle array shows no rates', v.tone === 'accent' && !c.classList.contains('cc-dk-busy'));
+  ok('it takes no focus and opens nothing, so no key or click leads anywhere', !('tabindex' in c.attrs) && !('role' in c.attrs) && !c.__ccDisk);
+  totalCard(grid, Object.assign({}, total, { rdText: '3.1 MB/s', fs: Object.assign({}, total.fs, { pct: 90 }) }), '');
+  ok('reading, it shows the rates, as a busy disk does', c.classList.contains('cc-dk-busy') && f('rd').textContent === '3.1 MB/s');
+  ok('from 90 % the vessel turns orange, on the same card and vessel', made.length === 1 && grid.querySelector(':scope > .cc-dk-total') === c && v.tone === 'warn' && v.level === 0.9);
+  totalCard(grid, Object.assign({}, total, { fs: Object.assign({}, total.fs, { pct: 95 }) }), '');
   ok('95 % is still orange', v.tone === 'warn');
-  arrayVessel(host, { pct: 95.2, used: '', size: '' });
+  totalCard(grid, Object.assign({}, total, { temp: null, fs: Object.assign({}, total.fs, { pct: 95.2 }) }), '#FF832B');
   ok('past 95 % it turns red', v.tone === 'err');
-  arrayVessel(host, null);
-  ok('without a file system the vessel goes', host.kids.length === 0);
-  ok('the render feeds it from the totals row each time', /arrayUse = data\.total && data\.total\.fs;[^}]*arrayVessel\(host, arrayUse\);/.test(js));
-  ok('it stands left of the disks, and above them on a phone', /\.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ display: grid; grid-template-columns: auto minmax\(0, 1fr\);/.test(css) && /@media \(max-width: 600px\) \{\s*html\.cc-dk-on #displaybox \.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
+  ok('with every disk asleep the temperature reads as on a disk that measures none', /cc-dk-idle"><\/span>\*$/.test(f('temp').__ccHtml));
+  ok('in the rainbow it wears its colour and the ink that goes with it', c.style.props['--cc-dk-c'] === '#FF832B' && c.style.props['--cc-dk-ct'] === '#161616');
+  ok('without a file system the card goes', totalCard(grid, Object.assign({}, total, { fs: null }), '') === null && grid.children.length === 0);
+  const rs = grabFn(js, 'renderSection');
+  ok('the render makes it the grid\'s lead and counts it in the grid\'s width', /var lead = S\.key === "array" \? totalCard\(grid, data\.total, colourAt\(data\.disks\.length\)\) : null;/.test(rs) && /grid\.style\.setProperty\("--cc-dk-n", data\.disks\.length \+ \(lead \? 1 : 0\)\);/.test(rs) && /fillGrid\(grid, cardsOf\(data\.disks, 0\), colourAt, lead\);/.test(rs));
+  ok('the mover still reads the array\'s share from the totals row', /arrayUse = data\.total && data\.total\.fs;/.test(rs));
+  ok('no strip and no vessel column are left beside the disks', !/cc-dk-vessel|arrayVessel/.test(js + css) && !/sumHtml\(data\.total/.test(js));
+  ok('its vessel sits in the middle of the well, as large as before', /\.cc-dk-total \.cc-vessel \{[^}]*position: absolute; inset: 0; width: 88px; height: 104px; margin: auto;/.test(css));
+  ok('it keeps the plain cursor and its surface under the pointer', /\.cc-dk-total \{ cursor: default; \}/.test(css) && /\.cc-dk-total:is\(:hover, :focus-within\) \{ background: var\(--cc-dk-card\); \}/.test(css));
+
+  const fg = new Function('kids', 'attr', 'ink', 'shapeOf', 'newCard', 'patch', grabFn(js, 'fillGrid') + '\nreturn fillGrid;')(
+    (n) => n.children.slice(), (n, k) => n.getAttribute(k) || '', () => '', (d) => d.key, (d) => { const n = dom('div'); n.setAttribute('data-key', d.key); n.__ccShape = d.key; return n; }, () => {});
+  const g2 = dom('div'), lead = dom('div');
+  const items = ['parity', 'disk1'].map((k, i) => ({ d: { key: k }, ctx: {}, n: i }));
+  fg(g2, items, () => '');
+  const parity = g2.children[0];
+  fg(g2, items, () => '', lead);
+  ok('the grid takes the lead first and keeps the disk cards it had, in their order', g2.children[0] === lead && g2.children[1] === parity && g2.children.map((n) => n.getAttribute('data-key')).slice(1).join() === 'parity,disk1');
+  fg(g2, items, () => '', lead);
+  ok('a refill keeps the lead where it is', g2.children[0] === lead && g2.children.length === 3);
 }
 
 console.log('\ndisks.php reads emhttp\'s own files');

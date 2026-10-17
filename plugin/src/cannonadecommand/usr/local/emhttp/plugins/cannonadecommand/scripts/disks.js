@@ -22,6 +22,7 @@
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
       member: "Gehört zum Pool %p", details: "Details", aopArray: "Array", aopDisks: "Platten", aopSystem: "System",
       spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten", arrayFill: "Füllstand des Arrays",
+      arrayTip: "%u von %s belegt. Ab 90 % wird das Gefäß orange, über 95 % rot.", tempAvg: "Mittelwert der Datenträger, die gerade eine Temperatur melden",
       moving: "Mover läuft", movingTip: "Er verschiebt gerade Dateien zwischen den Pools und dem Array.",
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
@@ -31,6 +32,7 @@
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
       member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System", arrayFill: "Array fill level",
+      arrayTip: "%u of %s used. The vessel turns orange from 90 % and red past 95 %.", tempAvg: "Average of the disks that report a temperature right now",
       moving: "Mover running", movingTip: "It is moving files between the pools and the array.",
       hdd: "Hard disk", ssd: "SATA SSD", nvme: "NVMe SSD", usb: "USB flash drive" }
   };
@@ -454,18 +456,20 @@
     }
     if (c.__ccWait && (c.__ccWait.down !== d.down || Date.now() - c.__ccWait.at > 30000)) { c.__ccWait = null; c.classList.remove("cc-dk-wait"); }
   }
-  // Puts the cards for a list of disks into a grid, reusing a card while its drawing still fits,
-  // and moving only those out of place, since a moved node starts its animations over.
-  function fillGrid(grid, list, colourAt) {
-    var old = {};
-    kids(grid).forEach(function (c) { old[attr(c, "data-key")] = c; });
+  // Puts the cards for a list of disks into a grid, after lead when there is one, reusing a card
+  // while its drawing still fits and moving only those out of place, since a moved node starts its
+  // animations over.
+  function fillGrid(grid, list, colourAt, lead) {
+    var old = {}, at = lead ? 1 : 0;
+    kids(grid).forEach(function (c) { if (c !== lead) old[attr(c, "data-key")] = c; });
+    if (lead && grid.children[0] !== lead) grid.insertBefore(lead, grid.children[0] || null);
     list.forEach(function (it, i) {
       var ctx = it.ctx; ctx.colour = colourAt(it.n); ctx.ink = ink(ctx.colour);
       var c = old[it.d.key], sh = shapeOf(it.d, ctx);
       if (c && c.__ccShape !== sh) { grid.removeChild(c); c = null; }
       if (!c) { c = newCard(it.d, i, ctx); c.__ccShape = sh; }
       delete old[it.d.key];
-      if (grid.children[i] !== c) grid.insertBefore(c, grid.children[i] || null);
+      if (grid.children[i + at] !== c) grid.insertBefore(c, grid.children[i + at] || null);
       patch(c, it.d, ctx);
     });
     Object.keys(old).forEach(function (k) { if (old[k].parentNode === grid) grid.removeChild(old[k]); });
@@ -483,11 +487,9 @@
   }
 
   function el(tagName, cls, html) { var n = document.createElement(tagName); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
-  function sumHtml(total) {
-    var f = total.fs;
-    return "<span><b>" + esc(total.label) + "</b></span>" + (total.temp ? "<span>Ø " + esc(nf.format(total.temp.shown) + " °" + total.temp.unit) + "</span>" : "") +
-      "<span>" + esc(t("read")) + ' <b data-f="trd">' + esc(total.rdText) + "</b></span><span>" + esc(t("write")) + ' <b data-f="twr">' + esc(total.wrText) + "</b></span>" +
-      (f ? "<span><b>" + esc(f.used) + "</b> " + esc(t("of") + " " + f.size + " " + t("used")) + '</span><span class="cc-dk-track cc-dk-sumbar"><span class="cc-dk-fill ' + lvl(f.pct) + '" style="width:' + f.pct.toFixed(1) + '%"></span></span><span>' + esc(f.free + " " + t("free")) + "</span>" : "");
+  function sumHtml(label, f) {
+    return "<span><b>" + esc(label) + "</b></span><span><b>" + esc(f.used) + "</b> " + esc(t("of") + " " + f.size + " " + t("used")) + "</span>" +
+      '<span class="cc-dk-track cc-dk-sumbar"><span class="cc-dk-fill ' + lvl(f.pct) + '" style="width:' + f.pct.toFixed(1) + '%"></span></span><span>' + esc(f.free + " " + t("free")) + "</span>";
   }
   function strip(host, cls, html) {
     var n = host.querySelector(":scope > ." + cls);
@@ -499,24 +501,42 @@
   }
 
   function fillTone(p) { return p > 95 ? "err" : p >= 90 ? "warn" : "accent"; }
-  // The array's fill level as a vessel on the left of its card (GlimStone: "A fill level is a
-  // vessel"), orange from 90 % and red past 95 %. It is built once, so its liquid keeps sloshing,
-  // and follows the numbers each time Unraid refills the table.
-  function arrayVessel(host, fs) {
-    var box = host.querySelector(":scope > .cc-dk-vessel");
-    if (!fs || !window.CCPictures) { if (box) host.removeChild(box); return; }
-    if (!box) {
-      box = el("div", "cc-dk-vessel", '<span class="cc-dk-vpct"><b data-f="vpct"></b> %</span><span class="cc-dk-vlbl">' + esc(t("used")) + "</span>");
-      box.__ccVessel = window.CCPictures.vessel({ share: fs.pct / 100, label: t("arrayFill") });
-      box.insertBefore(box.__ccVessel.el, box.firstChild);
-      host.insertBefore(box, host.firstChild);
+  // The whole array as the first card of its grid, built like a disk's with its fill level as a
+  // vessel for the drawing (GlimStone: "A fill level is a vessel"), orange from 90 % and red past
+  // 95 %. It is built once, so the liquid keeps sloshing, and opens nothing, so it takes no focus.
+  function totalCard(grid, total, colour) {
+    var c = grid.querySelector(":scope > .cc-dk-total"), fs = total && total.fs;
+    if (!fs || !window.CCPictures) { if (c) grid.removeChild(c); return null; }
+    if (!c) {
+      c = el("div", "cc-dk-card cc-dk-total cc-dk-enter",
+        '<div class="cc-dk-art"></div><div class="cc-dk-namerow"><span class="cc-dk-nb">' + esc(t("aopArray")) + '</span><span class="cc-dk-cap" data-f="cap"></span>' +
+        '<span class="cc-info cc-dk-info" tabindex="0" data-f="tip" aria-label="' + esc(t("details")) + '">' + INFO + "</span></div>" +
+        '<div class="cc-dk-model" data-f="label"></div><div class="cc-dk-use"><div class="cc-dk-uselbl"><span><b data-f="used"></b> ' + esc(t("used")) + ' · <span data-f="pct"></span> %</span><span data-f="free"></span></div>' +
+        '<div class="cc-dk-track"><div class="cc-dk-fill" data-f="fill"></div></div></div>' +
+        '<div class="cc-dk-io"><div>' + esc(t("temp")) + '<b data-f="temp" data-tip="' + esc(t("tempAvg")) + '"></b></div><div class="cc-dk-rate">' + esc(t("read")) + '<b data-f="rd"></b></div><div class="cc-dk-rate">' + esc(t("write")) + '<b data-f="wr"></b></div></div>');
+      c.__ccVessel = window.CCPictures.vessel({ share: fs.pct / 100, label: t("arrayFill") });
+      c.querySelector(".cc-dk-art").appendChild(c.__ccVessel.el);
+      c.addEventListener("animationend", function (e) { if (e.target === c) c.classList.remove("cc-dk-enter"); });
     }
-    box.__ccVessel.setLevel(fs.pct / 100).setTone(fillTone(fs.pct));
-    setText(box.querySelector('[data-f="vpct"]'), String(Math.round(fs.pct)));
-    var tip = fs.used + " " + t("of") + " " + fs.size + " " + t("used");
-    if (box.getAttribute("data-tip") !== tip) box.setAttribute("data-tip", tip);
-    var c = colourAt(0);
-    if (c) box.style.setProperty("--cc-dk-c", c); else box.style.removeProperty("--cc-dk-c");
+    c.__ccVessel.setLevel(fs.pct / 100).setTone(fillTone(fs.pct));
+    setText(c.querySelector('[data-f="cap"]'), cap(bytes(fs.size)) || fs.size);
+    setText(c.querySelector('[data-f="label"]'), total.label);
+    setText(c.querySelector('[data-f="used"]'), fs.used);
+    setText(c.querySelector('[data-f="pct"]'), String(Math.round(fs.pct)));
+    setText(c.querySelector('[data-f="free"]'), fs.free + " " + t("free"));
+    var f = c.querySelector('[data-f="fill"]');
+    f.className = "cc-dk-fill " + lvl(fs.pct) + (f.classList.contains("cc-slosh-edge") ? " cc-slosh-edge" : "");
+    f.style.width = Math.max(fs.pct, 1.5).toFixed(1) + "%";
+    if (window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
+    var tip = c.querySelector('[data-f="tip"]'), tp = fill(t("arrayTip"), { u: fs.used, s: fs.size });
+    if (tip.getAttribute("data-tip") !== tp) tip.setAttribute("data-tip", tp);
+    setHtml(c.querySelector('[data-f="temp"]'), total.temp ? '<span class="cc-dk-dot"></span>' + esc("Ø " + nf.format(total.temp.shown) + " °" + total.temp.unit) : '<span class="cc-dk-dot cc-dk-idle"></span>*');
+    setText(c.querySelector('[data-f="rd"]'), total.rdText);
+    setText(c.querySelector('[data-f="wr"]'), total.wrText);
+    c.classList.toggle("cc-dk-busy", rate(total.rdText) > 0 || rate(total.wrText) > 0);
+    if (colour) { c.style.setProperty("--cc-dk-c", colour); c.style.setProperty("--cc-dk-ct", ink(colour)); }
+    else { c.style.removeProperty("--cc-dk-c"); c.style.removeProperty("--cc-dk-ct"); }
+    return c;
   }
 
   // Unraid's own subscriber on /Main says what the array is busy with, and 2 is the mover. Its
@@ -656,7 +676,7 @@
         return { d: shown, ctx: { member: multi ? p.name : "" }, n: n++ };
       });
       var box = poolBox(wrap, p, items);
-      strip(box, "cc-dk-sum", multi && p.fs ? sumHtml({ label: p.name, temp: null, rdText: "", wrText: "", fs: p.fs }) : "");
+      strip(box, "cc-dk-sum", multi && p.fs ? sumHtml(p.name, p.fs) : "");
       boxes.push(box);
     });
     order(wrap, boxes);
@@ -748,9 +768,10 @@
     }
     var empty = host.querySelector(":scope > .cc-dk-empty"); if (empty) host.removeChild(empty);
     var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
-    grid.style.setProperty("--cc-dk-n", data.disks.length);
-    fillGrid(grid, cardsOf(data.disks, 0), colourAt);
-    if (S.key === "array") { arrayUse = data.total && data.total.fs; strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : ""); arrayVessel(host, arrayUse); }
+    var lead = S.key === "array" ? totalCard(grid, data.total, colourAt(data.disks.length)) : null;
+    grid.style.setProperty("--cc-dk-n", data.disks.length + (lead ? 1 : 0));
+    fillGrid(grid, cardsOf(data.disks, 0), colourAt, lead);
+    if (S.key === "array") arrayUse = data.total && data.total.fs;
     if (S.key === "boot") notesStrip(host, data.notes);
   }
 
