@@ -2387,6 +2387,63 @@
     }
     return out;
   }
+  // The bell swings instead of wearing Connect's corner badge: once when unread notifications
+  // first show, again whenever a new one arrives, and every 30 seconds while any stay unread.
+  var CC_BELL_RANK = { "": 0, notice: 1, warning: 2, alert: 3 };
+  var ccBellSpan = null, ccBellObs = null, ccBellLvl = null, ccBellCount = null, ccBellTimer = 0, ccBellLast = 0, ccBellNchan = false;
+  function ccBellLevel(span) {
+    var mark = span && span.querySelector('[class*="absolute"]');
+    if (!mark) return "";
+    var cls = mark.getAttribute("class") || "";
+    return /red/.test(cls) ? "alert" : /yellow|orange|amber/.test(cls) ? "warning" : "notice";
+  }
+  function ccBellRing() {
+    clearTimeout(ccBellTimer); ccBellTimer = 0;
+    var span = ccBellSpan;
+    if (!span || !ccBellLvl) return;
+    ccBellTimer = setTimeout(ccBellRing, 30000);                   // the reminder counts from the latest swing
+    var now = Date.now();
+    if (now - ccBellLast < 1500 || document.hidden || span.getAttribute("aria-expanded") === "true") return;
+    if (window.CCPictures && window.CCPictures.still()) return;
+    ccBellLast = now;
+    span.classList.remove("cc-bell-ring");
+    void span.offsetWidth;                                         // a swing still running starts over
+    span.classList.add("cc-bell-ring");
+  }
+  function ccBellSync() {
+    var span = ccBellSpan, lvl = ccBellLevel(span), was = ccBellLvl || "";
+    ccBellLvl = lvl;
+    if (!span) return;
+    if (lvl) span.setAttribute("data-cc-bell", lvl); else span.removeAttribute("data-cc-bell");
+    span.setAttribute("data-cc-tip", lvl ? T("Ungelesene Benachrichtigungen", "Unread notifications") : T("Benachrichtigungen", "Notifications"));
+    if (!lvl) { clearTimeout(ccBellTimer); ccBellTimer = 0; return; }
+    // The level outlives the span, so a fresh span Connect swaps in with the same badge is no news.
+    if (CC_BELL_RANK[lvl] > CC_BELL_RANK[was]) ccBellRing();
+    else if (!ccBellTimer) ccBellTimer = setTimeout(ccBellRing, 30000);
+  }
+  // Unraid still publishes the whole unread list on its notify channel whenever it changes, which
+  // catches a new notification at a level the bell already shows.
+  function ccBellNews(msg) {
+    var list;
+    try { list = JSON.parse(msg); } catch (e) { return; }
+    if (!Array.isArray(list)) return;
+    if (ccBellCount !== null && list.length > ccBellCount) ccBellRing();
+    ccBellCount = list.length;
+  }
+  function ccBellWatch(span) {
+    if (span === ccBellSpan) return;
+    if (ccBellObs) { ccBellObs.disconnect(); ccBellObs = null; }
+    ccBellSpan = span;
+    if (!span) { clearTimeout(ccBellTimer); ccBellTimer = 0; return; }
+    ccBellObs = new MutationObserver(ccBellSync);
+    ccBellObs.observe(span, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+    span.addEventListener("animationend", function (e) { if (e.animationName === "cc-bell-swing") span.classList.remove("cc-bell-ring"); });
+    ccBellSync();
+    if (!ccBellNchan && window.defaultPage && window.defaultPage.on) {
+      ccBellNchan = true;
+      window.defaultPage.on("message", function (msg, meta) { try { if (meta.id.channel() === 2) ccBellNews(msg); } catch (e) {} });
+    }
+  }
   function ccDockProfile() {
     try {
       if (!document.documentElement.classList.contains("cc-header-on")) { ccUndockProfile(); return; }
@@ -2450,12 +2507,14 @@
           }
         }
       });
+      ccBellWatch(hideBell ? null : bellSpan);
       ccArmAdoptObs();
     } catch (e) {}
   }
   function ccUndockProfile() {                                     // move the spans back and drop the proxies, so the row is native again
     try {
       ccDisarmAdoptObs();
+      ccBellWatch(null);
       var bell = document.querySelector('[data-cc-trig="bell"]'), burger = document.querySelector('[data-cc-trig="burger"]');
       var up = document.getElementById("UserProfile");
       var container = up ? up.querySelector(":scope > div:nth-child(2)") : null;
