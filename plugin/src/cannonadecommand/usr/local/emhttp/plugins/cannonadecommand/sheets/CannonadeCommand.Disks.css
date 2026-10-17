@@ -103,6 +103,13 @@ html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow .s
   position: relative; z-index: 1; height: auto; margin: calc(var(--cc-sec-h, 22px) / -2) 0 13px !important; padding: 0;   /* Shares.css sets the top margin with !important */
 }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow div.title > span.left { flex-wrap: wrap; row-gap: 6px; }
+/* UD's controls end the first badge line, where the last card ends while all three fit in a row,
+   so its badge line keeps their width (--cc-ud-ctrls-w, measured by shares.js) and a row gap free.
+   The card grows for it instead of the badge running under the toggles. The popup look pads every
+   title with !important. */
+@media not all and (max-width: 600px) {
+  html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > :last-child div.title { padding-right: calc(var(--cc-ud-ctrls-w, 0px) + 8px) !important; }
+}
 @media (max-width: 600px) {
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > * { flex: 1 1 100%; }
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-box .cc-dk-udrow > .show-disks:not(:has(> .show-historical)) { max-width: none; }

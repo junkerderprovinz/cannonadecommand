@@ -1154,7 +1154,18 @@
         else if (/refresh|sync|rotate/i.test(cls)) ta.setAttribute("title", LANG === "de" ? "Datenträger neu einlesen" : "Refresh disks");
       }
       head.appendChild(wrap); bar.setAttribute("data-cc-ud-moved", "1"); bar.classList.add("cc-ud-moved");
+      ccUdCtrlsMeasure(sec, wrap);
     } catch (e) {}
+  }
+  // The cluster stands at the right end of the first badge line, and Disks.css keeps that much room
+  // beside the badge of the card that ends there.
+  var ccUdCtrlsRo = null;
+  function ccUdCtrlsMeasure(sec, wrap) {
+    if (ccUdCtrlsRo) { ccUdCtrlsRo.disconnect(); ccUdCtrlsRo = null; }
+    if (!sec) return;
+    if (!wrap) { sec.style.removeProperty("--cc-ud-ctrls-w"); return; }
+    ccUdCtrlsRo = new ResizeObserver(function (en) { sec.style.setProperty("--cc-ud-ctrls-w", Math.ceil(en[0].contentRect.width) + "px"); });
+    ccUdCtrlsRo.observe(wrap);
   }
   // UD's loose text buttons float detached in the CC layout and duplicate the gear and refresh
   // icons, so they are hidden wherever they ended up.
@@ -1232,6 +1243,7 @@
       var wrap = document.querySelector("#displaybox .cc-card-head .cc-ud-ctrls[data-cc-ud-ctrls]"); if (!wrap) return;
       var bar = document.querySelector("#displaybox div.title[data-cc-ud-moved]");
       if (bar) { while (wrap.firstChild) bar.appendChild(wrap.firstChild); bar.removeAttribute("data-cc-ud-moved"); bar.classList.remove("cc-ud-moved"); }
+      ccUdCtrlsMeasure(wrap.closest("section[data-cc-card]"), null);
       wrap.parentNode.removeChild(wrap);
     } catch (e) {}
   }
