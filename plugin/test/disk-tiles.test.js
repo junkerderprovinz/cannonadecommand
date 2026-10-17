@@ -247,7 +247,7 @@ console.log('\nEvery pool and section keeps its badge and stands beside the othe
   ok('each pool is headed by its own section badge', /'<span class="cc-dk-pb">' \+ esc\(p\.name\)/.test(js) && /\.cc-dk-pb \{[^}]*min-height: var\(--cc-sec-h, 22px\)[^}]*text-transform: uppercase/.test(css));
   ok('the boot device keeps its own section', !/cc-dk-merged/.test(js + css) && /function drawPools\(host, pools\)/.test(js));
   ok('the pools and the boot device are the sections that stand side by side', /S\.sec\.classList\.toggle\("cc-dk-side", tiles && !S\.data\.offline && \(S\.key === "pools" \|\| S\.key === "boot"\)\)/.test(js));
-  ok('such a section is as wide as its content, the page wraps the rest', /\.cc-sections-main #displaybox \{ display: flex; flex-wrap: wrap;/.test(css) && /#displaybox > section\.cc-dk-side \{ flex: 0 1 auto; width: auto; \}/.test(css));
+  ok('such a section is as wide as its content and as tall as its row, the page wraps the rest', /\.cc-sections-main #displaybox \{ display: flex; flex-wrap: wrap;/.test(css) && /#displaybox > section\.cc-dk-side \{ flex: 0 1 auto; align-self: stretch; width: auto; \}/.test(css));
   ok('a grid is as wide as its cards and wraps them when squeezed', /grid\.style\.setProperty\("--cc-dk-n", items\.length\)/.test(js) && /\.cc-dk-grid \{ display: grid; grid-template-columns: repeat\(auto-fill, minmax\(260px, 1fr\)\); gap: 12px; width: calc\(var\(--cc-dk-n, 1\) \* 272px - 12px\); max-width: 100%; \}/.test(css));
   ok('the array card hugs its row of disks', /\.cc-dk-host\[data-cc-dk="array"\] \{\s*box-sizing: border-box; width: fit-content; max-width: 100%;/.test(css));
   ok('the summary strips and the boot hint do not widen their card', /:is\(\.cc-dk-pool, \.cc-dk-host\) > :is\(\.cc-dk-sum, \.cc-dk-notes\) \{ contain: inline-size; \}/.test(css));
@@ -393,6 +393,21 @@ console.log('\nThe array is a card of its own, first among its disks, with a ves
   ok('the grid takes the lead first and keeps the disk cards it had, in their order', g2.children[0] === lead && g2.children[1] === parity && g2.children.map((n) => n.getAttribute('data-key')).slice(1).join() === 'parity,disk1');
   fg(g2, items, () => '', lead);
   ok('a refill keeps the lead where it is', g2.children[0] === lead && g2.children.length === 3);
+}
+
+console.log('\nThe boot hint stands beside the boot card');
+{
+  ok('a hint turns the boot section into a row, the hint a column as tall as the card', /\.cc-dk-host\[data-cc-dk="boot"\]:has\(> \.cc-dk-notes\) \{ display: flex; align-items: stretch; gap: 12px; \}/.test(css) && /\.cc-dk-host\[data-cc-dk="boot"\] > \.cc-dk-notes \{\s*flex: 0 0 168px;[^}]*margin-top: 0;/.test(css));
+  ok('the hint reads quiet, in dimmed text on a faint surface', /\.cc-dk-host\[data-cc-dk="boot"\] > \.cc-dk-notes \{[^}]*background: color-mix\(in srgb, var\(--cc-dk-card\) 50%, transparent\); color: var\(--cc-text-dim\);/.test(css));
+  ok('on a phone it goes back under the card', /@media \(max-width: 600px\) \{\s*html\.cc-dk-on #displaybox \.cc-dk-host\[data-cc-dk="boot"\]:has\(> \.cc-dk-notes\) \{ display: block; \}\s*html\.cc-dk-on #displaybox \.cc-dk-host\[data-cc-dk="boot"\] > \.cc-dk-notes \{ margin-top: 12px; \}/.test(css));
+  const kidsOf = [];
+  const host = { children: kidsOf, querySelector: () => kidsOf.find((k) => k.className.includes('cc-dk-notes')) || null, appendChild: (n) => { kidsOf.push(n); return n; }, removeChild: (n) => { kidsOf.splice(kidsOf.indexOf(n), 1); } };
+  const notesStrip = new Function('el', 'setHtml', grabFn(js, 'notesStrip') + '\nreturn notesStrip;')((t, c) => ({ tagName: t, className: c }), (n, h) => { n.html = h; });
+  kidsOf.push({ className: 'cc-dk-grid' });
+  notesStrip(host, [{ innerHTML: 'Kein internes Boot-Setup erkannt. <a href="/Tools/Wizards/InternalBootWizard">Internal Boot</a> starten.' }]);
+  ok('the hint follows the card, its link kept', kidsOf.length === 2 && kidsOf[1].className === 'cc-dk-sum cc-dk-notes' && /<a href="\/Tools\/Wizards\/InternalBootWizard">Internal Boot<\/a>/.test(kidsOf[1].html));
+  notesStrip(host, []);
+  ok('without a hint the section keeps the card alone, as before', kidsOf.length === 1 && kidsOf[0].className === 'cc-dk-grid');
 }
 
 console.log('\ndisks.php reads emhttp\'s own files');

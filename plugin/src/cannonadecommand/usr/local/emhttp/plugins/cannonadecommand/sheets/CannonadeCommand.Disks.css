@@ -72,10 +72,11 @@ html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box .cc-card-head > .cc-ud-ctrls { transform: none; }
 }
 /* In section view the pools and the boot device stand side by side while the page has room, each
-   section under its own badge and as wide as its cards; every other section keeps the whole row. */
+   section under its own badge, as wide as its cards and as tall as the row; every other section
+   keeps the whole row. */
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 24px; }
 html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > * { flex: 1 1 100%; min-width: 0; }
-html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 0 1 auto; width: auto; }
+html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 0 1 auto; align-self: stretch; width: auto; }
 @media (max-width: 600px) {
   html.cc-dk-on.cc-dk-sides.cc-on-main.cc-sections-main #displaybox > section.cc-dk-side { flex: 1 1 100%; }
   html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-host[data-cc-dk="array"] { width: auto; }
@@ -179,6 +180,18 @@ html.cc-dk-on #displaybox .cc-dk-grid { display: grid; grid-template-columns: re
 html.cc-dk-on #displaybox .cc-dk-pools { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-start; }
 html.cc-dk-on #displaybox .cc-dk-pool { flex: 0 1 auto; min-width: 0; }
 html.cc-dk-on #displaybox :is(.cc-dk-pool, .cc-dk-host) > :is(.cc-dk-sum, .cc-dk-notes) { contain: inline-size; }
+/* The boot hint is a quiet column beside the boot card and as tall as it, so the boot section is
+   no taller than the pools beside it. On a phone it goes back under the card. */
+html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="boot"]:has(> .cc-dk-notes) { display: flex; align-items: stretch; gap: 12px; }
+html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="boot"] > .cc-dk-grid { flex: none; }
+html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="boot"] > .cc-dk-notes {
+  flex: 0 0 168px; flex-direction: column; justify-content: center; margin-top: 0; padding: 12px 14px;
+  background: color-mix(in srgb, var(--cc-dk-card) 50%, transparent); color: var(--cc-text-dim); font-size: var(--cc-text-meta); line-height: 1.5;
+}
+@media (max-width: 600px) {
+  html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="boot"]:has(> .cc-dk-notes) { display: block; }
+  html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="boot"] > .cc-dk-notes { margin-top: 12px; }
+}
 /* A pool's heading is a section badge above its cards. */
 html.cc-dk-on #displaybox .cc-dk-phead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; font-size: var(--cc-text-meta); color: var(--cc-text-dim); }
 html.cc-dk-on #displaybox .cc-dk-pb {
