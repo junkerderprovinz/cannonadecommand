@@ -106,18 +106,17 @@ html.cc-dk-on #displaybox .cc-dk-box .cc-dk-udrow :is(table.samba_mounts, table.
    check card follows in the flow instead of standing beside the table. */
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px 24px; margin-top: 16px; }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills { position: static; flex: none; gap: 8px; padding-top: 49px; }   /* the first chip level with the first button row */
-/* The array state and the parity state are chips like a disk's SMART chip, the dot in the state's
-   colour: green while all is well, orange for a check that runs or a warning, red for the rest. */
+/* The array state and the parity state are chips like a disk's SMART chip, filled in the state's
+   colour with its ink: green while all is well, orange for a check that runs or a warning, red for
+   the rest. The fill carries the state, so the dot Shares.css sets before a green one stays off. */
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-b.cc-aop-status {
   gap: 6px; height: 22px; min-height: 0; padding: 0 9px !important; border-radius: var(--cc-radius-pill);
-  background: var(--cc-chip); color: var(--cc-text-chip); font-size: var(--cc-text-meta); font-weight: 400; line-height: 1;
+  background: var(--cc-err); color: var(--cc-err-fg); font-size: var(--cc-text-meta); font-weight: 400; line-height: 1;
 }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status strong { font-weight: inherit; }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status::before {
-  content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cc-err);
-}
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-ok::before { background: var(--cc-ok); }
-html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-warn::before { background: var(--cc-warn); }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status::before { content: none; }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-ok { background: var(--cc-ok); color: var(--cc-ok-fg); }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-warn { background: var(--cc-warn); color: var(--cc-warn-fg); }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg {
   position: relative; flex: 1 1 300px; min-width: min(100%, 300px); box-sizing: border-box; padding: 24px 16px 12px !important;   /* Shares.css strips the left padding of anything holding an array_status table */
   background: var(--cc-dk-card); border-radius: var(--cc-radius-card);
