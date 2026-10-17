@@ -1535,7 +1535,9 @@
       lbl.textContent = advWord(next);
       try { document.cookie = "docker_listview_mode=" + (next ? "advanced" : "basic") + "; path=/"; } catch (e9) {}
       try { var inp9 = document.querySelector("input.advancedview"); if (inp9) inp9.checked = next; } catch (e9) {}
-      if (gridHolder) gridHolder.classList.toggle("cc-adv", next);
+      // The card and folder views draw their details once per render and never see loadlist()'s
+      // rebuild, so they are drawn again for the new view.
+      if (mode !== "list") renderCurrentView();
       // One full re-enhancement per flip. loadlist() replaces #docker_list wholesale, which wakes
       // the MutationObserver, and its sweep already runs applyEnhanceClasses() and
       // injectAllRowBadges() against the fresh rows: its callbacks arrive as microtasks after
@@ -1551,7 +1553,7 @@
       setTimeout(function () { try { if (!themingOn()) { removeEnhanceClasses(); reinjectRowBadges(); } } catch (e9) {} }, 300);
       setTimeout(function () {
         try {
-          if (!themingOn() || ccEnhanceAt > flipAt) return;   // the observer's sweep already repainted the fresh list
+          if (!themingOn() || mode !== "list" || ccEnhanceAt > flipAt) return;   // the observer already repainted the fresh list, or the cards hide it
           applyEnhanceClasses(); reinjectRowBadges();
         } catch (e9) {}
       }, 1200);
@@ -1946,11 +1948,13 @@
     // The IP, the network and the published ports run as one line under the name, so none of
     // them has a badge of its own, and CPU, RAM and the network rate are the badges at the foot
     // of the card, with no bars repeating them. The no-break space keeps a dot from starting a
-    // wrapped line, and a port list cut short by the card comes up whole as the tip.
+    // wrapped line, and a port list cut short by the card comes up whole as the tip. Each part
+    // shows in the views its list column shows in, so the Basic/Advanced switch changes the card
+    // as it changes the list.
     var nb = el("div", "cc-card-name"), title = el("div", "cc-card-title", c.name);
     title.addEventListener("mouseover", function () { if (title.scrollWidth > title.clientWidth) title.setAttribute("data-tip", c.name); else title.removeAttribute("data-tip"); });
     nb.appendChild(title);
-    var where = [c.ip, c.network, (c.ports || []).join(", ")].filter(Boolean).join(" · ");
+    var where = [colOn("ip") && c.ip, colOn("net") && c.network, colOn("port") && (c.ports || []).join(", ")].filter(Boolean).join(" · ");
     if (where) {
       var ip = el("div", "cc-card-ip", where);
       ip.addEventListener("mouseover", function () { if (ip.scrollHeight > ip.clientHeight) ip.setAttribute("data-tip", where); else ip.removeAttribute("data-tip"); });
@@ -1960,7 +1964,7 @@
     // The corner gathers whether and how the container starts: the start plan and the autostart
     // switch, and under them its state while it is not running and the plan's last run.
     var corner = el("div", "cc-card-corner"), startRow = el("div", "cc-card-cornerrow");
-    startRow.appendChild(planBadge(c.name));
+    if (colOn("plan")) startRow.appendChild(planBadge(c.name));
     var auto = autostartSwitch(c.name); if (auto) startRow.appendChild(auto);
     corner.appendChild(startRow);
     var stateRow = el("div", "cc-card-cornerrow cc-card-state");
@@ -1973,17 +1977,19 @@
     wrap.appendChild(abrow);
     // the same three limit gears injectRowBadges puts in a list row, so the card view can open
     // the same editors
-    var rg = el("div", "cc-rowbadges cc-resgroup cc-card-res"); rg.setAttribute(MARK, "1"); rg.dataset.name = c.name;
-    var lm = limits[c.name] || {};
-    var cpuB = badgeInfo("CPU", "…", "cpu");
-    rg.appendChild(resLine(cpuB, limGear(c.name, "cpu", cpuLimited(lm) || cpuPinned(lm))));
-    var ramB = badgeInfo("RAM", "…", "ram");
-    rg.appendChild(resLine(ramB, limGear(c.name, "ram", ramLimited(lm))));
-    var bw = bandwidthFor(c.name);
-    var bwB = badgeInfo("BW", "…", "bw"); bwB.setAttribute("data-tip", t("bandwidth") + " " + bwTitle(bw));
-    rg.appendChild(resLine(bwB, bwGear(c.name, bwHasLimit(bw))));
-    updateResGroup(rg, stats[c.name], c.state);
-    wrap.appendChild(rg);
+    if (colOn("res")) {
+      var rg = el("div", "cc-rowbadges cc-resgroup cc-card-res"); rg.setAttribute(MARK, "1"); rg.dataset.name = c.name;
+      var lm = limits[c.name] || {};
+      var cpuB = badgeInfo("CPU", "…", "cpu");
+      rg.appendChild(resLine(cpuB, limGear(c.name, "cpu", cpuLimited(lm) || cpuPinned(lm))));
+      var ramB = badgeInfo("RAM", "…", "ram");
+      rg.appendChild(resLine(ramB, limGear(c.name, "ram", ramLimited(lm))));
+      var bw = bandwidthFor(c.name);
+      var bwB = badgeInfo("BW", "…", "bw"); bwB.setAttribute("data-tip", t("bandwidth") + " " + bwTitle(bw));
+      rg.appendChild(resLine(bwB, bwGear(c.name, bwHasLimit(bw))));
+      updateResGroup(rg, stats[c.name], c.state);
+      wrap.appendChild(rg);
+    }
     if (filterText && norm(c.name).indexOf(filterText) < 0) wrap.style.display = "none";
     return wrap;
   }
