@@ -5,6 +5,7 @@
 //   · a resting state inside the gate, which leaves crests standing or bubbles hanging in a still frame
 //   · a checkmark drawn undrawn by default, which stays invisible wherever the gate is not read
 //   · a vessel that keeps its colour when the level crosses into warning
+//   · a thin bar that sloshes like the vessel, where the surge only twitches
 //   · a script that loads after the areas, which then draw without it
 const fs = require('fs');
 const path = require('path');
@@ -27,6 +28,12 @@ function rules(src) {
   return out;
 }
 const all = rules(css);
+function grabSlosh(src) {
+  const i = src.indexOf('function slosh(');
+  let d = 0;
+  for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
+  throw new Error('unbalanced function: slosh');
+}
 
 // A small DOM: enough tree for innerHTML, querySelector by tag or class, attributes, classList and style.
 function node(tag) {
@@ -80,10 +87,17 @@ ok('it loads before every area script, all at :97 or later', +/^Menu="Buttons:(\
 ok('it renders no icon and loads pictures.js', /^Link="cc-pictures-hook"/m.test(page) && /scripts\/pictures\.js/.test(page));
 ok('the kit names the five pictures and the motion question', ['sloshBar', 'vessel', 'drawCheck', 'flow', 'ring', 'still'].every((k) => k in P));
 
-console.log('\nA bar sloshes through the one engine Tokens.css already drives');
+console.log('\nA bar sloshes through the one engine Tokens.css already drives, and only a tall one');
 {
   ok('sloshBar is CCTheme.slosh itself, no second engine', P.sloshBar === window.CCTheme.slosh);
   ok('the sheet draws nothing on a bar\'s fill', !all.some((r) => /cc-slosh/.test(r.sel)));
+  const theme = read('scripts/cc-theme.js');
+  global.performance = global.performance || { now: () => 0 };
+  const kit = load(Object.assign({}, window, { CCTheme: { slosh: new Function(/var SLOSH_MIN = \d+;/.exec(theme)[0] + grabSlosh(theme) + '\nreturn slosh;')() } }));
+  const bar = (high) => { const f = node('span'); f.style.width = '60%'; f.style.removeProperty = (k) => { delete f.style.props[k]; }; f.getBoundingClientRect = () => ({ height: high }); return f; };
+  const thin = kit.sloshBar(bar(8)), tall = kit.sloshBar(bar(26));
+  ok('a thin bar handed to the kit stands still, so the slosh stays with the vessel', !thin.classList.contains('cc-slosh-edge'));
+  ok('a bar of 12px or more still sloshes', tall.classList.contains('cc-slosh-edge') && kit.sloshBar(bar(12)).classList.contains('cc-slosh-edge'));
 }
 
 console.log('\nThe vessel');

@@ -201,8 +201,6 @@
       if (col) { c.style.setProperty("--cc-sht-c", col); c.style.setProperty("--cc-sht-ct", ink(col)); }
       else { c.style.removeProperty("--cc-sht-c"); c.style.removeProperty("--cc-sht-ct"); }
       setHtml(c, cardHtml(sh, disk));
-      var f = c.querySelector(".cc-sht-fill");
-      if (f && window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
     });
     Object.keys(old).forEach(function (k) { if (old[k].parentNode === grid) grid.removeChild(old[k]); });
   }

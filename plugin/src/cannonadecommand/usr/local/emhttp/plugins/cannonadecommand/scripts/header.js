@@ -1175,7 +1175,6 @@
         var ubar = document.createElement("span"); ubar.className = "cc-isl-bar";
         var ufill = document.createElement("span"); ufill.className = "cc-isl-fill";
         ufill.style.width = w + "%"; ufill.style.background = col;
-        if (window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(ufill);
         ubar.appendChild(ufill); uch.appendChild(ubar); uch.appendChild(document.createTextNode(pctText));
         if (tip) uch.setAttribute("data-cc-tip", tip);
         if (cls) uch.setAttribute("data-cc-chip", cls.replace(/^cc-isl-/, ""));
@@ -1334,7 +1333,7 @@
     try {
       var on = g("cc.statenative", "0") === "1" && g("cc.theming", "1") !== "0";
       var allBars = document.querySelectorAll(".usage-disk:not(.sys):not(.mm) > span:first-child");
-      // Every usage bar CannonadeCommand draws sloshes at its end: the /Main bars while the Shares
+      // The two usage bars tall enough to slosh at their end: the 26px /Main bars while the Shares
       // area restyles them, and the array meter in the menu while the header area is on.
       var rt = document.documentElement.classList, CT = window.CCTheme;
       if (CT && CT.slosh) {

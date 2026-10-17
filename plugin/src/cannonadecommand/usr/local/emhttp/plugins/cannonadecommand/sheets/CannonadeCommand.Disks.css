@@ -40,25 +40,6 @@ html.cc-dk-on.cc-on-main.cc-sections-main #displaybox section.cc-dk-box:has(> .c
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-host[data-cc-dk="array"] {
   box-sizing: border-box; width: fit-content; max-width: 100%; margin: 0; padding: 24px 16px 16px; background: var(--cc-dk-sec); border-radius: var(--cc-radius-card);
 }
-/* The array's vessel stands left of its disks and its summary strip, its percentage under it. On
-   a phone it lies in a row of its own above the disks. */
-html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"]:has(> .cc-dk-vessel) { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 20px; }
-html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"] > .cc-dk-vessel ~ * { grid-column: 2; }
-html.cc-dk-on #displaybox .cc-dk-vessel {
-  --cc-pic-c: var(--cc-dk-c, var(--cc-shr-accent, #FCC419));
-  grid-row: 1 / span 2; align-self: center; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 88px;
-  font-size: var(--cc-text-subline); color: var(--cc-text-hint); font-variant-numeric: tabular-nums;
-}
-html.cc-dk-on #displaybox .cc-dk-vessel > .cc-vessel { width: 88px; height: 104px; margin-bottom: 6px; }
-html.cc-dk-on #displaybox .cc-dk-vpct { color: var(--cc-text); font-size: var(--cc-text-title); }
-html.cc-dk-on #displaybox .cc-dk-vpct b { font-weight: 700; }
-html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-host:not(:hover) > .cc-dk-vessel { --cc-pic-c: var(--cc-text-dim); }
-@media (max-width: 600px) {
-  html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"]:has(> .cc-dk-vessel) { grid-template-columns: minmax(0, 1fr); }
-  html.cc-dk-on #displaybox .cc-dk-host[data-cc-dk="array"] > .cc-dk-vessel ~ * { grid-column: 1; }
-  html.cc-dk-on #displaybox .cc-dk-vessel { grid-row: auto; flex-direction: row; align-self: start; gap: 8px; margin-bottom: 12px; }
-  html.cc-dk-on #displaybox .cc-dk-vessel > .cc-vessel { width: 44px; height: 52px; margin: 0 4px 0 0; }
-}
 /* While the mover runs, a strip under the pools shows its picture: the pools as badges, a line
    from each to the array's vessel, packets on the lines. */
 html.cc-dk-on #displaybox .cc-dk-move {
@@ -224,6 +205,15 @@ html.cc-dk-on #displaybox .cc-dk-art { position: relative; height: 140px; backgr
 html.cc-dk-on #displaybox .cc-dk-art svg.cc-dk-drive { position: absolute; inset: 14px 12px; width: calc(100% - 24px); height: calc(100% - 28px); }
 html.cc-dk-on #displaybox .cc-dk-art text { font-family: inherit; }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down svg.cc-dk-drive { opacity: .62; }
+/* The array's own card stands first among its disks, its vessel where a disk has its drawing. It
+   opens nothing, so it keeps the plain cursor and its surface under the pointer. */
+html.cc-dk-on #displaybox .cc-dk-total { cursor: default; }
+html.cc-dk-on #displaybox .cc-dk-total:is(:hover, :focus-within) { background: var(--cc-dk-card); }
+html.cc-dk-on #displaybox .cc-dk-total .cc-vessel {
+  --cc-pic-c: var(--cc-dk-c, var(--cc-shr-accent, #FCC419));
+  position: absolute; inset: 0; width: 88px; height: 104px; margin: auto;
+}
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-total:not(:hover):not(:focus-within) .cc-vessel { --cc-pic-c: var(--cc-text-dim); }
 
 /* The action badges show on hover and keyboard focus, and always on a touch screen. */
 html.cc-dk-on #displaybox .cc-dk-acts {
@@ -329,6 +319,9 @@ html.cc-dk-on #displaybox .cc-dk-led { fill: var(--cc-dk-led-off); }
 html.cc-dk-on #displaybox .cc-dk-card:not(.cc-dk-down) .cc-dk-led { fill: color-mix(in srgb, var(--cc-dk-c, var(--cc-shr-accent, #FCC419)) 40%, var(--cc-dk-led-off)); }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-busy .cc-dk-led { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down .cc-dk-led { opacity: .45; }
+/* The light over an SSD and the dots in an NVMe or USB stick show only while they travel, so a
+   still frame has none of them. */
+html.cc-dk-on #displaybox :is(.cc-dk-sweep, .cc-dk-flow) { opacity: 0; }
 html.cc-dk-on #displaybox .cc-dk-bar { fill: var(--cc-dk-bar-off); transform-box: fill-box; transform-origin: left center; }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
 
@@ -337,11 +330,12 @@ html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(:hover):not(:focus
 html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(:hover):not(:focus-within) .cc-dk-st { fill: var(--cc-dk-rest); }
 html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(:hover):not(:focus-within) .cc-dk-ink { fill: var(--cc-dk-rest-ink); }
 html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card:not(.cc-dk-down):not(:hover):not(:focus-within) .cc-dk-led { fill: color-mix(in srgb, var(--cc-text) 35%, var(--cc-dk-led-off)); }
-html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card.cc-dk-busy:not(:hover):not(:focus-within) :is(.cc-dk-led, .cc-dk-bar) { fill: var(--cc-text); }
+html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card.cc-dk-busy:not(:hover):not(:focus-within) :is(.cc-dk-led, .cc-dk-bar, .cc-dk-flow) { fill: var(--cc-text); }
 
 /* The motion reads the disk dials in Tokens.css, inside the no-preference gate, and stops at "off".
    The platter turns only while the disk reads or writes and stops where it was, so a disk that
-   waits or rests shows a still platter; an SSD, an NVMe stick and a USB stick only blink their LED. */
+   waits or rests shows a still platter. A flash drive shows its data flowing for as long, a light
+   over an SSD's lines and dots running into an NVMe or USB stick, beside its blinking LED. */
 @keyframes cc-dk-spin { to { rotate: 360deg; } }
 @keyframes cc-dk-seek {
   0%, 100% { rotate: calc(var(--cc-motion-disk-swing, 0deg) * -.6); }
@@ -350,11 +344,21 @@ html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-card.cc-dk-busy:not(:hover)
   80% { rotate: calc(var(--cc-motion-disk-swing, 0deg) * .9); }
 }
 @keyframes cc-dk-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes cc-dk-sweep { from { transform: translateX(-60px); opacity: 0; } 15%, 85% { opacity: 1; } to { transform: translateX(130px); opacity: 0; } }
+@keyframes cc-dk-bars { 0%, 100% { scale: .25 1; opacity: .55; } 50% { scale: 1 1; opacity: 1; } }
+@keyframes cc-dk-flow { from { transform: translateX(0); opacity: 0; } 15%, 85% { opacity: 1; } to { transform: translateX(46px); opacity: 0; } }
 @keyframes cc-dk-in { from { transform: translateY(var(--cc-motion-disk-rise, 0px)); opacity: .001; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: no-preference) {
   html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-plat { animation: cc-dk-spin var(--cc-motion-disk-spin) linear infinite paused; }
   html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy:not(.cc-dk-down) .cc-dk-plat { animation-play-state: running; }
   html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy:not(.cc-dk-down) .cc-dk-seek { animation: cc-dk-seek var(--cc-motion-disk-seek) ease-in-out infinite; }
   html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-led { animation: cc-dk-blink calc(var(--cc-motion-disk-blink) * var(--cc-dk-k, 1)) var(--cc-motion-disk-blink-ease) infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-sweep { animation: cc-dk-sweep calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1)) ease-in-out infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar { animation: cc-dk-bars calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) * .8) ease-in-out infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar.cc-dk-n2 { animation-delay: calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) * -.27); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-bar.cc-dk-n3 { animation-delay: calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) * -.53); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-flow { animation: cc-dk-flow calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1)) linear infinite; }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-flow.cc-dk-n2 { animation-delay: calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) / -3); }
+  html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-busy .cc-dk-flow.cc-dk-n3 { animation-delay: calc(var(--cc-motion-disk-flow) * var(--cc-dk-k, 1) / -1.5); }
   html.cc-dk-on:not([data-cc-motion="off"]) #displaybox .cc-dk-card.cc-dk-enter { animation: cc-dk-in .42s var(--cc-motion-disk-ease) both; animation-delay: min(calc(var(--cc-dk-i, 0) * var(--cc-motion-disk-stagger)), 480ms); }
 }

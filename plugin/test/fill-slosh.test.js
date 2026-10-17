@@ -1,12 +1,13 @@
-// A bar that shows a fill level sloshes at its end (GlimStone, "Illustrations"): the end surges
-// out leaning forward and draws back. Nothing runs past the end or pops, and no dots drift in the
+// A bar that shows a fill level sloshes at its end (GlimStone, "Illustrations") once it is at least
+// 12px tall: the end surges out leaning forward and draws back. A thinner bar stands still. Nothing runs past the end or pops, and no dots drift in the
 // liquid. The motion setting sets how lively it is, and at "off" or under reduced motion the liquid
 // rests level. What can quietly break it:
 //   · a level that leaves a slosh dial out inherits the lively number
 //   · an animation outside the no-preference gate keeps moving under reduced motion
 //   · a bar drawn again every few seconds starts its swing over each time
 //   · a MutationObserver that calls the stamp wakes itself if the stamp writes twice
-//   · a fill level CannonadeCommand draws without the class
+//   · a thin bar that sloshes, where the surge only twitches
+//   · a tall bar that loses the class
 //   · bubbles that run past the end and pop coming back into a bar
 //   · GlimStone's drifting dots coming back into the liquid
 const fs = require('fs');
@@ -68,12 +69,14 @@ console.log('\nCCTheme.slosh stamps a fill once');
   let clock = 12345.6789;
   global.performance = { now: () => clock };
   class F {
-    constructor(width) { this.kids = []; this.cls = new Set(); this.props = {}; this.appends = 0; const self = this; this.style = { width: width === undefined ? '40%' : width, setProperty: (k, v) => { self.props[k] = v; self.writes = (self.writes || 0) + 1; }, removeProperty: (k) => { delete self.props[k]; } }; }
+    constructor(width, high) { this.high = high || 0; this.kids = []; this.cls = new Set(); this.props = {}; this.appends = 0; const self = this; this.style = { width: width === undefined ? '40%' : width, setProperty: (k, v) => { self.props[k] = v; self.writes = (self.writes || 0) + 1; }, removeProperty: (k) => { delete self.props[k]; } }; }
     get classList() { const c = this.cls; return { add: (x) => c.add(x), remove: (x) => c.delete(x), contains: (x) => c.has(x) }; }
     appendChild(c) { this.kids.push(c); this.appends++; return c; }
+    getBoundingClientRect() { return { height: this.high }; }
   }
   const document = { createElement: () => ({ className: '', attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } }) };
-  const slosh = new Function('document', grabFn(read('scripts/cc-theme.js'), 'slosh') + '\nreturn slosh;')(document);
+  const theme = read('scripts/cc-theme.js');
+  const slosh = new Function('document', /var SLOSH_MIN = \d+;/.exec(theme)[0] + grabFn(theme, 'slosh') + '\nreturn slosh;')(document);
   const f = new F();
   slosh(f);
   ok('the fill takes the class', f.cls.has('cc-slosh-edge'));
@@ -90,22 +93,32 @@ console.log('\nCCTheme.slosh stamps a fill once');
   ok('an empty bar does not slosh, since it holds no liquid', !empty.cls.has('cc-slosh-edge') && !empty.kids.length);
   const drained = new F(); slosh(drained); drained.style.width = '0%'; slosh(drained);
   ok('a bar that empties stops sloshing', !drained.cls.has('cc-slosh-edge') && !drained.kids.length);
+  const thin = new F('60%', 8); slosh(thin);
+  ok('an 8px bar stands still', !thin.cls.has('cc-slosh-edge') && !thin.writes);
+  const edge = new F('60%', 11.5); slosh(edge);
+  ok('so does one just under 12px', !edge.cls.has('cc-slosh-edge'));
+  const tall = new F('60%', 12); slosh(tall);
+  ok('from 12px it sloshes', tall.cls.has('cc-slosh-edge'));
+  const squeezed = new F('60%', 26); slosh(squeezed); squeezed.high = 6; slosh(squeezed);
+  ok('a bar that is drawn thinner stops sloshing', !squeezed.cls.has('cc-slosh-edge') && !('--cc-slosh-phase' in squeezed.props));
+  const hidden = new F('60%', 0); slosh(hidden);
+  ok('a bar that is not laid out yet keeps what the caller asked for', hidden.cls.has('cc-slosh-edge'));
   ok('no sheet or script draws a popping bubble', !/cc-slosh-pop|--cc-motion-slosh-pop-/.test(tokens + read('scripts/cc-theme.js')));
   ok('cc-theme.js publishes it', /slosh: slosh,/.test(read('scripts/cc-theme.js')));
 }
 
-console.log('\nEvery fill level CannonadeCommand draws sloshes');
+console.log('\nThin bars stand still, only the tall ones are handed to the slosh');
 {
-  const docker = read('scripts/docker.js'), header = read('scripts/header.js');
-  ok('the CPU and RAM gauges on a Docker card', /fill\.style\.width = [^;]+; if \(window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(fill\);/.test(grabFn(docker, 'gauge')));
-  ok('the array, RAM and CPU bars in the status island', /window\.CCTheme\.slosh\(ufill\)/.test(header));
+  const disks = read('scripts/disks.js'), sht = read('scripts/sharetiles.js'), docker = read('scripts/docker.js'), header = read('scripts/header.js');
+  const calls = (src) => (src.match(/\.slosh\(/g) || []).length;
+  ok('no 8px bar on a /Main disk tile, the array card or a pool strip', calls(disks) === 0 && !/cc-slosh-edge/.test(disks));
+  ok('none on a /Shares disk share tile', calls(sht) === 0);
+  ok('none in the CPU and RAM gauges of a Docker card', calls(docker) === 0);
+  ok('none in the status island\'s array, RAM and CPU chips', calls(grabFn(header, 'barChip')) === 0);
   const bars = grabFn(header, 'ccStateBars');
-  ok('the /Main usage bars while the Shares area restyles them', /CT\.slosh\(allBars\[s\], mainOn && !!allBars\[s\]\.closest\("#displaybox"\)\)/.test(bars) && /rt\.contains\("cc-shares-on"\) && rt\.contains\("cc-on-main"\)/.test(bars));
-  ok('the array meter in the menu while the header area is on', /CT\.slosh\(meter, rt\.contains\("cc-header-on"\)\)/.test(bars));
-  const disks = read('scripts/disks.js'), sht = read('scripts/sharetiles.js');
-  ok('the bar on a /Main disk tile and on a single-disk pool', /f\.style\.width = [^;]+;\s*if \(window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(f\);/.test(grabFn(disks, 'patch')));
-  ok('the bar in the array and pool summary strips', /var f = n\.querySelector\("\.cc-dk-fill"\);\s*if \(f && window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(f\);/.test(grabFn(disks, 'strip')));
-  ok('the bar on a /Shares disk share tile, after each redraw of the card', /setHtml\(c, cardHtml\(sh, disk\)\);\s*var f = c\.querySelector\("\.cc-sht-fill"\);\s*if \(f && window\.CCTheme && window\.CCTheme\.slosh\) window\.CCTheme\.slosh\(f\);/.test(grabFn(sht, 'fillGrid')));
+  ok('the 26px /Main usage bars still slosh while the Shares area restyles them', /CT\.slosh\(allBars\[s\], mainOn && !!allBars\[s\]\.closest\("#displaybox"\)\)/.test(bars) && /rt\.contains\("cc-shares-on"\) && rt\.contains\("cc-on-main"\)/.test(bars) && /html\.cc-shares-on\.cc-on-main #displaybox \.usage-disk:not\(\.sys\):not\(\.mm\) \{[^}]*height: 26px !important;/.test(read('sheets/CannonadeCommand.Shares.css')));
+  ok('and so does the 24px array meter in the menu while the header area is on', /CT\.slosh\(meter, rt\.contains\("cc-header-on"\)\)/.test(bars) && /#menu \.usage-bar \{[^}]*height: var\(--cc-md-h, 30px\) !important;[^}]*padding: 3px !important;/.test(read('sheets/CannonadeCommand.Header.css')));
+  ok('those are the only callers, so a thin bar elsewhere cannot pick it up again', calls(header) === 2 && calls(read('scripts/shares.js') + read('scripts/dashboard.js') + read('scripts/vms.js')) === 0);
   ok('the menu meter clips what runs past its end', /html\.cc-header-on #menu \.usage-bar \{[^}]*overflow: hidden;/.test(read('sheets/CannonadeCommand.Header.css')));
 }
 
