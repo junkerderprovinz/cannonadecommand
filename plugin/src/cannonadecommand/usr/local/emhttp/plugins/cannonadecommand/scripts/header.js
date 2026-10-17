@@ -2390,8 +2390,8 @@
     return out;
   }
   // The bell swings instead of wearing Connect's corner badge, on a CSS beat that runs while
-  // anything is unread (cc-bell-ring). The badge's level goes into data-cc-bell for the dot that
-  // stands in where nothing may move.
+  // anything is unread (cc-bell-ring). The badge's level goes into data-cc-bell, which colours the
+  // glyph.
   var ccBellSpan = null, ccBellObs = null;
   function ccBellLevel(span) {
     var mark = span && span.querySelector('[class*="absolute"]');
