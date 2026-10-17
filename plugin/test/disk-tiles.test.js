@@ -511,6 +511,9 @@ console.log('\nThe boot hint stands beside the boot card');
 
 console.log('\ndisks.php reads emhttp\'s own files');
 {
+  // A PHP build may leave ctype, mbstring or iconv out, and the CI runs php -n, which loads none.
+  const phpSrc = fs.readFileSync(path.join(DIR, 'server', 'disks.php'), 'utf8');
+  ok('it calls no function from an optional PHP extension', !/\b(ctype_|mb_|iconv)\w*\(/.test(phpSrc));
   let php = null;
   try { execFileSync('php', ['-v'], { stdio: 'ignore' }); php = 'php'; } catch (e) {}
   if (!php) ok('php is not installed here, so the endpoint check is skipped', true);

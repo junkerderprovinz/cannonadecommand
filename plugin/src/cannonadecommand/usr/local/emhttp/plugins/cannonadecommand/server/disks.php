@@ -40,12 +40,12 @@ function smart($file, $ack, $watched) {
     $found = [];
     foreach (preg_split('/\R/', $text) as $line) {
         $f = preg_split('/\s+/', trim($line));
-        if (count($f) < 10 || !ctype_digit($f[0])) continue;
+        if (count($f) < 10 || !preg_match('/^\d+$/', $f[0])) continue;
         $id = (int) $f[0];
         $raw = (int) preg_replace('/\D.*$/', '', $f[9]);
         $failing = strpos($f[8], 'FAILING_NOW') !== false;
         if ($id === 9) $out['hours'] = $raw;
-        if (in_array($id, [177, 231, 233], true) && ctype_digit($f[3])) $out['wear'] = max(0, 100 - (int) $f[3]);
+        if (in_array($id, [177, 231, 233], true) && preg_match('/^\d+$/', $f[3])) $out['wear'] = max(0, 100 - (int) $f[3]);
         if ($failing || (in_array($id, $watched, true) && $raw > 0)) $found[] = str_replace('_', ' ', $f[1]) . ': ' . ($failing ? $f[8] : $raw);
     }
     if (!isset($out['hours']) && preg_match('/^Power On Hours:\s*([\d,.]+)/m', $text, $m)) $out['hours'] = (int) str_replace([',', '.'], '', $m[1]);
