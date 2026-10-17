@@ -1,11 +1,11 @@
 // The header bell tells of unread notifications by swinging instead of wearing Connect's corner
-// badge: a calm beat every 1.6 seconds while anything is unread, until all are read. The box looks
-// like every other header button, and where nothing may move a dot in the highest level's colour
-// stays, so unread notifications never go unseen. The beat is a CSS animation, so the main thread
-// does no work for it.
+// badge: every 1.6 seconds it is struck and rings out while anything is unread, until all are read.
+// The box looks like every other header button and the glyph wears the highest level's colour,
+// which is the sign wherever nothing may move. The beat is a CSS animation, so the main thread does
+// no work for it.
 const fs = require('fs');
 const path = require('path');
-const { DIR, candidates } = require('./cascade');
+const { DIR, candidates, specificity, cmp } = require('./cascade');
 const read = (rel) => fs.readFileSync(path.join(DIR, rel), 'utf8');
 const header = read('scripts/header.js');
 
@@ -56,7 +56,7 @@ console.log('\nThe bell swings while anything is unread');
   const s = bell('alert');
   m.watch(s);
   ok('unread notifications on load start the beat', s.ringing());
-  ok('and the box is told the highest level for the dot', s.getAttribute('data-cc-bell') === 'alert');
+  ok('and the bell is told the highest level for its colour', s.getAttribute('data-cc-bell') === 'alert');
   ok('its bubble says they are unread', s.getAttribute('data-cc-tip') === 'Ungelesene Benachrichtigungen');
   s.swinging = true;
   s.fire('animationiteration', 'cc-bell-swing');
@@ -146,8 +146,11 @@ console.log('\nThe box stays like every other header button');
     const mode = html.length > 1 ? 'grey' : 'colour';
     for (const states of [{}, { hover: true }]) {
       const box = (attrs) => last(candidates('every', { tag: 'span', classes: [], attrs, states, html }, 'background'));
-      const plain = box({ 'data-cc-trig': 'burger' }), unread = box({ 'data-cc-trig': 'bell', 'data-cc-bell': 'alert' });
-      ok('in the ' + mode + ' mode' + (states.hover ? ' under the pointer' : '') + ' an unread bell fills like the burger', unread === plain, unread + ' | ' + plain);
+      const plain = box({ 'data-cc-trig': 'burger' });
+      for (const l of ['alert', 'warning', 'notice']) {
+        const unread = box({ 'data-cc-trig': 'bell', 'data-cc-bell': l });
+        ok('in the ' + mode + ' mode' + (states.hover ? ' under the pointer' : '') + ' a bell with an unread ' + l + ' fills like the burger', unread === plain, unread + ' | ' + plain);
+      }
     }
     const ink = last(candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'bell', 'data-cc-bell': 'alert' }, html }, 'color'));
     const plainInk = last(candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'burger' }, html }, 'color'));
@@ -165,26 +168,45 @@ console.log('\nThe beat runs in CSS');
   ok('over and over, one beat after the other', !!swing && /animation:\s*cc-bell-swing var\(--cc-motion-bell-dur, 0s\)[^;]*\binfinite\b/.test(swing.body), swing && swing.body);
   ok('and rests while the notification list is open', !!swing && /\.cc-bell-ring:not\(\[aria-expanded="true"\]\)/.test(swing.sel));
   const frames = hcss.filter((x) => /^@keyframes cc-bell-swing$/.test(x.media));
-  const at = (pct) => frames.find((f) => f.sel.split(',').map((p) => p.trim()).includes(pct + '%'));
-  const swung = frames.filter((f) => /var\(--cc-motion-bell-swing/.test(f.body)).map((f) => parseFloat(f.sel));
-  ok('it swings in the first half of the beat', swung.length >= 3 && Math.max(...swung) <= 50, swung.join(' '));
-  ok('and hangs upright for the rest', !!at(50) && !!at(100) && /rotate:\s*0deg/.test(at(50).body) && at(50) === at(100));
+  const factor = (f) => { if (/^rotate:\s*var\(--cc-motion-bell-swing/.test(f.body)) return 1; const m = /\* (-?[\d.]+)\)/.exec(f.body); return m ? +m[1] : 0; };
+  const swung = frames.filter((f) => /var\(--cc-motion-bell-swing/.test(f.body)).map((f) => ({ at: parseFloat(f.sel), k: factor(f) })).sort((a, b) => a.at - b.at);
+  ok('each beat strikes to and fro at least six times', swung.length >= 6 && swung.every((s, i) => !i || Math.sign(s.k) !== Math.sign(swung[i - 1].k)), swung.map((s) => s.at + '%:' + s.k).join(' '));
+  ok('and rings out, the first stroke the full swing and each one after it smaller', swung.length > 0 && swung[0].k === 1 && swung.every((s, i) => !i || Math.abs(s.k) < Math.abs(swung[i - 1].k)));
+  const rest = frames.find((f) => f.sel.split(',').map((p) => p.trim()).includes('100%'));
+  const restAt = rest ? Math.min(...rest.sel.split(',').map((p) => parseFloat(p)).filter((p) => p > 0)) : NaN;
+  ok('then hangs upright for at least a third of the beat', !!rest && /rotate:\s*0deg/.test(rest.body) && swung.length > 0 && restAt > swung[swung.length - 1].at && restAt <= 67, restAt);
   ok('it moves rotate alone, which the compositor runs', frames.length > 0 && frames.every((f) => /^rotate:[^;]+;?$/.test(f.body)), frames.map((f) => f.body).join(' | '));
   const beat = (sel) => parseInt(dial(sel, true, '--cc-motion-bell-dur'), 10);
-  ok('a beat at the wild and subtle levels comes every one to two seconds', [beat('html'), beat('html[data-cc-motion="subtle"]')].every((v) => v >= 1000 && v <= 2000), [beat('html'), beat('html[data-cc-motion="subtle"]')].join(' '));
+  ok('a beat at the wild and subtle levels comes about every 1.6 seconds', [beat('html'), beat('html[data-cc-motion="subtle"]')].every((v) => v >= 1400 && v <= 1800), [beat('html'), beat('html[data-cc-motion="subtle"]')].join(' '));
   const deg = (sel, gated) => parseFloat(dial(sel, gated, '--cc-motion-bell-swing'));
-  ok('wild swings further than subtle', deg('html', true) > deg('html[data-cc-motion="subtle"]', true) && deg('html[data-cc-motion="subtle"]', true) > 0);
+  ok('wild swings hard, 24 to 28 degrees', deg('html', true) >= 24 && deg('html', true) <= 28, deg('html', true));
+  ok('subtle 14 to 16 degrees', deg('html[data-cc-motion="subtle"]', true) >= 14 && deg('html[data-cc-motion="subtle"]', true) <= 16, deg('html[data-cc-motion="subtle"]', true));
   ok('reduced motion and "off" do not swing at all', dial('html', false, '--cc-motion-bell-dur') === '0s' && dial('html[data-cc-motion="off"]', true, '--cc-motion-bell-dur') === '0s' && deg('html', false) === 0);
 }
 
-console.log('\nWithout motion a dot stays');
+console.log('\nThe glyph wears the highest level\'s colour');
 {
-  const dot = hcss.find((x) => /\[data-cc-trig="bell"\]\[data-cc-bell\]::after$/.test(x.sel));
-  ok('an unread bell has a dot at the corner of its glyph', !!dot && /content:\s*""/.test(dot.body) && /position:\s*absolute/.test(dot.body));
-  ok('only where the motion level lets it show', !!dot && /display:\s*var\(--cc-motion-bell-mark, none\)/.test(dot.body));
-  ok('in the shape setting\'s radius', !!dot && /border-radius:\s*var\(--cc-radius-pill\)/.test(dot.body));
   const lvl = (l) => { const r = hcss.find((x) => x.sel === `html.cc-header-on [data-cc-trig="bell"][data-cc-bell="${l}"]`); return r ? r.body : ''; };
-  ok('in the highest level\'s colour: alert red, warning orange, notice green', !!dot && /background:\s*var\(--cc-bell-c\)/.test(dot.body) && /--cc-err\b/.test(lvl('alert')) && /--cc-warn\b/.test(lvl('warning')) && /--cc-ok\b/.test(lvl('notice')), [lvl('alert'), lvl('warning'), lvl('notice')].join(' | '));
+  ok('alert red, warning orange, notice the bell\'s accent', /--cc-bell-c:\s*var\(--cc-err-ink\b/.test(lvl('alert')) && /--cc-bell-c:\s*var\(--cc-warn-ink\b/.test(lvl('warning')) && /--cc-bell-c:[^;]*var\(--cc-rb-c, var\(--cc-hdr-accent\b/.test(lvl('notice')), [lvl('alert'), lvl('warning'), lvl('notice')].join(' | '));
+  ok('a notice in the ink shade, so it still reads on the light header', /color-mix\(in srgb, [^;]*var\(--cc-ink-mix\b[^;]*black\)/.test(lvl('notice')), lvl('notice'));
+  const sels = hcss.filter((x) => /color:\s*var\(--cc-bell-c\)\s*!important/.test(x.body)).flatMap((x) => x.sel.split(/,\s*(?![^()]*\))/).map((s) => s.trim()));
+  ok('the colour goes on the glyph and nowhere else', sels.length > 0 && sels.every((s) => /\[data-cc-trig="bell"\]/.test(s) && s.endsWith('svg:not([class*="absolute"])')), sels.join(' | '));
+  ok('alert and warning on every box', sels.some((s) => s.startsWith('html.cc-header-on [data-cc-trig="bell"]:is([data-cc-bell="alert"], [data-cc-bell="warning"]) ')));
+  ok('a notice on the grey box while the pointer is away, since on the accent it would vanish', sels.some((s) => s.startsWith('html.cc-header-on.cc-header-rbneutral [data-cc-trig="bell"][data-cc-bell="notice"]:not(:hover) ')) && !sels.some((s) => /notice/.test(s) && !/cc-header-rbneutral/.test(s)));
+  const base = hcss.find((x) => x.sel === 'html.cc-header-on [data-cc-trig] svg');
+  ok('over the rule that gives every header glyph the box\'s ink', !!base && /!important/.test(base.body) && sels.every((s) => cmp(specificity(s), specificity(base.sel)) > 0));
+  const rim = hcss.find((x) => /stroke:/.test(x.body) && /data-cc-bell/.test(x.sel));
+  ok('on a filled box red and orange keep a rim in the box\'s ink', !!rim && /:not\(\.cc-header-rbneutral\)/.test(rim.sel) && /:hover/.test(rim.sel) && /stroke:\s*var\(--cc-rb-ct, var\(--cc-hdr-accent-text\b/.test(rim.body) && /paint-order:\s*stroke/.test(rim.body), rim && rim.sel);
+}
+
+console.log('\nWithout motion the colour is the sign');
+{
+  const dots = hcss.filter((x) => /\[data-cc-trig="bell"\][^,]*::after$/.test(x.sel) && /content:/.test(x.body));
+  ok('a coloured glyph has no dot beside it', dots.every((d) => /:not\(\.cc-header-rbneutral\)/.test(d.sel) && /\[data-cc-bell="notice"\]::after$/.test(d.sel)), dots.map((d) => d.sel).join(' | '));
+  ok('only a notice on a filled box, whose glyph keeps the box\'s ink, gets one in that ink', dots.length === 1 && /background:\s*currentColor/.test(dots[0].body));
+  const dot = dots[0] || { body: '' };
+  ok('and only where the bell may not swing', /display:\s*var\(--cc-motion-bell-mark, none\)/.test(dot.body));
+  ok('in the shape setting\'s radius', /border-radius:\s*var\(--cc-radius-pill\)/.test(dot.body));
   ok('at the wild and subtle levels the dot stays away', dial('html', true, '--cc-motion-bell-mark') === 'none' && dial('html[data-cc-motion="subtle"]', true, '--cc-motion-bell-mark') === 'none');
   ok('reduced motion and "off" show it', dial('html', false, '--cc-motion-bell-mark') === 'block' && dial('html[data-cc-motion="off"]', true, '--cc-motion-bell-mark') === 'block');
 }

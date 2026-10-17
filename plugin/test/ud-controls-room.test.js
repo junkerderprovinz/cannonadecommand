@@ -54,6 +54,19 @@ console.log('\nThe card that ends the badge line keeps room for the controls');
   }
 }
 
+console.log('\nThe controls take their clicks over the badge lines');
+{
+  // The head holding the controls and the cards' badge lines share the section's stacking context,
+  // and a badge line comes later in the page, so on a tie it covers the controls.
+  const z = (r) => { const m = /z-index:\s*(-?\d+)/.exec(r ? r.body : ''); return m ? +m[1] : NaN; };
+  const head = disks.find((x) => /section\.cc-dk-box:has\(> \.cc-dk-udrow\) > \.cc-card-head$/.test(x.sel) && !x.media);
+  const title = disks.find((x) => /\.cc-dk-udrow > \* > div\.title/.test(x.sel) && /position:\s*relative/.test(x.body) && !x.media);
+  ok('the badge lines are lifted', z(title) >= 1, title && title.body);
+  ok('and the head with the controls stands above them', z(head) > z(title), [z(head), z(title)].join(' over '));
+  const phone = disks.filter((x) => /section\.cc-dk-box:has\(> \.cc-dk-udrow\) > \.cc-card-head$/.test(x.sel) && x.media && /z-index/.test(x.body));
+  ok('on a phone as well', phone.every((x) => z(x) > z(title)), phone.map((x) => x.body).join(' / '));
+}
+
 console.log('\nshares.js measures the controls');
 {
   const body = 'var ccUdCtrlsRo = null;\n' + grabFn(shares, 'ccUdCtrlsMeasure') + '\nreturn ccUdCtrlsMeasure;';

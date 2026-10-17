@@ -361,28 +361,42 @@ html.cc-header-on.cc-header-rbneutral [data-cc-trig]:hover { background: var(--c
 html.cc-header-on [data-cc-trig] svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
 /* Connect marks unread notifications with a corner badge on the bell: a shield for an alert, a
    triangle for a warning, a green dot for the rest. header.js reads its level into data-cc-bell
-   and keeps the bell swinging instead (ccBellSync), so the badge itself never shows and the box
-   stays like every other header button. */
+   and keeps the bell swinging instead (ccBellSync), so the badge itself never shows. The box stays
+   like every other header button and the glyph takes the highest level's colour: alert, warning,
+   or the bell's accent for a notice, in the ink shade that reads on a light header too. */
 html.cc-header-on [data-cc-trig="bell"] { position: relative; }
 html.cc-header-on [data-cc-trig="bell"] [class*="absolute"] { display: none !important; }
-/* Where the bell may not swing, a dot at the corner of the glyph in the highest level's colour
-   tells of them, ringed in the box's ink so it shows on every box colour. */
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell]::after {
-  content: ""; display: var(--cc-motion-bell-mark, none); position: absolute; top: calc(50% - 12px); right: calc(50% - 12px);
-  width: 8px; height: 8px; box-sizing: border-box; border-radius: var(--cc-radius-pill);
-  background: var(--cc-bell-c); box-shadow: 0 0 0 1.5px currentColor; pointer-events: none;
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell="alert"] { --cc-bell-c: var(--cc-err-ink, #ff8389); }
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell="warning"] { --cc-bell-c: var(--cc-warn-ink, #ff832b); }
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell="notice"] { --cc-bell-c: color-mix(in srgb, var(--cc-rb-c, var(--cc-hdr-accent, #FCC419)) var(--cc-ink-mix, 100%), black); }
+/* A notice in the accent would vanish on a box filled with the accent, so it is coloured only on
+   the grey box and not while the pointer fills it. */
+html.cc-header-on [data-cc-trig="bell"]:is([data-cc-bell="alert"], [data-cc-bell="warning"]) svg:not([class*="absolute"]),
+html.cc-header-on.cc-header-rbneutral [data-cc-trig="bell"][data-cc-bell="notice"]:not(:hover) svg:not([class*="absolute"]) { color: var(--cc-bell-c) !important; }
+/* On a filled box red and orange are too close to the fill, so the glyph keeps a rim in the box's
+   ink under its colour. */
+html.cc-header-on:not(.cc-header-rbneutral) [data-cc-trig="bell"]:is([data-cc-bell="alert"], [data-cc-bell="warning"]) svg:not([class*="absolute"]),
+html.cc-header-on.cc-header-rbneutral [data-cc-trig="bell"]:is([data-cc-bell="alert"], [data-cc-bell="warning"]):hover svg:not([class*="absolute"]) {
+  stroke: var(--cc-rb-ct, var(--cc-hdr-accent-text, #161616)); stroke-width: 3px; stroke-linejoin: round; paint-order: stroke;
 }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell="alert"] { --cc-bell-c: var(--cc-err, #ff8389); }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell="warning"] { --cc-bell-c: var(--cc-warn, #ff832b); }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell="notice"] { --cc-bell-c: var(--cc-ok, #6fdc8c); }
-/* One beat: the bell swings out on its hook and dies away in the first half, then hangs still for
-   the rest, over and over. Only rotate moves, which the compositor runs off the main thread. */
+/* There the notice glyph looks like any other, so where the bell may not swing a dot in the box's
+   ink at the corner of the glyph tells of it. */
+html.cc-header-on:not(.cc-header-rbneutral) [data-cc-trig="bell"][data-cc-bell="notice"]::after {
+  content: ""; display: var(--cc-motion-bell-mark, none); position: absolute; top: calc(50% - 11px); right: calc(50% - 11px);
+  width: 6px; height: 6px; border-radius: var(--cc-radius-pill); background: currentColor; pointer-events: none;
+}
+/* One beat: the bell is struck, swings hard to and fro on its hook and rings out over seven
+   strokes, then hangs still for the last part, over and over. Only rotate moves, which the
+   compositor runs off the main thread. */
 @keyframes cc-bell-swing {
-  0%, 50%, 100% { rotate: 0deg; }
-  10% { rotate: var(--cc-motion-bell-swing, 0deg); }
-  20% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.75); }
-  30% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .45); }
-  40% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.2); }
+  0%, 62%, 100% { rotate: 0deg; }
+  5% { rotate: var(--cc-motion-bell-swing, 0deg); }
+  13% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.9); }
+  21% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .75); }
+  29% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.6); }
+  37% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .45); }
+  45% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.3); }
+  53% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .15); }
 }
 /* An open notification list holds the bell still, and a hidden tab draws no frames. */
 @media (prefers-reduced-motion: no-preference) {
