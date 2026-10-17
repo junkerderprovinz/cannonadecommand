@@ -267,7 +267,11 @@ html.cc-dk-on #displaybox .cc-dk-dot.cc-dk-idle { background: var(--cc-text-dim2
 html.cc-dk-on #displaybox .cc-dk-dot.cc-dk-warn { background: var(--cc-warn); }
 html.cc-dk-on #displaybox .cc-dk-dot.cc-dk-err { background: var(--cc-err); }
 
-html.cc-dk-on #displaybox .cc-dk-chips { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; min-height: 22px; }
+/* A card shows only what deviates: no chip row while all is well, and the rates only while the
+   disk reads or writes. The temperature always stays. */
+html.cc-dk-on #displaybox .cc-dk-chips { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; }
+html.cc-dk-on #displaybox .cc-dk-chips:empty,
+html.cc-dk-on #displaybox .cc-dk-card:not(.cc-dk-busy) .cc-dk-rate { display: none; }
 html.cc-dk-on #displaybox .cc-dk-chip {
   display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; white-space: nowrap;
   border-radius: var(--cc-radius-pill); background: var(--cc-chip); color: var(--cc-text-chip); font-size: var(--cc-text-meta);

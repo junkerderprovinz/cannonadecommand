@@ -278,6 +278,28 @@ console.log('\nThe capacity has a badge of its own');
   ok('the drawing keeps a margin to the edge of its well', /\.cc-dk-art \{[^}]*height: 140px;/.test(css) && /svg\.cc-dk-drive \{ position: absolute; inset: 14px 12px;/.test(css));
 }
 
+console.log('\nA card shows only what deviates');
+{
+  const src = ['var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc'), grabFn(js, 'chipsHtml')].join('\n') + '\nreturn chipsHtml;';
+  const extra = {};
+  const chips = new Function('extra', 'LANG', 'nf', src)(extra, 'de', { format: String });
+  const disk = (o) => Object.assign({ dev: 'sdf', state: 'ok', stateTip: '', parity: false, errors: 0, errTip: '' }, o);
+  extra.sdf = { smart: 'ok' };
+  ok('a healthy disk with SMART ok and no errors shows no chip', chips(disk({})) === '');
+  extra.sdf = { smart: 'warn', tip: 'Reallocated sectors: 8' };
+  ok('a SMART warning shows the moment disks.php reports it', /class="cc-dk-chip cc-dk-warn" data-tip="Reallocated sectors: 8"[^>]*>.*SMART-Warnung/.test(chips(disk({}))));
+  extra.sdf = { smart: 'fail' };
+  ok('a failed SMART test shows in red', /cc-dk-chip cc-dk-err[^>]*>.*SMART-Fehler/.test(chips(disk({}))));
+  extra.sdf = { smart: 'ok' };
+  const err = chips(disk({ errors: 3, errTip: 'Device errors: 3' }));
+  ok('errors show in red with their count and Unraid\'s bubble', /^<span class="cc-dk-chip cc-dk-err" data-tip="Device errors: 3">3 Fehler<\/span>$/.test(err), err);
+  ok('a disk Unassigned Devices counts no errors for shows none', chips(disk({ errors: null })) === '');
+  ok('a state that is not normal keeps its chip', /cc-dk-chip cc-dk-err/.test(chips(disk({ state: 'err', stateTip: 'Datenträger deaktiviert' }))));
+  ok('the chips are written again on every refill, so they follow the feed', /setHtml\(c\.querySelector\('\[data-f="chips"\]'\), chipsHtml\(d\)\);/.test(grabFn(js, 'patch')) && !/smartOk/.test(js));
+  ok('an empty chip row takes no room', /html\.cc-dk-on #displaybox \.cc-dk-chips:empty,/.test(css) && !/\.cc-dk-chips \{[^}]*min-height/.test(css));
+  ok('read and write show only while the disk is busy, the temperature always', /<div class="cc-dk-rate">' \+ esc\(t\("read"\)\)/.test(js) && /<div class="cc-dk-rate">' \+ esc\(t\("write"\)\)/.test(js) && /html\.cc-dk-on #displaybox \.cc-dk-card:not\(\.cc-dk-busy\) \.cc-dk-rate \{ display: none; \}/.test(css) && /<div>' \+ esc\(t\("temp"\)\)/.test(js));
+}
+
 console.log('\nThe array is a vessel on the left of its card');
 {
   const made = [];

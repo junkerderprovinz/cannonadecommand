@@ -16,7 +16,7 @@
   var TXT = {
     de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", spinDown: "Platte anhalten", spinUp: "Platte anlaufen lassen", browse: "Durchsuchen", log: "Datenträgerprotokoll",
       resting: "Ruht", used: "belegt", free: "frei", of: "von", temp: "Temperatur", read: "Lesen", write: "Schreiben", errors: "Fehler",
-      smartOk: "SMART ok", smartWarn: "SMART-Warnung", smartFail: "SMART-Fehler", smartOkTip: "SMART meldet nichts Auffälliges",
+      smartWarn: "SMART-Warnung", smartFail: "SMART-Fehler",
       smartFailTip: "Der SMART-Selbsttest ist fehlgeschlagen", parity: "Parität gültig, schützt %n Datenträger",
       tempTip: "Warnung ab %w, kritisch ab %c", tempNone: "Meldet keine Temperatur", tempDown: "Ruht und misst gerade nicht",
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
@@ -25,7 +25,7 @@
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
       resting: "Spun down", used: "used", free: "free", of: "of", temp: "Temperature", read: "Read", write: "Write", errors: "errors",
-      smartOk: "SMART ok", smartWarn: "SMART warning", smartFail: "SMART failed", smartOkTip: "SMART reports nothing unusual",
+      smartWarn: "SMART warning", smartFail: "SMART failed",
       smartFailTip: "The SMART self-assessment failed", parity: "Parity valid, protects %n disks",
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
@@ -386,15 +386,16 @@
     return '<div class="cc-dk-use"><div class="cc-dk-uselbl"><span><b data-f="used">' + esc(d.fs.used) + "</b> " + esc(t("used")) + ' · <span data-f="pct">' + Math.round(d.fs.pct) + '</span> %</span><span data-f="free">' + esc(d.fs.free + " " + t("free")) + "</span></div>" +
       '<div class="cc-dk-track"><div class="cc-dk-fill ' + lvl(d.fs.pct) + '" data-f="fill" style="width:' + Math.max(d.fs.pct, 1.5).toFixed(1) + '%"></div></div></div>';
   }
+  // A chip only for what deviates: a state that is not normal, SMART that warns or fails, errors.
+  // A disk that is fine shows none.
   function chipsHtml(d) {
     var x = extra[d.dev], h = "";
     if ((d.state === "warn" || d.state === "err" || d.state === "new") && !d.parity) h += '<span class="cc-dk-chip cc-dk-' + (d.state === "new" ? "plain" : d.state) + '" data-tip="' + esc(d.stateTip) + '">' + esc(d.stateTip.split("\n")[0]) + "</span>";
-    if (x && x.smart) {
-      var cls = x.smart === "fail" ? " cc-dk-err" : x.smart === "warn" ? " cc-dk-warn" : "";
-      var tip = x.smart === "fail" ? t("smartFailTip") : x.smart === "warn" ? x.tip : t("smartOkTip");
-      h += '<span class="cc-dk-chip' + cls + '" data-tip="' + esc(tip) + '"><span class="cc-dk-dot"></span>' + esc(x.smart === "fail" ? t("smartFail") : x.smart === "warn" ? t("smartWarn") : t("smartOk")) + "</span>";
+    if (x && (x.smart === "fail" || x.smart === "warn")) {
+      var fail = x.smart === "fail";
+      h += '<span class="cc-dk-chip ' + (fail ? "cc-dk-err" : "cc-dk-warn") + '" data-tip="' + esc(fail ? t("smartFailTip") : x.tip) + '"><span class="cc-dk-dot"></span>' + esc(fail ? t("smartFail") : t("smartWarn")) + "</span>";
     }
-    if (d.errors != null) h += '<span class="cc-dk-chip' + (d.errors ? " cc-dk-err" : "") + '"' + (d.errTip ? ' data-tip="' + esc(d.errTip) + '"' : "") + ">" + esc(nf.format(d.errors) + " " + t("errors")) + "</span>";
+    if (d.errors) h += '<span class="cc-dk-chip cc-dk-err"' + (d.errTip ? ' data-tip="' + esc(d.errTip) + '"' : "") + ">" + esc(nf.format(d.errors) + " " + t("errors")) + "</span>";
     return h;
   }
   function tempHtml(d) {
@@ -418,7 +419,7 @@
       '<div class="cc-dk-namerow"><span class="cc-dk-nb">' + esc(d.name) + "</span>" + (d.size ? '<span class="cc-dk-cap">' + esc(cap(d.size)) + "</span>" : "") + '<span class="cc-info cc-dk-info" tabindex="0" data-f="tip">' + INFO + '</span><span class="cc-dk-dev">' + esc(d.dev) + "</span></div>" +
       '<div class="cc-dk-model">' + esc(d.model + (d.fs ? " · " + d.fs.fs : "")) + "</div>" + useHtml(d, ctx) +
       '<div class="cc-dk-chips" data-f="chips"></div>' +
-      '<div class="cc-dk-io"><div>' + esc(t("temp")) + '<b data-f="temp"></b></div><div>' + esc(t("read")) + '<b data-f="rd"></b></div><div>' + esc(t("write")) + '<b data-f="wr"></b></div></div>';
+      '<div class="cc-dk-io"><div>' + esc(t("temp")) + '<b data-f="temp"></b></div><div class="cc-dk-rate">' + esc(t("read")) + '<b data-f="rd"></b></div><div class="cc-dk-rate">' + esc(t("write")) + '<b data-f="wr"></b></div></div>';
     if (window.CCTheme && window.CCTheme.pressable) Array.prototype.forEach.call(c.querySelectorAll(".cc-dk-ib"), window.CCTheme.pressable);
     c.addEventListener("animationend", function (e) { if (e.target === c) c.classList.remove("cc-dk-enter"); });
     return c;
