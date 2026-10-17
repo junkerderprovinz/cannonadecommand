@@ -309,7 +309,9 @@
 
   // One drawing per kind of drive, its label in the card colour naming the kind; the capacity
   // stands in the card's badge. A parity disk wears the shield beside its label. The gradients
-  // live once in the page, see defs().
+  // live once in the page, see defs(). The platter is an HTML layer between the case and the arm,
+  // since the compositor turns only HTML: on an SVG node the turn waits for every task Unraid and
+  // the other scripts run on /Main, and stalls each second while they do.
   function drawHdd(d) {
     var sticker = d.parity
       ? '<rect class="cc-dk-st" x="124" y="15" width="62" height="22" rx="3"/><svg class="cc-dk-ink" x="130" y="19" width="14" height="14" viewBox="' + OWN.ShieldOn[0] + '">' + OWN.ShieldOn[1] + '</svg><text class="cc-dk-ink" x="180" y="30.5" font-size="12" font-weight="800" letter-spacing="1.5" text-anchor="end">HDD</text>'
@@ -319,18 +321,19 @@
     [40, 24].forEach(function (r) { streaks += '<path d="M ' + (78 - r) + " 68 A " + r + " " + r + " 0 0 1 " + (78 - r * Math.cos(0.7)).toFixed(2) + " " + (68 - r * Math.sin(0.7)).toFixed(2) + '" fill="none" stroke="var(--cc-dk-sheen)" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>'; });
     var screws = "";
     for (var i = 0; i < 6; i++) screws += '<circle cx="' + (78 + 8.5 * Math.cos(i * Math.PI / 3)).toFixed(2) + '" cy="' + (68 + 8.5 * Math.sin(i * Math.PI / 3)).toFixed(2) + '" r="1.5" fill="#555"/>';
-    return '<svg class="cc-dk-drive" viewBox="3 3 194 130" aria-hidden="true"><g>' +
+    return '<div class="cc-dk-drive cc-dk-hdd" aria-hidden="true"><svg viewBox="3 3 194 130">' +
       '<rect x="6" y="6" width="188" height="124" rx="10" fill="url(#cc-dk-metal)"/>' +
       '<rect x="12" y="10" width="176" height="116" rx="8" fill="var(--cc-dk-well)"/>' +
-      '<circle cx="78" cy="68" r="55" fill="var(--cc-dk-metal-b)"/>' +
-      '<g class="cc-dk-plat" style="transform-origin:78px 68px"><circle cx="78" cy="68" r="53" fill="url(#cc-dk-plat)"/>' + streaks +
-      '<circle cx="78" cy="68" r="13" fill="var(--cc-dk-hub)"/>' + screws + '<circle cx="78" cy="68" r="4" fill="#3a3a3a"/></g>' + sticker +
+      '<circle cx="78" cy="68" r="55" fill="var(--cc-dk-metal-b)"/></svg>' +
+      '<div class="cc-dk-plat"><svg viewBox="25 15 106 106"><circle cx="78" cy="68" r="53" fill="url(#cc-dk-plat)"/>' + streaks +
+      '<circle cx="78" cy="68" r="13" fill="var(--cc-dk-hub)"/>' + screws + '<circle cx="78" cy="68" r="4" fill="#3a3a3a"/></svg></div>' +
+      '<svg viewBox="3 3 194 130">' + sticker +
       '<path d="M168 84 L186 92 L186 124 L160 124 Z" fill="var(--cc-dk-metal-b)"/>' +
       '<g class="cc-dk-arm" style="transform-origin:168px 106px"><g class="cc-dk-seek" style="transform-origin:168px 106px"><g transform="translate(168 106) rotate(-134)">' +
       '<path d="M0 -8 L78 -2.6 L94 -1.6 L94 1.6 L78 2.6 L0 8 Z" fill="var(--cc-dk-arm)"/><path d="M0 -8 L78 -2.6 L94 -1.6 L94 0 L0 0 Z" fill="var(--cc-dk-arm-hi)" opacity=".6"/>' +
       '<rect x="88" y="-3.2" width="9" height="6.4" rx="1.2" fill="#6a6a6a"/></g></g>' +
       '<circle cx="168" cy="106" r="11" fill="#9a9a9a"/><circle cx="168" cy="106" r="4" fill="#4a4a4a"/></g>' +
-      '<circle class="cc-dk-led" cx="24" cy="118" r="3.2"/></g></svg>';
+      '<circle class="cc-dk-led" cx="24" cy="118" r="3.2"/></svg></div>';
   }
   var clipN = 0;
   function drawSsd() {
@@ -417,8 +420,9 @@
   function pace(d) { var r = d.rd + d.wr; return r > 100e6 ? 0.5 : r > 10e6 ? 0.75 : 1.1; }
 
   // Unraid sends the rates once a second, and a disk that reads in bursts drops to zero between
-  // them, so a card stays busy until HOLD after its last rate above zero.
-  var HOLD = 5000;
+  // them, so a card stays busy until HOLD after its last rate above zero. Array disks often see a
+  // write every six seconds or so, which a shorter hold would break into a stop each time.
+  var HOLD = 8000;
   function hold(c, active, after) {
     var now = Date.now();
     if (active) c.__ccSeen = now;
@@ -465,7 +469,9 @@
     if (m.spin) {
       m.p = toward(m.p, m.on ? 1 : 0, dt / (m.on ? UP : DOWN));
       var r = m.p * m.p * (3 - 2 * m.p);
-      if (r > 0) { m.spin.playbackRate = r; if (m.spin.playState !== "running") m.spin.play(); }
+      // Assigning playbackRate to an animation the compositor is still picking up starts the pickup
+      // over, so a platter that runs up from rest would stand until it reached full speed.
+      if (r > 0) { m.spin.updatePlaybackRate(r); if (m.spin.playState !== "running") m.spin.play(); }
       else m.spin.pause();
     }
     if (m.f !== m.ft) {

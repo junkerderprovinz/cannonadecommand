@@ -116,10 +116,42 @@ console.log('\nThin bars stand still, only the tall ones are handed to the slosh
   ok('none in the CPU and RAM gauges of a Docker card', calls(docker) === 0);
   ok('none in the status island\'s array, RAM and CPU chips', calls(grabFn(header, 'barChip')) === 0);
   const bars = grabFn(header, 'ccStateBars');
-  ok('the 26px /Main usage bars still slosh while the Shares area restyles them', /CT\.slosh\(allBars\[s\], mainOn && !!allBars\[s\]\.closest\("#displaybox"\)\)/.test(bars) && /rt\.contains\("cc-shares-on"\) && rt\.contains\("cc-on-main"\)/.test(bars) && /html\.cc-shares-on\.cc-on-main #displaybox \.usage-disk:not\(\.sys\):not\(\.mm\) \{[^}]*height: 26px !important;/.test(read('sheets/CannonadeCommand.Shares.css')));
-  ok('and so does the 24px array meter in the menu while the header area is on', /CT\.slosh\(meter, rt\.contains\("cc-header-on"\)\)/.test(bars) && /#menu \.usage-bar \{[^}]*height: var\(--cc-md-h, 30px\) !important;[^}]*padding: 3px !important;/.test(read('sheets/CannonadeCommand.Header.css')));
+  ok('the 26px /Main usage bars still slosh while the Shares area restyles them', /CT\.slosh\(allBars\[s\], mainOn && !!allBars\[s\]\.closest\("#displaybox"\), highs\[s\]\)/.test(bars) && /rt\.contains\("cc-shares-on"\) && rt\.contains\("cc-on-main"\)/.test(bars) && /html\.cc-shares-on\.cc-on-main #displaybox \.usage-disk:not\(\.sys\):not\(\.mm\) \{[^}]*height: 26px !important;/.test(read('sheets/CannonadeCommand.Shares.css')));
+  ok('and so does the 24px array meter in the menu while the header area is on', /CT\.slosh\(meter, rt\.contains\("cc-header-on"\), meterHigh\)/.test(bars) && /#menu \.usage-bar \{[^}]*height: var\(--cc-md-h, 30px\) !important;[^}]*padding: 3px !important;/.test(read('sheets/CannonadeCommand.Header.css')));
   ok('those are the only callers, so a thin bar elsewhere cannot pick it up again', calls(header) === 2 && calls(read('scripts/shares.js') + read('scripts/dashboard.js') + read('scripts/vms.js')) === 0);
   ok('the menu meter clips what runs past its end', /html\.cc-header-on #menu \.usage-bar \{[^}]*overflow: hidden;/.test(read('sheets/CannonadeCommand.Header.css')));
+}
+
+// Unraid writes the /Main table anew every second, and a bar measured after another was stamped
+// lays the page out again. Twenty of those block the main thread long enough to stall every SVG
+// animation on the page.
+console.log('\nA refilled /Main table is laid out once, not once per bar');
+{
+  const theme = read('scripts/cc-theme.js'), header = read('scripts/header.js');
+  const slosh = new Function(/var SLOSH_MIN = \d+;/.exec(theme)[0] + grabFn(theme, 'slosh') + '\nreturn slosh;')();
+  const page = { dirty: true, layouts: 0 };
+  const touch = () => { page.dirty = true; };
+  class Bar {
+    constructor() { this.cls = new Set(); this.style = { width: '50%', background: '', setProperty: touch, removeProperty: touch }; }
+    get classList() { const c = this.cls; return { add: (x) => { c.add(x); touch(); }, remove: (x) => { c.delete(x); touch(); }, contains: (x) => c.has(x) }; }
+    get className() { return [...this.cls].join(' '); }
+    set className(v) { this.cls = new Set(v.split(/\s+/).filter(Boolean)); touch(); }
+    closest() { return {}; }
+    getBoundingClientRect() { if (page.dirty) { page.layouts++; page.dirty = false; } return { height: 26 }; }
+  }
+  const bars = Array.from({ length: 20 }, () => new Bar()), meter = new Bar();
+  const document = {
+    documentElement: { classList: { contains: (c) => ['cc-shares-on', 'cc-on-main', 'cc-header-on'].includes(c) } },
+    querySelectorAll: () => bars,
+    querySelector: (s) => (/#menu/.test(s) ? meter : null),
+  };
+  const run = new Function('document', 'window', 'g', grabFn(header, 'ccStateBars') + '\nreturn ccStateBars;')(document, { CCTheme: { slosh } }, (k, d) => d);
+  run();
+  ok('twenty fresh bars and the meter all slosh', bars.every((b) => b.cls.has('cc-slosh-edge')) && meter.cls.has('cc-slosh-edge'));
+  ok('and the page is laid out once for all of them', page.layouts === 1, page.layouts + ' layouts');
+  const thin = new Bar();
+  slosh(thin, true, 8);
+  ok('a height read beforehand still keeps a thin bar still', !thin.cls.has('cc-slosh-edge'));
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

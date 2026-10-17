@@ -215,9 +215,15 @@ html.cc-dk-on #displaybox .cc-dk-card:focus-within { background: var(--cc-dk-car
 html.cc-dk-on #displaybox .cc-dk-card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
 /* Every drawing keeps a margin to the edge of its well, the same on every card. */
 html.cc-dk-on #displaybox .cc-dk-art { position: relative; height: 140px; background: var(--cc-dk-inset); border-radius: var(--cc-radius-control); overflow: hidden; }
-html.cc-dk-on #displaybox .cc-dk-art svg.cc-dk-drive { position: absolute; inset: 14px 12px; width: calc(100% - 24px); height: calc(100% - 28px); }
+html.cc-dk-on #displaybox .cc-dk-art .cc-dk-drive { position: absolute; inset: 14px 12px; width: calc(100% - 24px); height: calc(100% - 28px); }
+/* A hard disk stacks its case, platter and arm. The platter takes the place and scale the case's
+   viewBox gives it, so the layers line up at any card width. */
+html.cc-dk-on #displaybox .cc-dk-hdd { container-type: size; }
+html.cc-dk-on #displaybox .cc-dk-hdd > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+html.cc-dk-on #displaybox .cc-dk-plat { --cc-dk-u: min(100cqw / 194, 100cqh / 130); position: absolute; left: calc(50% - 75 * var(--cc-dk-u)); top: calc(50% - 53 * var(--cc-dk-u)); width: calc(106 * var(--cc-dk-u)); height: calc(106 * var(--cc-dk-u)); }
+html.cc-dk-on #displaybox .cc-dk-plat > svg { display: block; width: 100%; height: 100%; }
 html.cc-dk-on #displaybox .cc-dk-art text { font-family: inherit; }
-html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down svg.cc-dk-drive { opacity: .62; }
+html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down .cc-dk-drive { opacity: .62; }
 /* The array's own card stands first among its disks, its vessel where a disk has its drawing. It
    opens nothing, so it keeps the plain cursor and its surface under the pointer. */
 html.cc-dk-on #displaybox .cc-dk-total { cursor: default; }
@@ -323,7 +329,7 @@ html.cc-dk-on #displaybox .cc-dk-empty b { color: var(--cc-text-hint); font-weig
    while the disk reads or writes. */
 html.cc-dk-on #displaybox .cc-dk-st { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); }
 html.cc-dk-on #displaybox .cc-dk-ink { fill: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); }
-html.cc-dk-on #displaybox :is(.cc-dk-plat, .cc-dk-arm, .cc-dk-seek) { transform-box: view-box; }
+html.cc-dk-on #displaybox :is(.cc-dk-arm, .cc-dk-seek) { transform-box: view-box; }
 html.cc-dk-on #displaybox .cc-dk-arm { rotate: 0deg; transition: rotate var(--cc-motion-disk-park, 0s) cubic-bezier(.4, 0, .2, 1); }
 html.cc-dk-on #displaybox .cc-dk-card.cc-dk-down .cc-dk-arm { rotate: 24deg; }
 /* The LED glows faintly while the disk spins and waits, lights up and blinks with every second it

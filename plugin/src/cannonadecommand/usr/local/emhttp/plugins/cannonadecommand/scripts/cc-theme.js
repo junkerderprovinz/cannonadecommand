@@ -937,11 +937,13 @@
   // swings on from where the one before it was. A fill that already sloshes is left untouched,
   // which keeps a MutationObserver that calls this from waking itself. An empty bar holds no
   // liquid, and on a bar thinner than SLOSH_MIN the surge reads as a twitch, so neither sloshes.
-  // A fill that is not laid out yet measures 0 and keeps what the caller asked for.
+  // A fill that is not laid out yet measures 0 and keeps what the caller asked for. A caller that
+  // stamps many bars reads their heights first and passes each in, since a read after a stamp lays
+  // the page out again.
   var SLOSH_MIN = 12;
-  function slosh(fill, on) {
+  function slosh(fill, on, high) {
     if (!fill || !fill.classList) return fill;
-    var high = fill.getBoundingClientRect().height;
+    if (high == null) high = fill.getBoundingClientRect().height;
     if (!(parseFloat(fill.style.width) > 0) || (high > 0 && high < SLOSH_MIN)) on = false;
     var sloshing = fill.classList.contains("cc-slosh-edge");
     if (on === false) {

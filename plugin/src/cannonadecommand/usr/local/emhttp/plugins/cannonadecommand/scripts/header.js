@@ -1338,9 +1338,11 @@
       var rt = document.documentElement.classList, CT = window.CCTheme;
       if (CT && CT.slosh) {
         var mainOn = rt.contains("cc-shares-on") && rt.contains("cc-on-main");
-        for (var s = 0; s < allBars.length; s++) CT.slosh(allBars[s], mainOn && !!allBars[s].closest("#displaybox"));
         var meter = document.querySelector("#menu .usage-bar > span");
-        if (meter) CT.slosh(meter, rt.contains("cc-header-on"));
+        var highs = Array.prototype.map.call(allBars, function (b) { return b.getBoundingClientRect().height; });
+        var meterHigh = meter ? meter.getBoundingClientRect().height : 0;
+        for (var s = 0; s < allBars.length; s++) CT.slosh(allBars[s], mainOn && !!allBars[s].closest("#displaybox"), highs[s]);
+        if (meter) CT.slosh(meter, rt.contains("cc-header-on"), meterHigh);
       }
       if (!on) {   // strip any leftover class so the colour mode shows through
         for (var i = 0; i < allBars.length; i++) { var b = allBars[i]; if (b.style.background) b.style.removeProperty("background"); if (b.className && b.className.indexOf("cc-fill-") >= 0) b.className = b.className.replace(/\s*cc-fill-(green|amber|red)\b/g, ""); }

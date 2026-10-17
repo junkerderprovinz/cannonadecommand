@@ -120,6 +120,10 @@ console.log('\nThe motion stays inside the gate and stops at "off"');
   const outside = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
   ok('the LED blinks with every second the disk reads or writes, and outside the gate it is lit without blinking', /\.cc-dk-card\.cc-dk-access \.cc-dk-led \{ animation: cc-dk-blink/.test(media) && /html\.cc-dk-on #displaybox \.cc-dk-card\.cc-dk-access \.cc-dk-led \{ fill: var\(--cc-dk-c/.test(outside) && /c\.classList\.toggle\("cc-dk-access", busy\(d\)\);/.test(grabFn(js, 'patch')) && !/cc-dk-blink/.test(outside.replace(/@keyframes[^\n]*/g, '')));
   ok('a resting disk dims its LED, a waiting one glows faintly', /\.cc-dk-card\.cc-dk-down \.cc-dk-led \{ opacity: \.45; \}/.test(css) && /\.cc-dk-card:not\(\.cc-dk-down\) \.cc-dk-led \{ fill: color-mix\(/.test(css));
+  const hdd = new Function('OWN', grabFn(js, 'drawHdd') + '\nreturn drawHdd;')({})({ parity: false });
+  const platAt = hdd.indexOf('class="cc-dk-plat"');
+  ok('the platter is an HTML layer between the case and the arm, so the compositor keeps it turning while the page is busy', /<div class="cc-dk-plat"><svg /.test(hdd) && !/<(?:g|svg|circle|path)\b[^>]*class="[^"]*cc-dk-plat/.test(hdd) && hdd.indexOf('r="55"') < platAt && platAt < hdd.indexOf('class="cc-dk-arm"') && /<\/svg><\/div><svg /.test(hdd.slice(platAt)) && !/:is\([^)]*\.cc-dk-plat/.test(css));
+  ok('it takes the place and scale the case\'s viewBox gives it', /\.cc-dk-hdd \{ container-type: size; \}/.test(css) && /\.cc-dk-plat \{ --cc-dk-u: min\(100cqw \/ 194, 100cqh \/ 130\); position: absolute; left: calc\(50% - 75 \* var\(--cc-dk-u\)\); top: calc\(50% - 53 \* var\(--cc-dk-u\)\); width: calc\(106 \* var\(--cc-dk-u\)\); height: calc\(106 \* var\(--cc-dk-u\)\); \}/.test(css) && /viewBox="3 3 194 130"/.test(hdd) && /viewBox="25 15 106 106"/.test(hdd));
   ok('every drawing keeps its LED', ['drawHdd', 'drawSsd', 'drawNvme', 'drawUsb'].every((n) => /class="cc-dk-led"/.test(grabFn(js, n))));
   const flowDots = new Function(grabFn(js, 'flowDots') + '\nreturn flowDots;')();
   ok('an SSD has a light that passes over its lines, an NVMe stick three dots from its contacts, a USB stick three beside its label', /class="cc-dk-sweep"/.test(grabFn(js, 'drawSsd')) && /id="cc-dk-sweep"/.test(grabFn(js, 'defs')) && /flowDots\(22, \[60, 68, 76\]\)/.test(grabFn(js, 'drawNvme')) && /flowDots\(66, \[50, 86, 50\]\)/.test(grabFn(js, 'drawUsb')) && (flowDots(22, [60, 68, 76]).match(/class="cc-dk-flow cc-dk-st( cc-dk-n[23])?"/g) || []).length === 3);
@@ -282,7 +286,7 @@ console.log('\nThe capacity has a badge of its own');
   const R = load({});
   ok('whole sizes read as Unraid prints them', R.cap(18e12) === '18 TB' && R.cap(500e9) === '500 GB' && R.cap(63.1e9) === '63 GB');
   ok('a size under ten keeps its decimal', R.cap(1.5e12) === '1.5 TB' && R.cap(2e12) === '2 TB');
-  ok('the drawing keeps a margin to the edge of its well', /\.cc-dk-art \{[^}]*height: 140px;/.test(css) && /svg\.cc-dk-drive \{ position: absolute; inset: 14px 12px;/.test(css));
+  ok('the drawing keeps a margin to the edge of its well', /\.cc-dk-art \{[^}]*height: 140px;/.test(css) && /\.cc-dk-art \.cc-dk-drive \{ position: absolute; inset: 14px 12px;/.test(css));
 }
 
 console.log('\nA card shows only what deviates');
@@ -411,8 +415,12 @@ console.log('\nA disk that reads in bursts keeps working, and its platter runs u
       (f, ms) => { const t = { f, at: env.now + ms }; env.timers.push(t); return t; },
       (t) => { env.timers = env.timers.filter((x) => x !== t); });
     const cls = new Set();
-    const spin = { playbackRate: 1, playState: 'running', currentTime: 0, made: 0, cancelled: false, duration: 0 };
-    Object.assign(spin, { pause() { spin.playState = 'paused'; }, play() { spin.playState = 'running'; }, cancel() { spin.cancelled = true; },
+    // A rate assigned straight to playbackRate is counted, since in Chrome it holds a starting
+    // animation still; updatePlaybackRate is the call that lets it run.
+    let rate = 1;
+    const spin = { playState: 'running', currentTime: 0, made: 0, cancelled: false, duration: 0, assigned: 0 };
+    Object.defineProperty(spin, 'playbackRate', { get: () => rate, set: (v) => { rate = v; spin.assigned++; } });
+    Object.assign(spin, { updatePlaybackRate(v) { rate = v; }, pause() { spin.playState = 'paused'; }, play() { spin.playState = 'running'; }, cancel() { spin.cancelled = true; },
       effect: { getTiming: () => ({ duration: spin.duration }), updateTiming: (t) => { spin.duration = t.duration; } } });
     const flow = { animationName: 'cc-dk-flow', playbackRate: 1 };
     const plat = { animate: (kf, o) => { spin.made++; spin.duration = o.duration; spin.kf = kf; return spin; } };
@@ -442,11 +450,13 @@ console.log('\nA disk that reads in bursts keeps working, and its platter runs u
   const up = burst.filter((s) => s.t <= t0 + 1200);
   const steps = up.slice(1).map((s, i) => s.rate - up[i].rate);
   ok('the platter runs up from rest in small steps instead of starting at full speed', up[0].rate < 0.05 && steps.every((d) => d >= 0 && d < 0.06) && up.some((s) => s.rate > 0.3 && s.rate < 0.7), up.slice(0, 6).map((s) => s.rate.toFixed(2)).join(' '));
+  ok('it changes speed through updatePlaybackRate, so the compositor does not hold a run-up from rest still', a.spin.assigned === 0 && up.some((s) => s.rate > 0.3 && s.rate < 0.7), a.spin.assigned + ' assignments');
   ok('it reaches full speed within a second and keeps it through the gaps between the bursts', burst.filter((s) => s.t >= t0 + 1000).every((s) => s.rate === 1 && a.spin.playState === 'running'));
   ok('the platter is one animation, a full turn at the spin dial, made once', a.spin.made === 1 && a.spin.duration === 1500 && a.spin.kf[1].rotate === '360deg');
 
+  const H = Number(/var HOLD = (\d+);/.exec(js)[1]);
   a.samples.length = 0;
-  a.run(2800);
+  a.run(H - 2000 - 200);
   ok('after the last rate above zero it stays busy for the hold', a.samples.every((s) => s.busy));
   a.run(2600);
   const tail = a.samples.filter((s) => !s.busy);
@@ -456,11 +466,16 @@ console.log('\nA disk that reads in bursts keeps working, and its platter runs u
   ok('and stays where it ran out, paused rather than reset', a.spin.playState === 'paused' && !a.spin.cancelled && a.env.frames.length === 0);
 
   const b = make();
-  b.feed(40e6); b.run(1000); b.feed(40e6); b.run(1000); b.feed(0); b.run(4000 + 600);
+  b.feed(40e6); b.run(1000); b.feed(40e6); b.run(1000); b.feed(0); b.run(H - 1000 + 600);
   const mid = b.samples[b.samples.length - 1].rate;
   b.samples.length = 0;
   b.feed(40e6); b.run(400);
   ok('a start while it coasts speeds up from where it is', mid > 0.2 && mid < 1 && b.samples.every((s) => s.rate >= mid - 1e-9) && b.samples.slice(1).every((s, i) => s.rate >= b.samples[i].rate), mid.toFixed(2));
+
+  // An array disk that writes once every 6.4 s, quiet for 5.4 s in between.
+  const p = make();
+  for (let i = 0; i < 32; i++) { p.feed(i % 6.4 < 1 ? 2e6 : 0); p.run(1000); }
+  ok('a disk that writes every six and a half seconds stays busy and its platter at full speed throughout', p.samples.every((s) => s.busy) && p.samples.filter((s) => s.t > p.samples[0].t + 1000).every((s) => s.rate === 1));
 
   const c = make();
   c.feed(40e6); c.run(500);
