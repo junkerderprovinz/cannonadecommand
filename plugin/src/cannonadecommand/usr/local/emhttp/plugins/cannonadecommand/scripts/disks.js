@@ -449,9 +449,8 @@
       setText(c.querySelector('[data-f="free"]'), d.fs.free + " " + t("free"));
       var f = c.querySelector('[data-f="fill"]');
       if (f) {
-        f.className = "cc-dk-fill " + lvl(d.fs.pct) + (f.classList.contains("cc-slosh-edge") ? " cc-slosh-edge" : "");
+        f.className = "cc-dk-fill " + lvl(d.fs.pct);
         f.style.width = Math.max(d.fs.pct, 1.5).toFixed(1) + "%";
-        if (window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
       }
     }
     if (c.__ccWait && (c.__ccWait.down !== d.down || Date.now() - c.__ccWait.at > 30000)) { c.__ccWait = null; c.classList.remove("cc-dk-wait"); }
@@ -496,8 +495,6 @@
     if (!html) { if (n) host.removeChild(n); return; }
     if (!n) { n = el("div", cls); host.appendChild(n); }
     setHtml(n, html);
-    var f = n.querySelector(".cc-dk-fill");
-    if (f && window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
   }
 
   function fillTone(p) { return p > 95 ? "err" : p >= 90 ? "warn" : "accent"; }
@@ -525,9 +522,8 @@
     setText(c.querySelector('[data-f="pct"]'), String(Math.round(fs.pct)));
     setText(c.querySelector('[data-f="free"]'), fs.free + " " + t("free"));
     var f = c.querySelector('[data-f="fill"]');
-    f.className = "cc-dk-fill " + lvl(fs.pct) + (f.classList.contains("cc-slosh-edge") ? " cc-slosh-edge" : "");
+    f.className = "cc-dk-fill " + lvl(fs.pct);
     f.style.width = Math.max(fs.pct, 1.5).toFixed(1) + "%";
-    if (window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
     var tip = c.querySelector('[data-f="tip"]'), tp = fill(t("arrayTip"), { u: fs.used, s: fs.size });
     if (tip.getAttribute("data-tip") !== tp) tip.setAttribute("data-tip", tp);
     setHtml(c.querySelector('[data-f="temp"]'), total.temp ? '<span class="cc-dk-dot"></span>' + esc("Ø " + nf.format(total.temp.shown) + " °" + total.temp.unit) : '<span class="cc-dk-dot cc-dk-idle"></span>*');

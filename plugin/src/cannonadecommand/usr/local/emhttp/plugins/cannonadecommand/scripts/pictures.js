@@ -1,6 +1,6 @@
-// The animated pictures the areas share (GlimStone, "Illustrations"): a bar that sloshes at its
-// end, a vessel that holds a fill level, a checkmark that draws itself, a line with packets on it
-// and a ring that shows progress. Loaded on every page through CannonadeCommand.Pictures.page as
+// The animated pictures the areas share (GlimStone, "Illustrations"): a bar tall enough to slosh
+// at its end, a vessel that holds a fill level, a checkmark that draws itself, a line with packets
+// on it and a ring that shows progress. Loaded on every page through CannonadeCommand.Pictures.page as
 // window.CCPictures, before the area scripts.
 //
 // The vessel, the check and the ring move in CSS on the dials of CannonadeCommand.Pictures.css,

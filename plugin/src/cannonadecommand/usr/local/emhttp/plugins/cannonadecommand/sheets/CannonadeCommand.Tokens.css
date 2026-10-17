@@ -179,10 +179,11 @@ button[type="button"]:where(.cc-btn, .cc-seg-btn, .cc-abtn, .cc-hgear, .cc-card-
 @keyframes cc-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cc-fade-out { from { opacity: 1; } to { opacity: 0; } }
 
-/* A bar that shows a fill level sloshes at its end (GlimStone, "Illustrations"). A strip in the
-   fill's colour waits under the end and surges out leaning forward. CCTheme.slosh() puts the class
-   on a fill and stamps --cc-slosh-phase, so a bar drawn again picks up the swing where the last one
-   was. GlimStone's drifting dots stay out, the edge carries the motion alone. */
+/* A bar that shows a fill level sloshes at its end (GlimStone, "Illustrations"), once it is at
+   least 12px tall. A strip in the fill's colour waits under the end and surges out leaning forward.
+   CCTheme.slosh() puts the class on a fill and stamps --cc-slosh-phase, so a bar drawn again picks
+   up the swing where the last one was. GlimStone's drifting dots stay out, the edge carries the
+   motion alone. */
 @keyframes cc-slosh-surge {
   from { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px) * .4) * var(--cc-dir-sign, 1)) 0; transform: none; }
   25%  { translate: calc((-100% + var(--cc-motion-slosh-surge, 5px) * .15) * var(--cc-dir-sign, 1)) 0; transform: skewX(calc(var(--cc-motion-slosh-lean, 12deg) * .5 * var(--cc-dir-sign, 1))); }

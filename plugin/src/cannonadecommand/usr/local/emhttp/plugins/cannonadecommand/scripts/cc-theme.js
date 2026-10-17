@@ -931,10 +931,13 @@
   // on === false. The phase is the time since the page loaded, so a bar that is drawn again
   // swings on from where the one before it was. A fill that already sloshes is left untouched,
   // which keeps a MutationObserver that calls this from waking itself. An empty bar holds no
-  // liquid, so its fill never sloshes.
+  // liquid, and on a bar thinner than SLOSH_MIN the surge reads as a twitch, so neither sloshes.
+  // A fill that is not laid out yet measures 0 and keeps what the caller asked for.
+  var SLOSH_MIN = 12;
   function slosh(fill, on) {
     if (!fill || !fill.classList) return fill;
-    if (!(parseFloat(fill.style.width) > 0)) on = false;
+    var high = fill.getBoundingClientRect().height;
+    if (!(parseFloat(fill.style.width) > 0) || (high > 0 && high < SLOSH_MIN)) on = false;
     var sloshing = fill.classList.contains("cc-slosh-edge");
     if (on === false) {
       if (!sloshing) return fill;
