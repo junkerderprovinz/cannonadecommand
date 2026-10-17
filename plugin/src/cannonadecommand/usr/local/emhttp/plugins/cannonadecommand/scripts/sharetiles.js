@@ -62,6 +62,10 @@
   // The cells Unraid wrote, without the Browse column shares.js inserts.
   function cells(tr) { return kids(tr).filter(function (c) { return tag(c) === "TD" && !hasCls(c, "cc-browse-col"); }); }
   function computeLink(td) { return find(td, function (n) { return tag(n) === "A" && /compute(Share|Disk)\(/.test(attr(n, "onclick")); }); }
+  // While Compute runs, Unraid writes a spinner and "Please wait" into the cell it was started from.
+  function waiting(td) {
+    return find(td, function (n) { return tag(n) === "I" && hasCls(n, "fa-spin"); }) ? clean(text(td)).replace(/\s*(\.\.\.|…)$/, "") : "";
+  }
   // The storage cell as icons and words: Unraid's glyphs keep their classes, the words are
   // escaped, and the tooltip span becomes the bubble text.
   function storage(td) {
@@ -81,21 +85,20 @@
     return { html: html.replace(/\s+/g, " ").trim(), tip: tip };
   }
   // A share or disk row: its name link leads to the settings page. A row without one is the
-  // per-disk breakdown Compute adds below its share.
+  // per-disk breakdown Compute adds below its share, and Recompute runs from its name cell.
   function readRow(tr) {
     var td = cells(tr), nameTd = td[0];
     var link = find(nameTd, function (n) { return tag(n) === "A" && /\/(Share|Disk)\?name=/.test(attr(n, "href")); });
     if (!link) {
-      var again = computeLink(nameTd);
+      var again = computeLink(nameTd), wait = waiting(nameTd);
+      if (wait) return { part: true, busy: wait };
       if (!again) return null;
       return { part: true, name: clean(text(nameTd)), size: clean(text(td[5])), outside: hasCls(tr, "warning"), again: again };
     }
     var browse = find(tr, function (n) { return tag(n) === "A" && hasCls(n, "view") && !!attr(n, "href"); });
     var orb = find(nameTd, function (n) { return tag(n) === "I" && hasCls(n, "orb"); });
     var tipSpan = orb && orb.parentNode && find(orb.parentNode, function (n) { return tag(n) === "SPAN"; });
-    var size = td[5], comp = computeLink(size);
-    // While Compute runs, Unraid writes a spinner and "Please wait" into the size cell.
-    var busy = find(size, function (n) { return tag(n) === "I" && hasCls(n, "fa-spin"); });
+    var size = td[5], comp = computeLink(size), busy = waiting(size);
     return {
       name: clean(text(link)), link: link, browse: browse,
       prot: !orb ? "" : hasCls(orb, "green-orb") ? "ok" : hasCls(orb, "yellow-orb") ? "warn" : "idle",
@@ -103,7 +106,7 @@
       comment: clean(text(td[1])),
       smb: clean(text(td[2])), nfs: clean(text(td[3])),
       store: storage(td[4]),
-      compute: comp, busy: busy ? clean(text(size)).replace(/\s*(\.\.\.|…)$/, "") : "",
+      compute: comp, busy: busy,
       size: comp || busy ? "" : clean(text(size)), free: clean(text(td[6])),
       parts: []
     };
@@ -117,7 +120,10 @@
       if (empty) { out.notice = clean(text(empty)); return; }
       var r = readRow(tr);
       if (!r) return;
-      if (r.part) { var last = out.shares[out.shares.length - 1]; if (last) last.parts.push(r); }
+      if (r.part) {
+        var last = out.shares[out.shares.length - 1];
+        if (last) { if (r.busy) last.busy = r.busy; else last.parts.push(r); }
+      }
       else out.shares.push(r);
     });
     return out;
@@ -149,30 +155,32 @@
     var off = !v || v === "-";
     return '<span class="cc-sht-chip' + (off ? " cc-sht-off" : "") + '">' + proto + " <b>" + esc(off ? t("off") : v) + "</b></span>";
   }
-  // Reading order: the name with its size, the comment, where the share lives and how it is
-  // exported, the per-disk split, and a footer with the actions and Compute in the corner.
+  function cornerBtn(kind, label) { return '<span class="cc-sht-cb" role="button" tabindex="0" data-act="' + kind + '">' + esc(label) + "</span>"; }
+  // Reading order: the name with its size and the actions in the top corner, the comment, where
+  // the share lives and how it is exported, the per-disk split, and Compute in the bottom corner.
+  // Compute and Recompute run the same computeShare, so the corner holds whichever the row offers.
   function cardHtml(sh, disk) {
-    var acts = (sh.browse ? act("browse", t("browse"), "Folder") : "") +
-      (sh.parts.length ? act("again", t("recompute"), "Refresh") : "") + act("open", t("settings"), "Gear");
+    var acts = (sh.browse ? act("browse", t("browse"), "Folder") : "") + act("open", t("settings"), "Gear");
     var dot = sh.prot ? '<span class="cc-sht-dot cc-sht-' + sh.prot + '"' + (sh.protTip ? ' data-tip="' + esc(sh.protTip) + '"' : "") + "></span>" : "";
     var pct = usage(sh, disk);
     var used = pct != null ? "<span><b>" + esc(Math.round(pct)) + " %</b> " + esc(t("of") + " " + sh.size + " " + t("used")) + "</span>"
       : sh.size ? "<span><b>" + esc(sh.size) + "</b> " + esc(t("used")) + "</span>" : "";
     var free = sh.free ? "<span><b>" + esc(sh.free) + "</b> " + esc(t("free")) + "</span>" : "";
-    var corner = sh.compute ? '<span class="cc-sht-cb" role="button" tabindex="0" data-act="compute">' + esc(t("compute")) + "</span>"
-      : sh.busy ? '<span class="cc-sht-busy">' + esc(sh.busy) + "</span>" : "";
+    var corner = sh.compute ? cornerBtn("compute", t("compute"))
+      : sh.busy ? '<span class="cc-sht-busy">' + esc(sh.busy) + "</span>"
+      : sh.parts.length ? cornerBtn("again", t("recompute")) : "";
     var parts = sh.parts.map(function (p) {
       return '<span class="cc-sht-part' + (p.outside ? " cc-sht-warn" : "") + '"' + (p.outside ? ' data-tip="' + esc(t("outside")) + '"' : "") + ">" + esc(p.name) + " <b>" + esc(p.size) + "</b></span>";
     }).join("");
-    return '<div class="cc-sht-head">' + dot + '<span class="cc-sht-nb">' + esc(sh.name) + "</span>" +
-      (used || free ? '<span class="cc-sht-size">' + used + free + "</span>" : "") + "</div>" +
+    return '<div class="cc-sht-head"><span class="cc-sht-title">' + dot + '<span class="cc-sht-nb">' + esc(sh.name) + "</span>" +
+      (used || free ? '<span class="cc-sht-size">' + used + free + "</span>" : "") + '</span><span class="cc-sht-acts">' + acts + "</span></div>" +
       (sh.comment ? '<div class="cc-sht-cmt">' + esc(sh.comment) + "</div>" : "") +
       '<div class="cc-sht-chips">' +
       (sh.store ? '<span class="cc-sht-chip cc-sht-store"' + (sh.store.tip ? ' data-tip="' + esc(sh.store.tip) + '"' : "") + ">" + sh.store.html + "</span>" : "") +
       exportChip("SMB", sh.smb) + exportChip("NFS", sh.nfs) + "</div>" +
       (pct != null ? '<div class="cc-sht-track"><div class="cc-sht-fill ' + lvl(pct) + '" style="width:' + Math.max(pct, 1.5).toFixed(1) + '%"></div></div>' : "") +
       (parts ? '<div class="cc-sht-parts">' + parts + "</div>" : "") +
-      '<div class="cc-sht-foot"><span class="cc-sht-acts">' + acts + "</span>" + corner + "</div>";
+      (corner ? '<div class="cc-sht-foot">' + corner + "</div>" : "");
   }
   function el(tagName, cls) { var n = document.createElement(tagName); if (cls) n.className = cls; return n; }
   function setHtml(n, v) { if (n && n.__ccHtml !== v) { n.innerHTML = v; n.__ccHtml = v; } }

@@ -62,7 +62,7 @@ function parse(html) {
 }
 const tbody = (rows) => parse('<tbody>' + rows + '</tbody>').children[0];
 
-const READERS = ['kids', 'tag', 'attr', 'hasCls', 'find', 'text', 'clean', 'esc', 'bytes', 'cells', 'computeLink', 'storage', 'readRow', 'readList', 'usage', 'press', 'run', 'cardOf', 'onClick', 'view'];
+const READERS = ['kids', 'tag', 'attr', 'hasCls', 'find', 'text', 'clean', 'esc', 'bytes', 'cells', 'computeLink', 'waiting', 'storage', 'readRow', 'readList', 'usage', 'press', 'run', 'cardOf', 'onClick', 'view'];
 function load(env) {
   const src = [grabVar(js, 'POW'), grabVar(js, 'KEY')].concat(READERS.map((n) => grabFn(js, n))).join('\n') + '\nreturn {' + READERS.join(',') + '};';
   return new Function('window', 'location', 'g', src)(env.window || {}, env.location || {}, env.g || (() => null));
@@ -124,30 +124,38 @@ console.log('\nThe readers follow Unraid\'s rows');
   ok('no shares: Unraid\'s own notice is kept', none.shares.length === 0 && none.notice === 'Es existieren keine zu exportierenden Datenträgerfreigaben');
 }
 
-console.log('\nA card reads name and size, comment, storage and exports, split, footer');
+console.log('\nA card reads name, size and actions, comment, storage and exports, split, Compute');
 {
   const txt = js.slice(js.indexOf('var TXT = {'), js.indexOf('};', js.indexOf('var TXT = {')) + 2);
-  const fns = ['kids', 'tag', 'attr', 'hasCls', 'find', 'text', 'clean', 'esc', 'bytes', 'cells', 'computeLink', 'storage', 'readRow', 'readList', 'usage', 't', 'glyph', 'lvl', 'act', 'exportChip', 'cardHtml'];
+  const fns = ['kids', 'tag', 'attr', 'hasCls', 'find', 'text', 'clean', 'esc', 'bytes', 'cells', 'computeLink', 'waiting', 'storage', 'readRow', 'readList', 'usage', 't', 'glyph', 'lvl', 'act', 'cornerBtn', 'exportChip', 'cardHtml'];
   const src = ['var LANG = "de";', txt, grabVar(js, 'POW')].concat(fns.map((n) => grabFn(js, n))).join('\n') + '\nreturn { readList, cardHtml };';
   const C = new Function('window', src)({});
   const html = (rows, disk) => C.cardHtml(C.readList(tbody(rows)).shares[0], disk);
   const card = (rows, disk) => parse('<div>' + html(rows, disk) + '</div>').children[0];
   const cls = (n) => (n && n.attrs.class) || '';
   const order = (n) => n.children.map(cls).join(' ');
+  const acts = (n) => n.children[0].children[1].children.map((b) => b.attrs['data-act']).join(' ');
   const media = card(MEDIA, false);
   ok('media: head, comment, chips and footer in that order', order(media) === 'cc-sht-head cc-sht-cmt cc-sht-chips cc-sht-foot', order(media));
-  ok('the free space stands on the name\'s line, right after the name badge', order(media.children[0]) === 'cc-sht-dot cc-sht-ok cc-sht-nb cc-sht-size' && html(MEDIA, false).includes('<b>9.09 TB</b> frei'));
+  ok('the head holds the title and, after it, the actions for the top corner', order(media.children[0]) === 'cc-sht-title cc-sht-acts');
+  ok('the free space stands on the name\'s line, right after the name badge', order(media.children[0].children[0]) === 'cc-sht-dot cc-sht-ok cc-sht-nb cc-sht-size' && html(MEDIA, false).includes('<b>9.09 TB</b> frei'));
+  ok('the top corner holds Durchsuchen and Einstellungen', acts(media) === 'browse open');
   ok('the storage badge leads, SMB and NFS follow on its row', order(media.children[2]) === 'cc-sht-chip cc-sht-store cc-sht-chip cc-sht-chip cc-sht-off');
   const foot = media.children[3];
-  ok('Berechnen comes last in the footer, after the actions', order(foot) === 'cc-sht-acts cc-sht-cb' && foot.children[1].attrs['data-act'] === 'compute');
+  ok('the footer holds Berechnen and nothing else', order(foot) === 'cc-sht-cb' && foot.children[0].attrs['data-act'] === 'compute');
   const backup = card(BACKUP, false);
-  ok('backup: used and free together in the head, the split before the footer', backup.children[0].children[2].children.length === 2 && order(backup) === 'cc-sht-head cc-sht-chips cc-sht-parts cc-sht-foot', order(backup));
-  ok('a computed share has no Berechnen in its footer', order(backup.children[3]) === 'cc-sht-acts');
+  ok('backup: used and free together in the head, the split before the footer', backup.children[0].children[0].children[2].children.length === 2 && order(backup) === 'cc-sht-head cc-sht-chips cc-sht-parts cc-sht-foot', order(backup));
+  ok('a computed share offers Neu berechnen in the same corner and not among the actions', order(backup.children[3]) === 'cc-sht-cb' && backup.children[3].children[0].attrs['data-act'] === 'again' && acts(backup) === 'browse open');
   const disk = card(DISK1, true);
   ok('a computed disk share keeps its bar between the chips and the split', order(disk) === 'cc-sht-head cc-sht-chips cc-sht-track cc-sht-parts cc-sht-foot', order(disk));
   const running = card(MEDIA.replace(/<a href='#' onclick="computeShare\('media',\$\(this\)\)">Berechnen\.\.\.<\/a>/, "<i class='fa fa-circle-o-notch fa-spin'></i> Bitte warten..."), false);
-  ok('while Compute runs its note takes the corner', cls(running.children[3].children[1]) === 'cc-sht-busy');
-  ok('the footer sits at the bottom and pushes Compute into the corner', /\.cc-sht-foot \{[^}]*margin-top: auto;/.test(css) && /\.cc-sht-foot > :is\(\.cc-sht-cb, \.cc-sht-busy\) \{ margin-left: auto; \}/.test(css));
+  ok('while Compute runs its note takes the corner', order(running.children[3]) === 'cc-sht-busy');
+  const again = card(BACKUP.replace(`<a class='view'></a><a href='#' title='Neu berechnen...' onclick="computeShare('backup',$(this).parent())"><i class='fa fa-refresh icon'></i></a>&nbsp;Datenträger 1`, "<i class='fa fa-circle-o-notch fa-spin'></i> Bitte warten..."), false);
+  ok('while Neu berechnen runs its note takes the corner as well', order(again.children[3]) === 'cc-sht-busy' && again.children[2].children.length === 1);
+  const bare = parse('<div>' + C.cardHtml(Object.assign(C.readList(tbody(BACKUP)).shares[0], { parts: [] }), false) + '</div>').children[0];
+  ok('a card with nothing for the corner has no footer', order(bare) === 'cc-sht-head cc-sht-chips', order(bare));
+  ok('the footer sits at the bottom and puts its button in the corner', /\.cc-sht-foot \{[^}]*justify-content: flex-end; margin-top: auto;/.test(css));
+  ok('the title wraps the size below the name, the actions keep their place', /\.cc-sht-title \{[^}]*flex: 1 1 auto; flex-wrap: wrap;/.test(css) && /\.cc-sht-acts \{[^}]*flex: none;/.test(css));
 }
 
 console.log('\nThe actions click the row\'s own controls');
