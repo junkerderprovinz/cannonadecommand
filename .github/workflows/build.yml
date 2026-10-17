@@ -35,11 +35,13 @@ jobs:
           CC_SOCK=/tmp/cc.sock CC_DATA_DIR=/tmp/ccdata CC_DOCKER_SOCK=/tmp/nope.sock "$BIN" serve &
           PID=$!
           for _ in $(seq 1 20); do [ -S /tmp/cc.sock ] && break; sleep 0.5; done
-          if ! curl -fsS --unix-socket /tmp/cc.sock http://localhost/api/health | grep -q ok; then
+          # Matched on a captured copy: a pipe into `grep -q` dies of SIGPIPE under
+          # pipefail when grep exits before curl has finished writing.
+          if ! grep -q ok <<< "$(curl -fsS --unix-socket /tmp/cc.sock http://localhost/api/health)"; then
             echo "health check failed"; kill "$PID" || true; exit 1
           fi
           # The docker socket is bogus, so /api/state answers with a docker_error.
-          curl -fsS --unix-socket /tmp/cc.sock http://localhost/api/state | grep -q docker_error
+          grep -q docker_error <<< "$(curl -fsS --unix-socket /tmp/cc.sock http://localhost/api/state)"
           echo "supervisor booted and served /api/health and /api/state"
           kill "$PID" || true
 
