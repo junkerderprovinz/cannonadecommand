@@ -1500,7 +1500,7 @@
     try {
       var lines = box.querySelectorAll("table.array_status td[id^='line']");
       var card = box.querySelector(".cc-aop-pcard");
-      if (!lines.length) { if (card) card.parentNode.removeChild(card); return; }
+      if (!lines.length) { if (card) card.parentNode.removeChild(card); ccAopParityRing(box, null); return; }
       if (!card) { card = el("div", "cc-aop-pcard"); var sec = lines[0].closest("section") || box; sec.appendChild(card); }
       // The top edge sits flush with the first button row, which a fixed CSS offset cannot do
       // because the badge row above varies in height. The card is out of flow, so measuring the
@@ -1550,7 +1550,31 @@
           if (pl2 && pl2.textContent !== lt) pl2.textContent = lt;
         }
       }
+      ccAopParityRing(box, pct);
     } catch (e) {}
+  }
+  // While a check runs, its status chip carries a progress ring with the share done (GlimStone: "a
+  // status ring becomes a progress ring while work runs"), and loses it when the check ends. The
+  // running check's row is the one with Unraid's pause button; its chip may have moved to the stack.
+  function ccAopParityRing(box, pct) {
+    var run = box.querySelector("table.array_status #pauseButton");
+    var home = run && run.closest("tr") ? run.closest("tr").children[0] : null;
+    var ref = home && home.getAttribute("data-cc-aop-pillhome");
+    var pill = ref ? box.querySelector('.cc-aop-status[data-cc-aop-pillref="' + ref + '"]') : home && home.querySelector(".cc-aop-status");
+    if (pct == null || !window.CCPictures) pill = null;
+    var ringed = box.querySelectorAll(".cc-aop-status.cc-aop-ringed");
+    for (var i = 0; i < ringed.length; i++) {
+      if (ringed[i] === pill) continue;
+      if (ringed[i].__ccRing && ringed[i].__ccRing.el.parentNode) ringed[i].__ccRing.el.parentNode.removeChild(ringed[i].__ccRing.el);
+      ringed[i].__ccRing = null; ringed[i].classList.remove("cc-aop-ringed");
+    }
+    if (!pill) return;
+    if (!pill.__ccRing) {
+      pill.__ccRing = window.CCPictures.ring((pill.textContent || "").trim());
+      pill.insertBefore(pill.__ccRing.el, pill.firstChild);
+      pill.classList.add("cc-aop-ringed");
+    }
+    pill.__ccRing.set(pct / 100);
   }
   // The status pills leave their grid rows for a tight stack of their own, so their spacing matches
   // the button gap instead of the row heights. Each pill remembers its home cell, so aopTeardown
@@ -1606,6 +1630,7 @@
   function aopTeardown() {
     try {
       var pc = document.querySelector("#displaybox .cc-aop-pcard"); if (pc) pc.parentNode.removeChild(pc);   // a pure mirror, and the rows unhide with the class
+      var dsp = document.getElementById("displaybox"); if (dsp) ccAopParityRing(dsp, null);
       var infos = document.querySelectorAll("#displaybox table.array_status .cc-info");
       for (var i = 0; i < infos.length; i++) infos[i].parentNode.removeChild(infos[i]);
       // moved link badges back into their row's description cell, with the bracketed text restored

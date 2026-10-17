@@ -307,7 +307,7 @@ console.log('\nThe array is a vessel on the left of its card');
   const box = () => { const b = kid(); b.parts = { '[data-f="vpct"]': kid() }; b.querySelector = (s) => b.parts[s]; b.insertBefore = () => {}; b.style = { setProperty() {}, removeProperty() {} }; return b; };
   const host = { kids: [], querySelector() { return this.kids[0] || null; }, insertBefore(n) { this.kids.unshift(n); }, removeChild(n) { this.kids.splice(this.kids.indexOf(n), 1); } };
   const pictures = { vessel(o) { const v = { el: {}, o, level: null, tone: null, setLevel(s) { v.level = s; return v; }, setTone(t) { v.tone = t; return v; } }; made.push(v); return v; } };
-  const src = [grabFn(js, 'arrayVessel'), grabFn(js, 'setText'), 'var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc')].join('\n') + '\nreturn arrayVessel;';
+  const src = [grabFn(js, 'arrayVessel'), grabFn(js, 'fillTone'), grabFn(js, 'setText'), 'var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc')].join('\n') + '\nreturn arrayVessel;';
   const arrayVessel = new Function('window', 'el', 'colourAt', 'LANG', src)({ CCPictures: pictures }, () => box(), () => '', 'de');
   const fs1 = { pct: 84.4, used: '43.9 TB', size: '52 TB' };
   arrayVessel(host, fs1);
@@ -323,7 +323,7 @@ console.log('\nThe array is a vessel on the left of its card');
   ok('past 95 % it turns red', v.tone === 'err');
   arrayVessel(host, null);
   ok('without a file system the vessel goes', host.kids.length === 0);
-  ok('the render feeds it from the totals row each time', /arrayVessel\(host, data\.total && data\.total\.fs\);/.test(js));
+  ok('the render feeds it from the totals row each time', /arrayUse = data\.total && data\.total\.fs;[^}]*arrayVessel\(host, arrayUse\);/.test(js));
   ok('it stands left of the disks, and above them on a phone', /\.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ display: grid; grid-template-columns: auto minmax\(0, 1fr\);/.test(css) && /@media \(max-width: 600px\) \{\s*html\.cc-dk-on #displaybox \.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
 }
 

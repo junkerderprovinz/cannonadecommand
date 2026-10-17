@@ -22,6 +22,7 @@
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
       member: "Gehört zum Pool %p", details: "Details", aopArray: "Array", aopDisks: "Platten", aopSystem: "System",
       spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten", arrayFill: "Füllstand des Arrays",
+      moving: "Mover läuft", movingTip: "Er verschiebt gerade Dateien zwischen den Pools und dem Array.",
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
       resting: "Spun down", used: "used", free: "free", of: "of", temp: "Temperature", read: "Read", write: "Write", errors: "errors",
@@ -30,6 +31,7 @@
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
       member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System", arrayFill: "Array fill level",
+      moving: "Mover running", movingTip: "It is moving files between the pools and the array.",
       hdd: "Hard disk", ssd: "SATA SSD", nvme: "NVMe SSD", usb: "USB flash drive" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
@@ -496,6 +498,7 @@
     if (f && window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
   }
 
+  function fillTone(p) { return p > 95 ? "err" : p >= 90 ? "warn" : "accent"; }
   // The array's fill level as a vessel on the left of its card (GlimStone: "A fill level is a
   // vessel"), orange from 90 % and red past 95 %. It is built once, so its liquid keeps sloshing,
   // and follows the numbers each time Unraid refills the table.
@@ -508,12 +511,50 @@
       box.insertBefore(box.__ccVessel.el, box.firstChild);
       host.insertBefore(box, host.firstChild);
     }
-    box.__ccVessel.setLevel(fs.pct / 100).setTone(fs.pct > 95 ? "err" : fs.pct >= 90 ? "warn" : "accent");
+    box.__ccVessel.setLevel(fs.pct / 100).setTone(fillTone(fs.pct));
     setText(box.querySelector('[data-f="vpct"]'), String(Math.round(fs.pct)));
     var tip = fs.used + " " + t("of") + " " + fs.size + " " + t("used");
     if (box.getAttribute("data-tip") !== tip) box.setAttribute("data-tip", tip);
     var c = colourAt(0);
     if (c) box.style.setProperty("--cc-dk-c", c); else box.style.removeProperty("--cc-dk-c");
+  }
+
+  // Unraid's own subscriber on /Main says what the array is busy with, and 2 is the mover. Its
+  // number reads the same in every language, where the button texts it sets would not.
+  var moving = false, arrayUse = null;
+  function watchMover() {
+    var mon = window.mymonitor;
+    if (!mon || typeof mon.on !== "function") return;
+    mon.on("message", function (state) {
+      var m = String(state) === "2";
+      if (m !== moving) { moving = m; soon(); }
+    });
+  }
+  // While the mover runs, the pools card shows its work as a picture: a line from each pool to the
+  // array, packets travelling on it at one speed, the array's vessel splashing as each one lands.
+  var MOVE_W = 220, MOVE_PITCH = 34;
+  function moverFlow(host, pools) {
+    var box = host.querySelector(":scope > .cc-dk-move");
+    var from = pools.filter(function (p) { return p.disks.length; });
+    var key = moving && window.CCPictures && from.length ? from.map(function (p) { return p.key; }).join("|") : "";
+    if (box && box.__ccKey !== key) { box.__ccFlows.forEach(function (f) { f.remove(); }); host.removeChild(box); box = null; }
+    if (!key) return;
+    if (!box) {
+      var h = Math.max(from.length * MOVE_PITCH, 56), top = (h - from.length * MOVE_PITCH) / 2 + MOVE_PITCH / 2;
+      var figures = from.map(function (p, i) {
+        var y = top + i * MOVE_PITCH;
+        return '<rect class="cc-dk-movepool" x="0" y="' + (y - 12) + '" width="92" height="24" rx="12"/><text class="cc-dk-movename" x="46" y="' + (y + 4) + '" text-anchor="middle">' + esc(p.name) + "</text>";
+      }).join("");
+      box = el("div", "cc-dk-move", '<div class="cc-dk-movetxt"><b>' + esc(t("moving")) + "</b><span>" + esc(t("movingTip")) + "</span></div>" +
+        '<div class="cc-dk-movepic"><svg viewBox="0 0 ' + MOVE_W + " " + h + '" width="' + MOVE_W + '" height="' + h + '" aria-hidden="true">' + figures + '</svg><span class="cc-dk-movedest"><span>' + esc(t("aopArray")) + "</span></span></div>");
+      var svg = box.querySelector("svg"), dest = box.querySelector(".cc-dk-movedest");
+      box.__ccVessel = window.CCPictures.vessel({ share: arrayUse ? arrayUse.pct / 100 : 0, label: t("arrayFill") });
+      dest.insertBefore(box.__ccVessel.el, dest.firstChild);
+      box.__ccFlows = from.map(function (p, i) { return window.CCPictures.flow(svg, [96, top + i * MOVE_PITCH], [MOVE_W, h / 2], { land: box.__ccVessel }); });
+      box.__ccKey = key;
+      host.appendChild(box);
+    }
+    if (arrayUse) box.__ccVessel.setLevel(arrayUse.pct / 100).setTone(fillTone(arrayUse.pct));
   }
 
   // The four sections, each found by the tbody Unraid fills and the box the list view shows.
@@ -619,6 +660,7 @@
       boxes.push(box);
     });
     order(wrap, boxes);
+    moverFlow(host, pools);
   }
   // Unassigned Devices' parts (its disks, the network shares, the past devices) share one wrapping
   // row, so they stand side by side where the section has room. UD finds them by class, wherever
@@ -708,7 +750,7 @@
     var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
     grid.style.setProperty("--cc-dk-n", data.disks.length);
     fillGrid(grid, cardsOf(data.disks, 0), colourAt);
-    if (S.key === "array") { strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : ""); arrayVessel(host, data.total && data.total.fs); }
+    if (S.key === "array") { arrayUse = data.total && data.total.fs; strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : ""); arrayVessel(host, arrayUse); }
     if (S.key === "boot") notesStrip(host, data.notes);
   }
 
@@ -820,6 +862,7 @@
     loadExtra();
     setInterval(loadExtra, 10 * 60 * 1000);
     watch();
+    watchMover();
     window.addEventListener("resize", level);
     window.addEventListener("storage", function (e) { if (e && e.key && /^cc[a-z]*\./.test(e.key) && e.key !== "cc.stateCache") soon(); });
   }

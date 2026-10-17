@@ -59,6 +59,20 @@ html.cc-dk-on.cc-shares-rbneutral #displaybox .cc-dk-host:not(:hover) > .cc-dk-v
   html.cc-dk-on #displaybox .cc-dk-vessel { grid-row: auto; flex-direction: row; align-self: start; gap: 8px; margin-bottom: 12px; }
   html.cc-dk-on #displaybox .cc-dk-vessel > .cc-vessel { width: 44px; height: 52px; margin: 0 4px 0 0; }
 }
+/* While the mover runs, a strip under the pools shows its picture: the pools as badges, a line
+   from each to the array's vessel, packets on the lines. */
+html.cc-dk-on #displaybox .cc-dk-move {
+  --cc-pic-c: var(--cc-dk-c, var(--cc-shr-accent, #FCC419));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; margin-top: 12px; padding: 10px 14px; contain: inline-size;
+  background: var(--cc-dk-card); border-radius: var(--cc-radius-card); font-size: var(--cc-text-subline); color: var(--cc-text-hint);
+}
+html.cc-dk-on #displaybox .cc-dk-movetxt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html.cc-dk-on #displaybox .cc-dk-movetxt b { color: var(--cc-text); font-weight: 600; }
+html.cc-dk-on #displaybox .cc-dk-movepic { display: flex; align-items: center; max-width: 100%; margin-left: auto; }
+html.cc-dk-on #displaybox .cc-dk-movepic > svg { flex: 0 1 auto; min-width: 0; max-width: calc(100% - 52px); height: auto; overflow: visible; }
+html.cc-dk-on #displaybox .cc-dk-movepool { fill: var(--cc-dk-c, var(--cc-shr-accent, #FCC419)); rx: min(12px, var(--cc-radius-pill)); }
+html.cc-dk-on #displaybox .cc-dk-movename { fill: var(--cc-dk-ct, var(--cc-shr-accent-text, #161616)); font-size: var(--cc-text-meta); font-weight: 600; }
+html.cc-dk-on #displaybox .cc-dk-movedest { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: var(--cc-text-meta); }
 /* Unassigned Devices' disks, network shares and past devices are three cards of their own, each
    under its own badge, so the section itself draws no card and its badge stays hidden. Its one
    column is as wide as the cards, and UD's controls, which stay in that head, sit at the right end
@@ -136,6 +150,7 @@ html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status::before { content: none; }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-ok { background: var(--cc-ok); color: var(--cc-ok-fg); }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-aop-status.cc-aop-warn { background: var(--cc-warn); color: var(--cc-warn-fg); }
+html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aop > .cc-aop-pills > .cc-b.cc-aop-status.cc-aop-ringed { height: auto; gap: 8px; padding: 4px 12px 4px 4px !important; }
 html.cc-dk-on.cc-on-main.cc-sections-main #displaybox .cc-dk-aopg {
   position: relative; flex: 1 1 300px; min-width: min(100%, 300px); box-sizing: border-box; padding: 24px 16px 12px !important;   /* Shares.css strips the left padding of anything holding an array_status table */
   background: var(--cc-dk-card); border-radius: var(--cc-radius-card);
