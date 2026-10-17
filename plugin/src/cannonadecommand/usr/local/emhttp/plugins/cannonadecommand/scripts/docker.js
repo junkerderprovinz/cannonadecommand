@@ -119,8 +119,8 @@
   // "CannonadeCommand" in both halves. "CC" is a source-code prefix, the cc- class namespace, the
   // CC_* constants and the cc.* keys, and it never leaves the source.
   var T = {
-    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", editFolder: "Ordner bearbeiten", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Nachzeichnen", iconTint: "Tönen", iconOriginal: "Original-Logo", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkRestartAll: "Alle neu starten", bulkUpdateAll: "Alle aktualisieren", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", folderColour: "Farbe", folderIcon: "Symbol", folderMembers: "Container", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen", thirdParty: "Drittanbieter", daemonDown: "Dienst nicht erreichbar, Limits und Bandbreite ruhen", manageInfo: "Nimmt den Container in den Startplan auf. CannonadeCommand startet ihn nach seinen Abhängigkeiten und wartet, bis er bereit ist.", watchdogInfo: "Startet den Container neu, wenn er abstürzt oder als unhealthy gemeldet wird." },
-    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", editFolder: "Edit folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Redraw", iconTint: "Tone", iconOriginal: "Original logo", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkRestartAll: "Restart all", bulkUpdateAll: "Update all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", folderColour: "Colour", folderIcon: "Icon", folderMembers: "Containers", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete", thirdParty: "Third party", daemonDown: "Service not reachable, limits and bandwidth are paused", manageInfo: "Adds the container to the start plan. CannonadeCommand starts it after its dependencies and waits until it is ready.", watchdogInfo: "Restarts the container when it crashes or reports unhealthy." },
+    de: { uptodate: "Aktuell", update: "Update", start: "Starten", stop: "Stoppen", restart: "Neustart", pause: "Pause", resume: "Fortsetzen", force: "Update erzwingen", save: "Startplan speichern", startorder: "In Reihenfolge starten", filter: "filtern…", search: "Suche", cols: "Badges", view: "Ansicht", list: "Liste", grid: "Raster", plan: "Startplan", done: "erledigt", saving: "speichere…", saved: "gespeichert", after: "nach", active: "aktiv", watchdog: "Auto-Start", wUnhealthy: "bei „unhealthy“", wExit: "bei Absturz (nicht bei normalem Stopp)", wMax: "max./Std.", schedules: "Zeitpläne", addsched: "+ Zeitplan", remove: "entfernen", manage: "Im Startplan verwalten", dependsOn: "Hängt ab von", commaSep: "kommagetrennt", dependsOnInfo: "Container, die laufen müssen, bevor dieser startet. CannonadeCommand startet sie zuerst, wartet, bis jeder von ihnen bereit meldet (womit „bereit“ gemeint ist, legst du unten unter „Bereit wenn“ fest), und startet erst danach diesen hier. Das Feld ist eine Auswahlliste: hineinklicken öffnet sie, jeder Klick nimmt einen Container auf oder wieder heraus, Tippen geht auch. Leer heißt: dieser Container wartet auf nichts und startet sofort.", startDelay: "Startverzögerung", startOrder: "Startnummer", startOrderPh: "Nr.", startOrderInfo: "Kleinere Zahl startet früher; leer/0 = ohne Nummer und startet zuletzt in Listenreihenfolge. Priorität, keine feste Reihenfolge; Doppelte sind erlaubt. Abhängigkeiten und Health-Gates gehen weiterhin vor.", secWait: "Sek. vor dem Start warten", readyWhen: "Bereit wenn", onFail: "Bei Fehlschlag", failhint: "abort überspringt Abhängige · continue/degrade starten sie trotzdem.", ramLimit: "RAM-Limit", cpuLimit: "CPU-Limit", cpuram: "CPU/RAM-Limits", ramPh: "z. B. 2G · 512M · leer = unverändert", cpuPh: "z. B. 1.5 · leer = unverändert", limitsFoot: "Sofort per Docker-Update angewendet, kein Neustart. Leeres Feld lässt den Wert unverändert. „Limit entfernen“ setzt auf unbegrenzt (Docker kann ein Limit live nicht ganz löschen, restlos weg erst durch Neu-Erstellen des Containers).", invalid: "Ungültige Eingabe", saveShort: "Speichern", ramNum: "z. B. 2 · leer = unverändert", cpuNum: "z. B. 1.5 · leer", cpuPin: "CPU-Pinning", cpuPinPh: "z. B. 0-3,6  (leer = alle)", cfgSet: "eingestellt", cfgUnset: "nicht eingestellt (Standard)", removeLim: "Limit entfernen", execPh: "Befehl im Container, z. B. pg_isready", logPh: "Text im Log, z. B. ready", bandwidth: "Bandbreite", egress: "Egress (Upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf-Shaper, Download = Netfilter-Policing (hashlimit) im Container, kein Kernel-Qdisc. Wird laufend angewendet; nach einem Container-Neustart erst im nächsten Zyklus wieder. Braucht nsenter + tc/iptables auf dem Host; die Schnittstelle stellst du in den Einstellungen ein.", idleStop: "Auto-Stop bei Leerlauf", idleMin: "Leerlauf-Minuten", idleCpu: "CPU-Schwelle %", idleFoot: "Stoppt den Container, wenn er längere Zeit nichts zu tun hat: CPU unter der Schwelle und kaum Netzwerkverkehr, beides gleichzeitig und ohne Unterbrechung. „Leerlauf-Minuten“ ist, wie lange das so bleiben muss, bevor CannonadeCommand stoppt; „CPU-Schwelle %“ ist, ab welcher Auslastung der Container als beschäftigt gilt. Ein beschäftigter Container wird nie gestoppt, und CannonadeCommand startet ihn danach auch nicht von selbst wieder.", restartPolicy: "Restart-Policy", rpNo: "Nein (kein Auto-Start)", rpUnlessStopped: "Außer wenn gestoppt", rpAlways: "Immer", rpOnFailure: "Bei Fehler", rpWarn: "kein Auto-Start", rpWarnTip: "Restart-Policy „no“: dieser Container startet nach einem Host-Neustart nicht automatisch.", depsOk: "Alle Abhängigkeiten bereit", depsBad: "Abhängigkeit nicht bereit:", depNotRun: "noch nicht geprüft", newFolder: "Neuer Ordner", editFolder: "Ordner bearbeiten", deleteFolder: "Ordner löschen", moveToFolder: "In Ordner verschieben", rootLevel: "(Wurzelebene)", iconMode: "Icon-Färbung", iconInherit: "folgt globaler Einstellung", iconAuto: "Automatisch", iconNative: "Natives Icon", iconFlat: "Nachzeichnen", iconTint: "Tönen", iconOriginal: "Original-Logo", hideStopped: "Gestoppte ausblenden", bulkStartAll: "Alle starten", bulkStopAll: "Alle stoppen", bulkRestartAll: "Alle neu starten", bulkUpdateAll: "Alle aktualisieren", bulkPauseAll: "Alle pausieren", bulkResumeAll: "Alle fortsetzen", allContainers: "Alle Container", barAdd: "Container hinzufügen", barCheck: "Nach Aktualisierungen suchen", barUpdateAll: "Alle aktualisieren", barSizes: "Containergröße", updateCt: "Aktualisieren", discardTitle: "Ungespeicherte Änderungen verwerfen?", discard: "Verwerfen", keepEditing: "Weiter bearbeiten", cancel: "Abbrechen", newFolderTitle: "Neuen Ordner anlegen", folderName: "Name des Ordners", create: "Anlegen", folderColour: "Farbe", folderIcon: "Symbol", folderMembers: "Container", deleteFolderTitle: "Ordner „%s“ löschen?", deleteShort: "Löschen", thirdParty: "Drittanbieter", daemonDown: "Dienst nicht erreichbar, Limits und Bandbreite ruhen", manageInfo: "Nimmt den Container in den Startplan auf. CannonadeCommand startet ihn nach seinen Abhängigkeiten und wartet, bis er bereit ist.", watchdogInfo: "Startet den Container neu, wenn er abstürzt oder als unhealthy gemeldet wird.", sceneTitle: "Startablauf", sceneInfo: "So startet CannonadeCommand die Container dieses Plans. Wer auf andere wartet, kommt nach ihnen dran, und ein Pfeil zeigt, auf wen. Ein Haken heißt bereit. Wartezeiten sind verkürzt, stehen aber im richtigen Verhältnis zueinander.", sceneFree: "Ohne Abhängigkeit", sceneCycle: "Diese Container warten im Kreis aufeinander. So startet der Plan nicht." },
+    en: { uptodate: "up to date", update: "Update", start: "Start", stop: "Stop", restart: "Restart", pause: "Pause", resume: "Resume", force: "Force update", save: "Save start plan", startorder: "Start in order", filter: "filter…", search: "Search", cols: "Badges", view: "View", list: "List", grid: "Grid", plan: "Start plan", done: "done", saving: "saving…", saved: "saved", after: "after", active: "active", watchdog: "Auto-start", wUnhealthy: "when unhealthy", wExit: "on crash (not on a normal stop)", wMax: "max/hour", schedules: "Schedules", addsched: "+ schedule", remove: "remove", manage: "Manage in the start plan", dependsOn: "Depends on", commaSep: "comma-separated", dependsOnInfo: "Containers that have to be running before this one starts. CannonadeCommand starts them first, waits until each of them reports ready (what “ready” means is set below under “Ready when”), and only then starts this one. The field is a picker: click it to open the list, each click adds or removes a container, and typing works too. Empty means this container waits for nothing and starts right away.", startDelay: "Start delay", startOrder: "Start order", startOrderPh: "no.", startOrderInfo: "Lower number starts earlier; empty/0 = unnumbered and starts last in list order. A priority, not a strict order; duplicates are fine. Dependencies and health-gates still take precedence.", secWait: "sec to wait before starting", readyWhen: "Ready when", onFail: "On fail", failhint: "abort skips dependents · continue/degrade start them anyway.", ramLimit: "RAM limit", cpuLimit: "CPU limit", cpuram: "CPU/RAM limits", ramPh: "e.g. 2G · 512M · empty = unchanged", cpuPh: "e.g. 1.5 · empty = unchanged", limitsFoot: "Applied instantly via Docker update, no restart. An empty field leaves the value unchanged. “Remove limit” sets it to unlimited (Docker can't fully unset a limit live, gone for good only by recreating the container).", invalid: "invalid value", saveShort: "Save", ramNum: "e.g. 2 · empty = unchanged", cpuNum: "e.g. 1.5 · empty", cpuPin: "CPU pinning", cpuPinPh: "e.g. 0-3,6  (empty = all)", cfgSet: "configured", cfgUnset: "not set (default)", removeLim: "Remove limit", execPh: "command in the container, e.g. pg_isready", logPh: "text in the log, e.g. ready", bandwidth: "Bandwidth", egress: "Egress (upload)", upload: "↑ Upload", download: "↓ Download", bwFoot: "Upload = tbf shaper, download = netfilter policing (hashlimit) inside the container, no kernel qdisc. Re-applied while running; after a container restart it returns on the next cycle. Needs nsenter + tc/iptables on the host; set the interface on the Settings page.", idleStop: "Auto-stop when idle", idleMin: "Idle minutes", idleCpu: "CPU threshold %", idleFoot: "Stops the container once it has had nothing to do for a while: CPU below the threshold and barely any network traffic, both at once and without a break. “Idle minutes” is how long that has to hold before CannonadeCommand stops it; “CPU threshold %” is the load above which the container counts as busy. A busy container is never stopped, and CannonadeCommand does not start it again by itself afterwards.", restartPolicy: "Restart policy", rpNo: "No (never)", rpUnlessStopped: "Unless stopped", rpAlways: "Always", rpOnFailure: "On failure", rpWarn: "no auto-start", rpWarnTip: "Restart policy “no”: this container will not auto-start after a host reboot.", depsOk: "All dependencies ready", depsBad: "Dependency not ready:", depNotRun: "not checked yet", newFolder: "New folder", editFolder: "Edit folder", deleteFolder: "Delete folder", moveToFolder: "Move to folder", rootLevel: "(Root level)", iconMode: "Icon colouring", iconInherit: "follows the global setting", iconAuto: "Automatic", iconNative: "Native icon", iconFlat: "Redraw", iconTint: "Tone", iconOriginal: "Original logo", hideStopped: "Hide stopped", bulkStartAll: "Start all", bulkStopAll: "Stop all", bulkRestartAll: "Restart all", bulkUpdateAll: "Update all", bulkPauseAll: "Pause all", bulkResumeAll: "Resume all", allContainers: "All containers", barAdd: "Add container", barCheck: "Check for updates", barUpdateAll: "Update all", barSizes: "Container size", updateCt: "Update", discardTitle: "Discard unsaved changes?", discard: "Discard", keepEditing: "Keep editing", cancel: "Cancel", newFolderTitle: "Create a folder", folderName: "Folder name", create: "Create", folderColour: "Colour", folderIcon: "Icon", folderMembers: "Containers", deleteFolderTitle: "Delete folder “%s”?", deleteShort: "Delete", thirdParty: "Third party", daemonDown: "Service not reachable, limits and bandwidth are paused", manageInfo: "Adds the container to the start plan. CannonadeCommand starts it after its dependencies and waits until it is ready.", watchdogInfo: "Restarts the container when it crashes or reports unhealthy.", sceneTitle: "Start sequence", sceneInfo: "How CannonadeCommand starts the containers in this plan. A container that waits for others comes after them, and an arrow shows which ones. A check means ready. Delays are shortened but keep their proportions.", sceneFree: "No dependencies", sceneCycle: "These containers wait for each other in a circle, so the plan will not start." },
   };
   function t(k) { return (T[LANG] || T.en)[k] || T.en[k]; }
   var STATE_LABELS = {
@@ -865,9 +865,11 @@
         if (n.tagName === "IMG") n.style.setProperty("object-fit", "contain", "important");
         else n.style.setProperty("font-size", lgImg, "important");
       }
-      // the grid runs the same pipeline as the rows, so one decision covers both layouts
-      if (gridHolder) {
-        var g = gridHolder.querySelectorAll("img.cc-card-ico");
+      // The grid and the start plan's scene run the same pipeline as the rows, so one decision
+      // covers every layout.
+      [gridHolder, sceneRoot].forEach(function (root) {
+        if (!root || !root.isConnected) return;
+        var g = root.querySelectorAll("img.cc-card-ico");
         var gnames = [];
         for (var j = 0; j < g.length; j++) {
           var gn = g[j].getAttribute("data-cc-name") || "";
@@ -876,7 +878,7 @@
           setIconSrc(g[j], gp.url);
           var gFlat = flat, gTint = f, gInk = ink;
           if (adopt) {
-            gInk = itemAdoptInk(g[j].closest(".cc-card"));
+            gInk = itemAdoptInk(g[j].closest(".cc-card, .cc-sn"));
             var cardBlk = gInk !== "#fff";
             gFlat = cardBlk ? flatBlk : flatWht;
             gTint = cardBlk ? fBlk : fWht;
@@ -884,7 +886,7 @@
           g[j].style.filter = gp.treat === "native" ? "" : gp.treat === "flat" ? gFlat : gp.treat === "knock" ? CI.knock(gInk, gp.tile, str) : gTint;
         }
         if (CI && gnames.length) CI.want(gnames);
-      }
+      });
     } catch (e) {}
   }
   // The rotating rainbow: the mapping from badge kind to colour shifts by a shared offset, so
@@ -3384,6 +3386,173 @@
     wrap.appendChild(input); wrap.appendChild(btn);
     return wrap;
   }
+  // The plan's start stages as the engine forms them (orchestrator.TopoStages): a dependency on a
+  // container outside the plan joins it as a node of its own, a stage holds every node whose
+  // dependencies an earlier stage has started, and the start order sorts within a stage. Nodes
+  // caught in a cycle come back in stuck, since the engine refuses to run such a plan.
+  function planStages(nodes) {
+    var list = nodes.slice(), known = {}, indeg = {}, dependents = {};
+    list.forEach(function (n) { known[n.name] = true; });
+    nodes.forEach(function (n) { (n.after || []).forEach(function (d) { if (d && !known[d]) { known[d] = true; list.push({ name: d, after: [] }); } }); });
+    list.forEach(function (n) { indeg[n.name] = 0; });
+    list.forEach(function (n) { (n.after || []).forEach(function (d) { if (!d) return; indeg[n.name]++; (dependents[d] = dependents[d] || []).push(n.name); }); });
+    var rank = function (n) { return n.start_order > 0 ? n.start_order : 1 << 30; };
+    var stages = [], left = list;
+    while (left.length) {
+      var stage = left.filter(function (n) { return indeg[n.name] === 0; });
+      if (!stage.length) break;
+      stage.sort(function (a, b) { return rank(a) - rank(b); });
+      stage.forEach(function (n) { (dependents[n.name] || []).forEach(function (d) { indeg[d]--; }); });
+      left = left.filter(function (n) { return stage.indexOf(n) < 0; });
+      stages.push(stage);
+    }
+    return { stages: stages, stuck: left };
+  }
+  // When each station of the scene lights up and when it is ready, in milliseconds. A stage waits
+  // for every station of the one before it. Within a stage the stations follow their start order a
+  // moment apart, and a start delay holds a station back by its share of the longest delay in the
+  // plan, so the waits keep their proportions without making anyone sit through them.
+  var SCENE_READY = 700, SCENE_GAP = 600, SCENE_DELAY = 1500;
+  function sceneTimes(stages) {
+    var longest = 0, at = {}, t = 300;
+    stages.forEach(function (st) { st.forEach(function (n) { longest = Math.max(longest, n.delay_seconds || 0); }); });
+    stages.forEach(function (st) {
+      var step = Math.min(140, 1200 / st.length), end = t;
+      st.forEach(function (n, i) {
+        var start = t + i * step + (longest ? (n.delay_seconds || 0) / longest * SCENE_DELAY : 0);
+        at[n.name] = { start: start, ready: start + SCENE_READY };
+        end = Math.max(end, start + SCENE_READY);
+      });
+      t = end + SCENE_GAP;
+    });
+    return at;
+  }
+  // The start plan as a scene in its window (GlimStone, "Illustrations"): every container of the
+  // plan is a station with its logo, an arrow runs from each dependency to the container that waits
+  // for it, and the stations light up in the order the engine starts them, each with a drawn check
+  // once it is ready. Containers that neither wait nor are waited for start in the first stage and
+  // stand small in a strip of their own, so a long plan keeps its chains readable. The scene plays
+  // once when the window opens and again when the plan changes, and shows its end frame at once
+  // under reduced motion and at the motion level "off".
+  var sceneRoot = null;
+  function planScene(focus) {
+    var P = window.CCPictures, de = LANG === "de";
+    var fig = el("figure", "cc-plan-scene"); fig.setAttribute("role", "img");
+    var cap = el("figcaption", "cc-plan-scene-cap", t("sceneTitle")); cap.appendChild(infoBubble(t("sceneInfo"))); fig.appendChild(cap);
+    var chain = el("div", "cc-plan-scene-chain"), lines = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    lines.setAttribute("class", "cc-plan-scene-lines"); lines.setAttribute("aria-hidden", "true");
+    var freeHead = el("div", "cc-plan-scene-sub", t("sceneFree")), free = el("div", "cc-plan-scene-free"), stuckNote = el("div", "cc-plan-scene-stuck", t("sceneCycle"));
+    fig.appendChild(chain); fig.appendChild(freeHead); fig.appendChild(free); fig.appendChild(stuckNote);
+    var at = {}, edges = [], stations = {}, timers = [], started = 0, sig = "";
+
+    function station(name) {
+      var s = el("div", "cc-sn" + (name === focus ? " cc-sn-focus" : "")); s.dataset.name = name; s.setAttribute("data-tip", name);
+      stampCardRainbow(s, name);
+      var ico = cardIcon(name, "cc-sn-ico"); ico.appendChild(el("span", "cc-sn-ok"));
+      s.appendChild(ico); s.appendChild(el("span", "cc-sn-name", name));
+      stations[name] = s;
+      return s;
+    }
+    function build(ps) {
+      chain.innerHTML = ""; free.innerHTML = ""; stations = {}; edges = [];
+      chain.appendChild(lines);
+      var linked = {};
+      ps.stages.concat([ps.stuck]).forEach(function (st) { st.forEach(function (n) { (n.after || []).forEach(function (d) { if (!d) return; edges.push({ from: d, to: n.name }); linked[d] = linked[n.name] = true; }); }); });
+      var cols = ps.stages.map(function (st) { return st.filter(function (n) { return linked[n.name]; }); }).filter(function (st) { return st.length; });
+      if (ps.stuck.length) cols.push(ps.stuck);
+      cols.forEach(function (st, i) {
+        var col = el("div", "cc-plan-scene-stage" + (i === cols.length - 1 && ps.stuck.length ? " cc-plan-scene-cycle" : ""));
+        st.forEach(function (n) { col.appendChild(station(n.name)); });
+        chain.appendChild(col);
+      });
+      (ps.stages[0] || []).forEach(function (n) { if (!linked[n.name]) free.appendChild(station(n.name)); });
+      chain.classList.toggle("cc-hidden", !cols.length);
+      freeHead.classList.toggle("cc-hidden", !cols.length || !free.children.length);
+      free.classList.toggle("cc-hidden", !free.children.length);
+      stuckNote.classList.toggle("cc-hidden", !ps.stuck.length);
+      fig.classList.toggle("cc-rainbow", localStorage.getItem("cc.rainbow") === "1");
+      fig.classList.toggle("cc-docker-iconbg", iconBgOn());
+      var said = ps.stages.map(function (st) { return st.map(function (n) { return n.name; }).join(", "); });
+      fig.setAttribute("aria-label", t("sceneTitle") + ": " + said.join(de ? ", dann " : ", then "));
+    }
+    // Large stations while every stage fits beside the others, small ones when not; a stage too
+    // long for one column runs into a second.
+    function fit() {
+      chain.classList.remove("cc-plan-scene-small");
+      var cols = chain.querySelectorAll(".cc-plan-scene-stage");
+      if (cols.length && cols[cols.length - 1].offsetTop > cols[0].offsetTop) chain.classList.add("cc-plan-scene-small");
+    }
+    // Offsets rather than client rectangles, because the window scales in as it opens and a
+    // rectangle read during that would put the arrows off their stations. A station's tooltip
+    // makes it a positioned box, so the offsets are summed up to the chain.
+    function box(name) {
+      var b = stations[name].querySelector(".cc-card-icobox"), x = 0, y = 0;
+      for (var n = b; n && n !== chain; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
+      return { x: x, y: y + b.offsetHeight / 2, w: b.offsetWidth };
+    }
+    function draw() {
+      while (lines.firstChild) lines.removeChild(lines.firstChild);
+      lines.setAttribute("viewBox", "0 0 " + chain.clientWidth + " " + chain.clientHeight);
+      edges.forEach(function (e) {
+        if (!stations[e.from] || !stations[e.to]) return;
+        var a = box(e.from), b = box(e.to), from = [a.x + a.w + 3, a.y], to = [b.x - 4, b.y];
+        var f = P.flow(lines, from, to, { gap: 22, size: 1.8 });
+        f.el.classList.add("cc-plan-scene-edge");
+        var head = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        head.setAttribute("class", "cc-plan-scene-head");
+        head.setAttribute("d", "M" + (to[0] - 5) + " " + (to[1] - 4) + "L" + to[0] + " " + to[1] + "L" + (to[0] - 5) + " " + (to[1] + 4));
+        f.el.appendChild(head);
+        e.el = f.el;
+      });
+    }
+    function paint(ms) {
+      Object.keys(stations).forEach(function (n) {
+        // A station caught in a cycle has no time, since the engine never starts it.
+        var s = stations[n], w = at[n];
+        s.classList.toggle("cc-sn-on", !!w && ms >= w.start);
+        if (w && ms >= w.ready && !s.classList.contains("cc-sn-ready")) { s.classList.add("cc-sn-ready"); P.drawCheck(s.querySelector(".cc-sn-ok")); }
+      });
+      edges.forEach(function (e) {
+        if (!e.el) return;
+        var from = at[e.from], to = at[e.to];
+        var on = !!from && ms >= from.ready;
+        e.el.classList.toggle("cc-plan-scene-on", on);
+        e.el.classList.toggle("cc-plan-scene-live", on && !!to && ms < to.start + 400);
+      });
+    }
+    function elapsed() { return P.still() || !started ? Infinity : performance.now() - started; }
+    function play() {
+      timers.forEach(clearTimeout); timers = [];
+      Object.keys(stations).forEach(function (n) { stations[n].classList.remove("cc-sn-on", "cc-sn-ready"); });
+      fit(); draw();
+      started = performance.now();
+      if (P.still()) { paint(Infinity); return; }
+      var marks = [0];
+      Object.keys(at).forEach(function (n) { marks.push(at[n].start, at[n].ready, at[n].start + 400); });
+      marks.forEach(function (ms) { timers.push(setTimeout(function () { if (fig.isConnected) paint(elapsed()); }, ms)); });
+    }
+    function update() {
+      var nodes = collectPlan().nodes, ps = planStages(nodes);
+      var next = JSON.stringify(ps.stages.concat([ps.stuck]).map(function (st) { return st.map(function (n) { return [n.name, n.after || [], n.delay_seconds || 0]; }); }));
+      fig.classList.toggle("cc-hidden", !nodes.length);
+      if (next === sig) return;
+      sig = next;
+      build(ps); at = sceneTimes(ps.stages);
+      sceneRoot = fig; applyIconTint();
+      if (fig.isConnected && nodes.length) play();
+    }
+    // A change of the window's width moves the stations, so the arrows are drawn again at the
+    // moment the scene has reached.
+    var ro = new ResizeObserver(function () { if (!fig.isConnected) { ro.disconnect(); return; } if (started) { fit(); draw(); paint(elapsed()); } });
+    ro.observe(fig);
+    var soon = 0;
+    return {
+      el: fig,
+      update: update,
+      // Typing in a field commits on every key, and the scene waits for a pause before it plays.
+      changed: function () { clearTimeout(soon); soon = setTimeout(function () { if (fig.isConnected) update(); }, 500); }
+    };
+  }
   function openEditor(anchor, name) {
     if (togglePop(anchor)) return;
     closePop();
@@ -3400,6 +3569,7 @@
     manageTog.addEventListener("click", flipManage);
     manageTog.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); flipManage(); } });
     var mrow = el("div", "cc-pop-row cc-pop-toggle"); mrow.appendChild(el("span", "cc-pop-sech", t("manage"))); mrow.appendChild(infoBubble(t("manageInfo"))); mrow.appendChild(el("span", "cc-set-spacer")); mrow.appendChild(manageTog); pop.appendChild(mrow);
+    var scene = planScene(name); pop.appendChild(scene.el);
     var body = el("div", "cc-pop-body" + (existing ? "" : " cc-dis"));
     // This is the one field in the window whose behaviour the control does not show: a text box
     // holding a comma list that is really a click-to-toggle multi-select, feeding an ordering
@@ -3586,6 +3756,7 @@
     var opened = draft();
     pop._unsaved = function () { return draft() !== opened; };
     function commit() {
+      scene.changed();
       if (!manageOn) { delete workingPlan[name]; body.classList.add("cc-dis"); refreshChip(anchor, name); return; }
       body.classList.remove("cc-dis");
       var afterList = after.value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
@@ -3617,6 +3788,7 @@
     // listener above still fires.
     Array.prototype.slice.call(pop.querySelectorAll("select:not([data-cc-dsel])")).forEach(function (s) { try { ctWrapSelect(s); } catch (e) {} });
     placePop(pop, anchor, 320);   // Rule 15: anchors head/foot, clamps into the viewport, locks the page behind it
+    scene.update();
   }
 
   // The CPU and RAM limits editor, on top of Docker's container update.

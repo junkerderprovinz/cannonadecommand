@@ -815,6 +815,38 @@ html.cc-scrolllock body { padding-right: var(--cc-sbw, 0px); }   /* the width th
    whose padding sits on the trigger inside it, does not have. A basis only decides anything where
    a row has more than one control to split, so the other rows are unaffected. */
 .cc-pop.cc-pop-plan .cc-pop-row .cc-dsel { flex: 1 1 16px; }
+/* The start plan's scene: its stations in the order the engine starts them and an arrow from each
+   dependency to the container that waits for it. A station rests grey and takes its colour in one
+   step when its turn comes, and its check badge stays hidden until it is ready. The packets on an
+   arrow show only while the container at its end is about to start. */
+.cc-plan-scene { --cc-pic-c: var(--cc-rbaccent, var(--cc-accent, #FCC419)); display: flex; flex-direction: column; gap: 8px; margin: 6px 14px 4px; padding: 8px 10px 10px; border-radius: var(--cc-radius-card); background: var(--cc-surface-2, #222222); }
+.cc-plan-scene-cap { display: flex; align-items: center; gap: 6px; font-size: var(--cc-text-subline); font-weight: 600; }
+.cc-plan-scene-chain { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 40px; row-gap: 14px; padding: 4px 0; }
+.cc-plan-scene-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cc-plan-scene-stage { display: grid; grid-auto-flow: column; grid-template-rows: repeat(4, auto); gap: 10px 8px; justify-items: center; }
+.cc-plan-scene-small { column-gap: 26px; }
+.cc-plan-scene-small .cc-plan-scene-stage { grid-template-rows: repeat(6, auto); gap: 6px; }
+.cc-sn { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 76px; }
+.cc-sn .cc-card-icobox { position: relative; width: 40px; height: 40px; }
+.cc-sn-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cc-dim, #8a8a8a); font-size: var(--cc-text-meta); line-height: 1.2; }
+.cc-plan-scene-small .cc-sn, .cc-plan-scene-free .cc-sn { width: auto; }
+.cc-plan-scene-small .cc-sn-name, .cc-plan-scene-free .cc-sn-name { display: none; }
+.cc-plan-scene-small .cc-sn .cc-card-icobox, .cc-plan-scene-free .cc-sn .cc-card-icobox { width: 28px; height: 28px; }
+.cc-plan-scene-sub { color: var(--cc-dim, #8a8a8a); font-size: var(--cc-text-meta); }
+.cc-plan-scene-free { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.cc-plan-scene-stuck { color: var(--cc-err-ink, #ff8389); font-size: var(--cc-text-meta); }
+.cc-sn:not(.cc-sn-on) .cc-card-icobox { filter: grayscale(1); opacity: .4; }
+.cc-sn-focus .cc-card-icobox { box-shadow: 0 0 0 2px var(--cc-surface-2, #222222), 0 0 0 4px var(--cc-pic-c); }
+.cc-plan-scene.cc-docker-iconbg .cc-card-icobox { background: var(--cc-iconbg-color, var(--cc-accent, #FCC419)); }
+.cc-plan-scene.cc-docker-iconbg.cc-rainbow .cc-card-icobox { background: var(--cc-iconbg-color, var(--cc-rb-c, var(--cc-accent, #FCC419))); }
+.cc-sn-ok { position: absolute; right: -5px; bottom: -5px; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--cc-surface-2, #222222); color: var(--cc-ok-ink, #6fdc8c); }
+.cc-sn-ok > .cc-check { width: 11px; height: 11px; }
+.cc-plan-scene-small .cc-sn-ok, .cc-plan-scene-free .cc-sn-ok { right: -4px; bottom: -4px; width: 12px; height: 12px; }
+:is(.cc-plan-scene-small, .cc-plan-scene-free) .cc-sn-ok > .cc-check { width: 8px; height: 8px; }
+.cc-sn:not(.cc-sn-ready) .cc-sn-ok { visibility: hidden; }
+.cc-plan-scene-edge .cc-flow-line, .cc-plan-scene-head { fill: none; stroke: var(--cc-dim, #8a8a8a); stroke-opacity: .45; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cc-plan-scene-on .cc-flow-line, .cc-plan-scene-on .cc-plan-scene-head { stroke: var(--cc-pic-c); stroke-opacity: .85; }
+.cc-plan-scene-edge:not(.cc-plan-scene-live) .cc-flow-packets { display: none; }
 /* every editor field in the same box: no border, a lighter background */
 .cc-in { flex: 1; background: #2e2e2e; color: #e6e6e6; border: none !important; border-radius: var(--cc-radius-control); padding: 5px 8px; font-size: var(--cc-text-meta); }
 /* Focus is a brightness step, never a ring, and it sets background-color rather than the

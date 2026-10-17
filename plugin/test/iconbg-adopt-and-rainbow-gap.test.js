@@ -67,10 +67,10 @@ console.log('\niconBgOn(): the shared gate is the Logo tiles switch, whatever ad
 
 console.log('\nAll three .cc-docker-iconbg call sites go through the shared helper');
 {
-  // renderGrid() and renderFolderView() write an identical line, so counting the
-  // occurrences is what shows both of them, and not one alone, were changed.
+  // renderGrid(), renderFolderView() and the start plan's scene write an identical line, so
+  // counting the occurrences is what shows each of them, and not one alone, were changed.
   const matches = src.match(/classList\.toggle\("cc-docker-iconbg",\s*iconBgOn\(\)\)/g) || [];
-  ok('three call sites gate on iconBgOn(): the table, the classic Grid and the Folder view', matches.length === 3, String(matches.length));
+  ok('four call sites gate on iconBgOn(): the table, the classic Grid, the Folder view and the plan scene', matches.length === 4, String(matches.length));
   ok('no call site inlines its own check', !/classList\.toggle\("cc-docker-iconbg",\s*effc\("iconbg"\)\s*===\s*"1"\)/.test(src));
 }
 
