@@ -2389,62 +2389,40 @@
     }
     return out;
   }
-  // The bell swings instead of wearing Connect's corner badge: once when unread notifications
-  // first show, again whenever a new one arrives, and every 30 seconds while any stay unread.
-  var CC_BELL_RANK = { "": 0, notice: 1, warning: 2, alert: 3 };
-  var ccBellSpan = null, ccBellObs = null, ccBellLvl = null, ccBellCount = null, ccBellTimer = 0, ccBellLast = 0, ccBellNchan = false;
+  // The bell swings instead of wearing Connect's corner badge, on a CSS beat that runs while
+  // anything is unread (cc-bell-ring). The badge's level goes into data-cc-bell for the dot that
+  // stands in where nothing may move.
+  var ccBellSpan = null, ccBellObs = null;
   function ccBellLevel(span) {
     var mark = span && span.querySelector('[class*="absolute"]');
     if (!mark) return "";
     var cls = mark.getAttribute("class") || "";
     return /red/.test(cls) ? "alert" : /yellow|orange|amber/.test(cls) ? "warning" : "notice";
   }
-  function ccBellRing() {
-    clearTimeout(ccBellTimer); ccBellTimer = 0;
-    var span = ccBellSpan;
-    if (!span || !ccBellLvl) return;
-    ccBellTimer = setTimeout(ccBellRing, 30000);                   // the reminder counts from the latest swing
-    var now = Date.now();
-    if (now - ccBellLast < 1500 || document.hidden || span.getAttribute("aria-expanded") === "true") return;
-    if (window.CCPictures && window.CCPictures.still()) return;
-    ccBellLast = now;
-    span.classList.remove("cc-bell-ring");
-    void span.offsetWidth;                                         // a swing still running starts over
-    span.classList.add("cc-bell-ring");
+  function ccBellSwinging(span) {
+    var glyph = span.querySelector('svg:not([class*="absolute"])');
+    return !!(glyph && glyph.getAnimations().some(function (a) { return a.animationName === "cc-bell-swing" && a.playState === "running"; }));
   }
   function ccBellSync() {
-    var span = ccBellSpan, lvl = ccBellLevel(span), was = ccBellLvl || "";
-    ccBellLvl = lvl;
+    var span = ccBellSpan, lvl = ccBellLevel(span);
     if (!span) return;
     if (lvl) span.setAttribute("data-cc-bell", lvl); else span.removeAttribute("data-cc-bell");
     span.setAttribute("data-cc-tip", lvl ? T("Ungelesene Benachrichtigungen", "Unread notifications") : T("Benachrichtigungen", "Notifications"));
-    if (!lvl) { clearTimeout(ccBellTimer); ccBellTimer = 0; return; }
-    // The level outlives the span, so a fresh span Connect swaps in with the same badge is no news.
-    if (CC_BELL_RANK[lvl] > CC_BELL_RANK[was]) ccBellRing();
-    else if (!ccBellTimer) ccBellTimer = setTimeout(ccBellRing, 30000);
-  }
-  // Unraid still publishes the whole unread list on its notify channel whenever it changes, which
-  // catches a new notification at a level the bell already shows.
-  function ccBellNews(msg) {
-    var list;
-    try { list = JSON.parse(msg); } catch (e) { return; }
-    if (!Array.isArray(list)) return;
-    if (ccBellCount !== null && list.length > ccBellCount) ccBellRing();
-    ccBellCount = list.length;
+    // A class write is a mutation even when it changes nothing, and the observer would call this
+    // again, so only a real change is written. A swing under way ends at the close of its beat.
+    var ring = span.classList.contains("cc-bell-ring");
+    if (lvl && !ring) span.classList.add("cc-bell-ring");
+    else if (!lvl && ring && !ccBellSwinging(span)) span.classList.remove("cc-bell-ring");
   }
   function ccBellWatch(span) {
     if (span === ccBellSpan) return;
     if (ccBellObs) { ccBellObs.disconnect(); ccBellObs = null; }
     ccBellSpan = span;
-    if (!span) { clearTimeout(ccBellTimer); ccBellTimer = 0; return; }
+    if (!span) return;
     ccBellObs = new MutationObserver(ccBellSync);
     ccBellObs.observe(span, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
-    span.addEventListener("animationend", function (e) { if (e.animationName === "cc-bell-swing") span.classList.remove("cc-bell-ring"); });
+    span.addEventListener("animationiteration", function (e) { if (e.animationName === "cc-bell-swing" && !span.hasAttribute("data-cc-bell")) span.classList.remove("cc-bell-ring"); });
     ccBellSync();
-    if (!ccBellNchan && window.defaultPage && window.defaultPage.on) {
-      ccBellNchan = true;
-      window.defaultPage.on("message", function (msg, meta) { try { if (meta.id.channel() === 2) ccBellNews(msg); } catch (e) {} });
-    }
   }
   function ccDockProfile() {
     try {

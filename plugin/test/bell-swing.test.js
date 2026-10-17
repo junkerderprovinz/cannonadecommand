@@ -1,7 +1,8 @@
 // The header bell tells of unread notifications by swinging instead of wearing Connect's corner
-// badge: once when they first show, again for each new one, and every 30 seconds while any stay
-// unread. The box takes the colour of the highest level, and where nothing may move a calm sign
-// stays, so unread notifications never go unseen.
+// badge: a calm beat every 1.6 seconds while anything is unread, until all are read. The box looks
+// like every other header button, and where nothing may move a dot in the highest level's colour
+// stays, so unread notifications never go unseen. The beat is a CSS animation, so the main thread
+// does no work for it.
 const fs = require('fs');
 const path = require('path');
 const { DIR, candidates } = require('./cascade');
@@ -17,182 +18,175 @@ function grabFn(src, name) {
   for (let k = src.indexOf('{', i); k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}') { d--; if (!d) return src.slice(i, k + 1); } }
   throw new Error('unbalanced function: ' + name);
 }
-
-// A clock the test moves by hand, so half a minute takes no time.
-let now = 1e6, timers = [], seq = 0;
-const setT = (fn, ms) => { const id = ++seq; timers.push({ id, at: now + (ms || 0), fn }); return id; };
-const clearT = (id) => { timers = timers.filter((t) => t.id !== id); };
-function advance(ms) {
-  const end = now + ms;
-  for (;;) {
-    timers.sort((a, b) => a.at - b.at);
-    const t = timers[0];
-    if (!t || t.at > end) break;
-    timers.shift(); now = t.at; t.fn();
-  }
-  now = end;
-}
+const FNS = ['ccBellLevel', 'ccBellSwinging', 'ccBellSync', 'ccBellWatch'];
 
 const BADGE = { alert: 'absolute -top-1 -right-1 size-4 rounded-full text-unraid-red', warning: 'absolute -top-1 -right-1 size-4 rounded-full text-yellow-500 translate-y-0.5', notice: 'absolute top-0 right-0 size-2.5 rounded-full border border-neutral-800 bg-unraid-green' };
-// The trigger span, with the badge Connect draws for a level, or none.
+// The trigger span with the badge Connect draws for a level, or none. swinging says whether the
+// stylesheet has the beat running on the glyph right now.
 function bell(level) {
   const attrs = { 'aria-expanded': 'false' }, cls = new Set(), on = {};
   const s = {
-    swings: 0, level,
-    querySelector: () => (s.level ? { getAttribute: () => BADGE[s.level] } : null),
+    level, swinging: false, writes: 0,
+    querySelector: (sel) => (/^svg:not/.test(sel)
+      ? { getAnimations: () => (s.swinging ? [{ animationName: 'cc-bell-swing', playState: 'running' }] : []) }
+      : (s.level ? { getAttribute: () => BADGE[s.level] } : null)),
     getAttribute: (k) => (k in attrs ? attrs[k] : null), setAttribute: (k, v) => { attrs[k] = String(v); }, removeAttribute: (k) => { delete attrs[k]; },
-    classList: { add: (c) => { if (c === 'cc-bell-ring') s.swings++; cls.add(c); }, remove: (c) => cls.delete(c), contains: (c) => cls.has(c) },
-    offsetWidth: 36,
+    hasAttribute: (k) => k in attrs,
+    classList: { add: (c) => { s.writes++; cls.add(c); }, remove: (c) => { s.writes++; cls.delete(c); }, contains: (c) => cls.has(c) },
     addEventListener: (e, f) => { on[e] = f; }, fire: (e, name) => on[e] && on[e]({ animationName: name }),
   };
+  s.ringing = () => cls.has('cc-bell-ring');
   return s;
 }
 
 function load() {
-  const observers = [], channel = [];
-  const env = { still: false };
+  const observers = [];
   class MO { constructor(cb) { this.cb = cb; observers.push(this); } observe(t) { this.target = t; } disconnect() { this.target = null; } }
-  const window = { CCPictures: { still: () => env.still }, defaultPage: { on: (e, f) => channel.push(f) } };
-  const document = { hidden: false };
-  const vars = /var CC_BELL_RANK[^\n]*\n\s*var ccBellSpan[^\n]*\n/.exec(header)[0];
-  const body = vars + ['ccBellLevel', 'ccBellRing', 'ccBellSync', 'ccBellNews', 'ccBellWatch'].map((n) => grabFn(header, n)).join('\n') + '\nreturn ccBellWatch;';
-  const watch = new Function('window', 'document', 'setTimeout', 'clearTimeout', 'MutationObserver', 'Date', 'T', body)(window, document, setT, clearT, MO, { now: () => now }, (de) => de);
+  const vars = /\n\s*var ccBellSpan[^\n]*\n/.exec(header)[0];
+  const body = vars + FNS.map((n) => grabFn(header, n)).join('\n') + '\nreturn ccBellWatch;';
+  const watch = new Function('MutationObserver', 'T', body)(MO, (de) => de);
   // A mutation inside the watched span, as Connect patches its badge.
   const patch = (s, level) => { s.level = level; observers.filter((o) => o.target === s).forEach((o) => o.cb()); };
-  const notify = (list, ch) => channel.forEach((f) => f(JSON.stringify(list), { id: { channel: () => (ch == null ? 2 : ch) } }));
-  return { watch, patch, notify, env, document };
+  return { watch, patch };
 }
 
-console.log('\nA new notification swings the bell');
+console.log('\nThe bell swings while anything is unread');
 {
-  timers = [];
   const m = load();
   const s = bell('alert');
   m.watch(s);
-  ok('unread notifications on load swing the bell once', s.swings === 1, s.swings);
-  ok('and the box is told the highest level', s.getAttribute('data-cc-bell') === 'alert');
+  ok('unread notifications on load start the beat', s.ringing());
+  ok('and the box is told the highest level for the dot', s.getAttribute('data-cc-bell') === 'alert');
   ok('its bubble says they are unread', s.getAttribute('data-cc-tip') === 'Ungelesene Benachrichtigungen');
-  s.fire('animationend', 'cc-wild-bounce');
-  ok('another animation ending inside the bell does not cut the swing short', s.classList.contains('cc-bell-ring'));
-  s.fire('animationend', 'cc-bell-swing');
-  ok('the swing class goes once the swing ends, ready for the next', !s.classList.contains('cc-bell-ring'));
+  s.swinging = true;
+  s.fire('animationiteration', 'cc-bell-swing');
+  ok('the beat goes on from one swing to the next', s.ringing());
+  const w = s.writes;
+  m.patch(s, 'alert'); m.patch(s, 'alert');
+  ok('a mutation that changes nothing writes no class, which would wake the observer again', s.writes === w, s.writes - w);
 }
 {
-  timers = [];
   const m = load();
   const s = bell('');
   m.watch(s);
-  ok('a bell with nothing unread stays still', s.swings === 0 && s.getAttribute('data-cc-bell') === null);
+  ok('a bell with nothing unread stays still', !s.ringing() && s.getAttribute('data-cc-bell') === null);
   ok('and is simply called notifications', s.getAttribute('data-cc-tip') === 'Benachrichtigungen');
-  advance(5000);
   m.patch(s, 'notice');
-  ok('a new notification swings the bell', s.swings === 1, s.swings);
-  advance(5000);
+  ok('a new notification starts the beat at once', s.ringing() && s.getAttribute('data-cc-bell') === 'notice');
   m.patch(s, 'warning');
-  ok('a new warning on top swings it again', s.swings === 2 && s.getAttribute('data-cc-bell') === 'warning', s.swings);
-  advance(5000);
-  m.patch(s, 'notice');
-  ok('reading the warning is no news', s.swings === 2, s.swings);
-  advance(24000);
-  ok('while any stay unread it waits', s.swings === 2, s.swings);
-  advance(1000);
-  ok('and swings again 30 seconds after the last swing', s.swings === 3, s.swings);
-  advance(29000);
-  ok('not sooner', s.swings === 3, s.swings);
-  advance(1000);
-  ok('and again after the next 30', s.swings === 4, s.swings);
-  m.patch(s, '');
-  advance(120000);
-  ok('once all are read it stops swinging', s.swings === 4, s.swings);
-  ok('and the colour goes with them', s.getAttribute('data-cc-bell') === null);
+  ok('a warning on top keeps it going in the warning colour', s.ringing() && s.getAttribute('data-cc-bell') === 'warning');
 }
+
+console.log('\nOnce all are read it finishes its swing and hangs upright');
 {
-  timers = [];
   const m = load();
   const s = bell('warning');
   m.watch(s);
-  const fresh = bell('warning');
-  advance(4000);
-  m.watch(fresh);
-  ok('a span Connect rebuilds with the same badge does not swing', fresh.swings === 0, fresh.swings);
-  ok('but wears the level at once', fresh.getAttribute('data-cc-bell') === 'warning');
-  advance(25000);
-  ok('nor does it put the reminder off', fresh.swings === 0, fresh.swings);
-  advance(1000);
-  ok('the reminder keeps its beat on the fresh span', fresh.swings === 1, fresh.swings);
+  s.swinging = true;
+  m.patch(s, '');
+  ok('reading the last one lets the swing under way run on', s.ringing() && s.getAttribute('data-cc-bell') === null);
+  ok('the bubble is plain again', s.getAttribute('data-cc-tip') === 'Benachrichtigungen');
+  s.fire('animationiteration', 'cc-wild-bounce');
+  ok('another animation inside the bell does not end the beat', s.ringing());
+  s.fire('animationiteration', 'cc-bell-swing');
+  ok('the beat stops where it ends, with the bell upright', !s.ringing());
 }
 {
-  timers = [];
   const m = load();
-  const s = bell('notice');
-  m.watch(s);
-  advance(5000);
-  m.notify([{ importance: 'normal' }]);
-  ok('the first list on the notify channel is only the count to compare with', s.swings === 1, s.swings);
-  m.notify([{ importance: 'normal' }, { importance: 'normal' }]);
-  ok('a new notification at a level already shown swings the bell', s.swings === 2, s.swings);
-  advance(5000);
-  m.notify([{ importance: 'normal' }]);
-  ok('a shorter list is no news', s.swings === 2, s.swings);
-  m.notify([{ a: 1 }, { a: 2 }, { a: 3 }], 1);
-  ok('the other channels on the same socket are not read', s.swings === 2, s.swings);
-  advance(5000);
-  s.setAttribute('aria-expanded', 'true');
-  advance(30000);
-  ok('an open notification drawer keeps the bell still', s.swings === 2, s.swings);
-}
-
-console.log('\nWithout motion a calm sign stays');
-{
-  timers = [];
-  const m = load();
-  m.env.still = true;
   const s = bell('alert');
   m.watch(s);
-  advance(60000);
-  ok('motion off or reduced motion never swings the bell', s.swings === 0, s.swings);
-  ok('the box still takes the level\'s colour', s.getAttribute('data-cc-bell') === 'alert');
-  const fill = (level, html) => candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'bell', 'data-cc-bell': level }, html }, 'background');
-  const last = (c) => (c.length ? c[c.length - 1].value : null);
-  for (const html of [['cc-header-on'], ['cc-header-on', 'cc-header-rbneutral']]) {
-    const mode = html.length > 1 ? 'grey' : 'colour';
-    ok('in the ' + mode + ' mode the bell fills with its level', last(fill('alert', html)) === 'var(--cc-bell-c)', last(fill('alert', html)));
-  }
-  const hover = candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'bell', 'data-cc-bell': 'alert' }, states: { hover: true }, html: ['cc-header-on', 'cc-header-rbneutral'] }, 'background');
-  ok('the pointer does not wash the level out', last(hover) === 'var(--cc-bell-c)', last(hover));
-  const level = (l) => last(candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'bell', 'data-cc-bell': l }, html: ['cc-header-on'] }, '--cc-bell-c'));
-  ok('an alert is red, a warning orange, a notice the accent', /--cc-err\b/.test(level('alert')) && /--cc-warn\b/.test(level('warning')) && /--cc-hdr-accent\b/.test(level('notice')), [level('alert'), level('warning'), level('notice')].join(' | '));
-  const css = read('sheets/CannonadeCommand.Header.css').replace(/\/\*[\s\S]*?\*\//g, '');
-  const dot = /html\.cc-header-on:not\(\.cc-header-rbneutral\) \[data-cc-trig="bell"\]\[data-cc-bell="notice"\]::after\s*\{([^}]*)\}/.exec(css);
-  ok('a notice in the accent, which the box alone cannot show, gets a dot when the bell cannot swing', !!dot && /display:\s*var\(--cc-motion-bell-mark, none\)/.test(dot[1]));
+  s.swinging = true;
+  m.patch(s, '');
+  m.patch(s, 'notice');
+  s.fire('animationiteration', 'cc-bell-swing');
+  ok('a new one in the last swing keeps the beat going', s.ringing());
+}
+{
+  const m = load();
+  const s = bell('alert');
+  m.watch(s);
+  s.swinging = false;
+  m.patch(s, '');
+  ok('a bell that is not swinging (no motion, list open) stops at once', !s.ringing());
+}
+{
+  const m = load();
+  m.watch(bell('warning'));
+  const fresh = bell('warning');
+  m.watch(fresh);
+  ok('a span Connect rebuilds carries the beat on', fresh.ringing() && fresh.getAttribute('data-cc-bell') === 'warning');
+}
+{
+  const block = FNS.map((n) => grabFn(header, n)).join('\n');
+  ok('no timer, frame loop or socket handler drives the beat', !/setTimeout|setInterval|requestAnimationFrame|defaultPage/.test(block));
 }
 
-// Every rule in the tokens sheet with the @media conditions it sits in.
+// Every rule with the @media conditions it sits in.
 function rules(css) {
   const out = []; const stack = []; let buf = '';
   for (const ch of css.replace(/\/\*[\s\S]*?\*\//g, '')) {
     if (ch === '{') { stack.push(buf.trim()); buf = ''; }
-    else if (ch === '}') { const head = stack.pop(); if (head !== undefined && !head.startsWith('@')) out.push({ sel: head, body: buf.trim(), media: stack.join(' ') }); buf = ''; }
+    else if (ch === '}') { const head = stack.pop(); if (head !== undefined) out.push({ sel: head, body: buf.trim(), media: stack.join(' ') }); buf = ''; }
     else buf += ch;
   }
   return out;
 }
+const hcss = rules(read('sheets/CannonadeCommand.Header.css'));
+const tcss = rules(read('sheets/CannonadeCommand.Tokens.css'));
 const dial = (sel, gated, name) => {
-  const r = rules(read('sheets/CannonadeCommand.Tokens.css')).find((x) => x.sel === sel && /no-preference/.test(x.media) === gated && x.body.includes(name));
+  const r = tcss.find((x) => x.sel === sel && /no-preference/.test(x.media) === gated && x.body.includes(name));
   const m = r && new RegExp(name + ':\\s*([^;]+);').exec(r.body);
   return m ? m[1].trim() : null;
 };
+const last = (c) => (c.length ? c[c.length - 1].value : null);
 
-console.log('\nNo dot while the bell can swing');
+console.log('\nThe box stays like every other header button');
 {
-  const hidden = (tag, cls) => { const c = candidates('every', { tag, classes: cls.split(' '), attrs: { class: cls }, html: ['cc-header-on'] }, 'display'); return c.length && c[c.length - 1].value === 'none'; };
+  for (const html of [['cc-header-on'], ['cc-header-on', 'cc-header-rbneutral']]) {
+    const mode = html.length > 1 ? 'grey' : 'colour';
+    for (const states of [{}, { hover: true }]) {
+      const box = (attrs) => last(candidates('every', { tag: 'span', classes: [], attrs, states, html }, 'background'));
+      const plain = box({ 'data-cc-trig': 'burger' }), unread = box({ 'data-cc-trig': 'bell', 'data-cc-bell': 'alert' });
+      ok('in the ' + mode + ' mode' + (states.hover ? ' under the pointer' : '') + ' an unread bell fills like the burger', unread === plain, unread + ' | ' + plain);
+    }
+    const ink = last(candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'bell', 'data-cc-bell': 'alert' }, html }, 'color'));
+    const plainInk = last(candidates('every', { tag: 'span', classes: [], attrs: { 'data-cc-trig': 'burger' }, html }, 'color'));
+    ok('and keeps its ink in the ' + mode + ' mode', ink === plainInk, ink + ' | ' + plainInk);
+  }
+  const hidden = (tag, cls) => last(candidates('every', { tag, classes: cls.split(' '), attrs: { class: cls }, html: ['cc-header-on'] }, 'display')) === 'none';
   ok('Connect\'s shield and triangle never show', hidden('svg', BADGE.alert) && hidden('svg', BADGE.warning));
   ok('nor its green dot', hidden('div', BADGE.notice));
-  ok('at the wild and subtle levels the stand-in dot stays away', dial('html', true, '--cc-motion-bell-mark') === 'none' && dial('html[data-cc-motion="subtle"]', true, '--cc-motion-bell-mark') === 'none');
-  ok('reduced motion and "off" keep it', dial('html', false, '--cc-motion-bell-mark') === 'block' && dial('html[data-cc-motion="off"]', true, '--cc-motion-bell-mark') === 'block');
-  const swing = rules(read('sheets/CannonadeCommand.Header.css')).find((x) => /\.cc-bell-ring/.test(x.sel) && /animation:/.test(x.body));
-  ok('the swing only runs inside the no-preference gate and never at "off"', !!swing && /no-preference/.test(swing.media) && /:not\(\[data-cc-motion="off"\]\)/.test(swing.sel));
-  ok('and lasts the level\'s swing, under a second', /^\d+ms$/.test(dial('html', true, '--cc-motion-bell-dur') || '') && parseInt(dial('html', true, '--cc-motion-bell-dur'), 10) <= 1000 && dial('html', false, '--cc-motion-bell-dur') === '0s');
+}
+
+console.log('\nThe beat runs in CSS');
+{
+  const swing = hcss.find((x) => /\.cc-bell-ring/.test(x.sel) && /animation:/.test(x.body));
+  ok('it runs only inside the no-preference gate and never at "off"', !!swing && /no-preference/.test(swing.media) && /:not\(\[data-cc-motion="off"\]\)/.test(swing.sel));
+  ok('over and over, one beat after the other', !!swing && /animation:\s*cc-bell-swing var\(--cc-motion-bell-dur, 0s\)[^;]*\binfinite\b/.test(swing.body), swing && swing.body);
+  ok('and rests while the notification list is open', !!swing && /\.cc-bell-ring:not\(\[aria-expanded="true"\]\)/.test(swing.sel));
+  const frames = hcss.filter((x) => /^@keyframes cc-bell-swing$/.test(x.media));
+  const at = (pct) => frames.find((f) => f.sel.split(',').map((p) => p.trim()).includes(pct + '%'));
+  const swung = frames.filter((f) => /var\(--cc-motion-bell-swing/.test(f.body)).map((f) => parseFloat(f.sel));
+  ok('it swings in the first half of the beat', swung.length >= 3 && Math.max(...swung) <= 50, swung.join(' '));
+  ok('and hangs upright for the rest', !!at(50) && !!at(100) && /rotate:\s*0deg/.test(at(50).body) && at(50) === at(100));
+  ok('it moves rotate alone, which the compositor runs', frames.length > 0 && frames.every((f) => /^rotate:[^;]+;?$/.test(f.body)), frames.map((f) => f.body).join(' | '));
+  const beat = (sel) => parseInt(dial(sel, true, '--cc-motion-bell-dur'), 10);
+  ok('a beat at the wild and subtle levels comes every one to two seconds', [beat('html'), beat('html[data-cc-motion="subtle"]')].every((v) => v >= 1000 && v <= 2000), [beat('html'), beat('html[data-cc-motion="subtle"]')].join(' '));
+  const deg = (sel, gated) => parseFloat(dial(sel, gated, '--cc-motion-bell-swing'));
+  ok('wild swings further than subtle', deg('html', true) > deg('html[data-cc-motion="subtle"]', true) && deg('html[data-cc-motion="subtle"]', true) > 0);
+  ok('reduced motion and "off" do not swing at all', dial('html', false, '--cc-motion-bell-dur') === '0s' && dial('html[data-cc-motion="off"]', true, '--cc-motion-bell-dur') === '0s' && deg('html', false) === 0);
+}
+
+console.log('\nWithout motion a dot stays');
+{
+  const dot = hcss.find((x) => /\[data-cc-trig="bell"\]\[data-cc-bell\]::after$/.test(x.sel));
+  ok('an unread bell has a dot at the corner of its glyph', !!dot && /content:\s*""/.test(dot.body) && /position:\s*absolute/.test(dot.body));
+  ok('only where the motion level lets it show', !!dot && /display:\s*var\(--cc-motion-bell-mark, none\)/.test(dot.body));
+  ok('in the shape setting\'s radius', !!dot && /border-radius:\s*var\(--cc-radius-pill\)/.test(dot.body));
+  const lvl = (l) => { const r = hcss.find((x) => x.sel === `html.cc-header-on [data-cc-trig="bell"][data-cc-bell="${l}"]`); return r ? r.body : ''; };
+  ok('in the highest level\'s colour: alert red, warning orange, notice green', !!dot && /background:\s*var\(--cc-bell-c\)/.test(dot.body) && /--cc-err\b/.test(lvl('alert')) && /--cc-warn\b/.test(lvl('warning')) && /--cc-ok\b/.test(lvl('notice')), [lvl('alert'), lvl('warning'), lvl('notice')].join(' | '));
+  ok('at the wild and subtle levels the dot stays away', dial('html', true, '--cc-motion-bell-mark') === 'none' && dial('html[data-cc-motion="subtle"]', true, '--cc-motion-bell-mark') === 'none');
+  ok('reduced motion and "off" show it', dial('html', false, '--cc-motion-bell-mark') === 'block' && dial('html[data-cc-motion="off"]', true, '--cc-motion-bell-mark') === 'block');
 }
 
 console.log('\n' + (fail ? `FAILED  ${pass} passed, ${fail} failed` : `OK  ${pass} passed`));

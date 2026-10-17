@@ -361,32 +361,33 @@ html.cc-header-on.cc-header-rbneutral [data-cc-trig]:hover { background: var(--c
 html.cc-header-on [data-cc-trig] svg { width: 16px !important; height: 16px !important; color: inherit !important; fill: currentColor; }
 /* Connect marks unread notifications with a corner badge on the bell: a shield for an alert, a
    triangle for a warning, a green dot for the rest. header.js reads its level into data-cc-bell
-   and swings the bell instead (ccBellSync), so the badge itself never shows. While any are unread
-   the box takes the colour of the highest level, over the rainbow and the grey alike. */
+   and keeps the bell swinging instead (ccBellSync), so the badge itself never shows and the box
+   stays like every other header button. */
+html.cc-header-on [data-cc-trig="bell"] { position: relative; }
 html.cc-header-on [data-cc-trig="bell"] [class*="absolute"] { display: none !important; }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell="alert"] { --cc-bell-c: var(--cc-err, #ff8389); --cc-bell-ct: var(--cc-err-fg, #161616); }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell="warning"] { --cc-bell-c: var(--cc-warn, #ff832b); --cc-bell-ct: var(--cc-warn-fg, #161616); }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell="notice"] { --cc-bell-c: var(--cc-hdr-accent, #FCC419); --cc-bell-ct: var(--cc-hdr-accent-text, #161616); }
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell],
-html.cc-header-on [data-cc-trig="bell"][data-cc-bell]:hover { background: var(--cc-bell-c) !important; color: var(--cc-bell-ct) !important; }
-/* A notice in the accent is the colour the bell already wears outside the grey mode, so where the
-   bell cannot swing a small dot in its ink says it instead. */
-html.cc-header-on:not(.cc-header-rbneutral) [data-cc-trig="bell"][data-cc-bell="notice"]::after {
-  content: ""; display: var(--cc-motion-bell-mark, none); position: absolute; top: 6px; right: 6px;
-  width: 6px; height: 6px; border-radius: var(--cc-radius-pill); background: currentColor; pointer-events: none;
+/* Where the bell may not swing, a dot at the corner of the glyph in the highest level's colour
+   tells of them, ringed in the box's ink so it shows on every box colour. */
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell]::after {
+  content: ""; display: var(--cc-motion-bell-mark, none); position: absolute; top: calc(50% - 12px); right: calc(50% - 12px);
+  width: 8px; height: 8px; box-sizing: border-box; border-radius: var(--cc-radius-pill);
+  background: var(--cc-bell-c); box-shadow: 0 0 0 1.5px currentColor; pointer-events: none;
 }
-/* The swing hangs from the top of the glyph and dies away like a struck bell. */
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell="alert"] { --cc-bell-c: var(--cc-err, #ff8389); }
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell="warning"] { --cc-bell-c: var(--cc-warn, #ff832b); }
+html.cc-header-on [data-cc-trig="bell"][data-cc-bell="notice"] { --cc-bell-c: var(--cc-ok, #6fdc8c); }
+/* One beat: the bell swings out on its hook and dies away in the first half, then hangs still for
+   the rest, over and over. Only rotate moves, which the compositor runs off the main thread. */
 @keyframes cc-bell-swing {
-  0%, 100% { rotate: 0deg; }
-  15% { rotate: var(--cc-motion-bell-swing, 0deg); }
-  32% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.8); }
-  49% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .55); }
-  66% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.3); }
-  83% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .12); }
+  0%, 50%, 100% { rotate: 0deg; }
+  10% { rotate: var(--cc-motion-bell-swing, 0deg); }
+  20% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.75); }
+  30% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * .45); }
+  40% { rotate: calc(var(--cc-motion-bell-swing, 0deg) * -.2); }
 }
+/* An open notification list holds the bell still, and a hidden tab draws no frames. */
 @media (prefers-reduced-motion: no-preference) {
-  html.cc-header-on:not([data-cc-motion="off"]) [data-cc-trig="bell"].cc-bell-ring svg:not([class*="absolute"]) {
-    animation: cc-bell-swing var(--cc-motion-bell-dur, 0s) ease-out; transform-origin: 50% 8%;
+  html.cc-header-on:not([data-cc-motion="off"]) [data-cc-trig="bell"].cc-bell-ring:not([aria-expanded="true"]) svg:not([class*="absolute"]) {
+    animation: cc-bell-swing var(--cc-motion-bell-dur, 0s) ease-in-out infinite; transform-origin: 50% 8%;
   }
 }
 /* the burger's second svg is a dropdown chevron, which is noise inside a 30px box */
