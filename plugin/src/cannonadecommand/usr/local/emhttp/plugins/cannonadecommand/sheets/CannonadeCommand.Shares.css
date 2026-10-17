@@ -919,7 +919,9 @@ html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) 
 }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-warn { background: var(--cc-warn, #ff832b); color: var(--cc-warn-fg, #161616); }
 html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status.cc-aop-off  { background: var(--cc-badge-neutral, #3c3c3c); color: var(--cc-text-chip, #cfcfcf); }
-html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status a.info { display: none !important; }   /* the pill's colour is the state, so the orb and its a.info tooltip go */
+html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-aop-status a.info { display: none !important; }
+/* A running check's chip holds its progress ring and grows around it. */
+html.cc-shares-on.cc-on-main #displaybox :is(table.array_status, .cc-aop-pills) .cc-b.cc-aop-status.cc-aop-ringed { height: auto; gap: 10px; padding: 4px 16px 4px 4px !important; }   /* the pill's colour is the state, so the orb and its a.info tooltip go */
 /* The (i) icon, repeated from styles/docker.css, which is not loaded on /Main. It is neutral
    (currentColor), and the bubble is header.js's floating body-level one for every [data-cc-tip]
    and [data-tip]. */

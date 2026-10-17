@@ -76,7 +76,6 @@ html {
   --cc-motion-disk-swing:           0deg;
   --cc-motion-disk-blink:           60s;
   --cc-motion-disk-blink-ease:      ease-in-out;
-  --cc-motion-disk-flow:            60s;
   --cc-motion-disk-park:            0s;
   --cc-motion-disk-rise:            0px;
   --cc-motion-disk-stagger:         0ms;
@@ -105,7 +104,6 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     --cc-motion-disk-swing:           10deg;
     --cc-motion-disk-blink:           .32s;
     --cc-motion-disk-blink-ease:      steps(2, jump-none);
-    --cc-motion-disk-flow:            .9s;
     --cc-motion-disk-park:            .7s;
     --cc-motion-disk-rise:            18px;
     --cc-motion-disk-stagger:         45ms;
@@ -128,7 +126,6 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     --cc-motion-disk-swing:           4deg;
     --cc-motion-disk-blink:           1.6s;
     --cc-motion-disk-blink-ease:      ease-in-out;
-    --cc-motion-disk-flow:            2.4s;
     --cc-motion-disk-park:            .5s;
     --cc-motion-disk-rise:            6px;
     --cc-motion-disk-stagger:         25ms;
@@ -151,7 +148,6 @@ html[dir="rtl"] { --cc-dir-sign: -1; }   /* a keyframe does not mirror on its ow
     --cc-motion-disk-swing:           0deg;
     --cc-motion-disk-blink:           60s;
     --cc-motion-disk-blink-ease:      ease-in-out;
-    --cc-motion-disk-flow:            60s;
     --cc-motion-disk-park:            0s;
     --cc-motion-disk-rise:            0px;
     --cc-motion-disk-stagger:         0ms;

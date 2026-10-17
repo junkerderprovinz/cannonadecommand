@@ -110,13 +110,18 @@ console.log('\nThe motion stays inside the gate and stops at "off"');
 {
   const media = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
   const anims = [...css.matchAll(/^\s*(html[^\n{]*)\{[^}\n]*\banimation:\s*cc-dk-/gm)].map((m) => m[1]);
-  ok('there are animations', anims.length >= 6, anims.length);
+  ok('there are animations', anims.length >= 4, anims.length);
   ok('each one names the quiet level and none the lively one', anims.every((s) => /:not\(\[data-cc-motion="off"\]\)/.test(s)) && !/data-cc-motion="(wild|subtle)"\]/.test(css));
   ok('they all sit in the no-preference block', anims.every((s) => media.includes(s)));
   const tokens = read('sheets/CannonadeCommand.Tokens.css');
-  for (const d of ['spin', 'seek', 'swing', 'blink', 'flow', 'rise', 'stagger']) ok('the platter, arm, LED and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
+  for (const d of ['spin', 'seek', 'swing', 'blink', 'rise', 'stagger']) ok('the platter, arm, LED and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
   ok('the entrance ends at transform: none', /@keyframes cc-dk-in \{[^}]*\}[^}]*to \{ transform: none;/.test(css));
-  ok('a spun-down platter stops where it was', /\.cc-dk-card\.cc-dk-down \.cc-dk-plat \{ animation-play-state: paused; \}/.test(css));
+  ok('the platter waits paused and turns only while the disk reads or writes, so it stops where it was', /#displaybox \.cc-dk-plat \{ animation: cc-dk-spin var\(--cc-motion-disk-spin\) linear infinite paused; \}/.test(css) && /\.cc-dk-card\.cc-dk-busy:not\(\.cc-dk-down\) \.cc-dk-plat \{ animation-play-state: running; \}/.test(css));
+  const outside = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
+  ok('the LED blinks while busy, and outside the gate it is lit without blinking', /\.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ animation: cc-dk-blink/.test(media) && /html\.cc-dk-on #displaybox \.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ fill: var\(--cc-dk-c/.test(outside) && !/cc-dk-blink/.test(outside.replace(/@keyframes[^\n]*/g, '')));
+  ok('a resting disk dims its LED, a waiting one glows faintly', /\.cc-dk-card\.cc-dk-down \.cc-dk-led \{ opacity: \.45; \}/.test(css) && /\.cc-dk-card:not\(\.cc-dk-down\) \.cc-dk-led \{ fill: color-mix\(/.test(css));
+  ok('flash drives move nothing but their LED, and every drawing has one', !/cc-dk-(sweep|flow)|@keyframes cc-dk-bars/.test(css + js) && ['drawHdd', 'drawSsd', 'drawNvme', 'drawUsb'].every((n) => /class="cc-dk-led"/.test(grabFn(js, n))));
+  ok('the dial no drawing reads any more is gone', !/--cc-motion-disk-flow/.test(tokens));
 }
 
 console.log('\nThe readers follow Unraid\'s rows');
@@ -271,6 +276,55 @@ console.log('\nThe capacity has a badge of its own');
   ok('whole sizes read as Unraid prints them', R.cap(18e12) === '18 TB' && R.cap(500e9) === '500 GB' && R.cap(63.1e9) === '63 GB');
   ok('a size under ten keeps its decimal', R.cap(1.5e12) === '1.5 TB' && R.cap(2e12) === '2 TB');
   ok('the drawing keeps a margin to the edge of its well', /\.cc-dk-art \{[^}]*height: 140px;/.test(css) && /svg\.cc-dk-drive \{ position: absolute; inset: 14px 12px;/.test(css));
+}
+
+console.log('\nA card shows only what deviates');
+{
+  const src = ['var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc'), grabFn(js, 'chipsHtml')].join('\n') + '\nreturn chipsHtml;';
+  const extra = {};
+  const chips = new Function('extra', 'LANG', 'nf', src)(extra, 'de', { format: String });
+  const disk = (o) => Object.assign({ dev: 'sdf', state: 'ok', stateTip: '', parity: false, errors: 0, errTip: '' }, o);
+  extra.sdf = { smart: 'ok' };
+  ok('a healthy disk with SMART ok and no errors shows no chip', chips(disk({})) === '');
+  extra.sdf = { smart: 'warn', tip: 'Reallocated sectors: 8' };
+  ok('a SMART warning shows the moment disks.php reports it', /class="cc-dk-chip cc-dk-warn" data-tip="Reallocated sectors: 8"[^>]*>.*SMART-Warnung/.test(chips(disk({}))));
+  extra.sdf = { smart: 'fail' };
+  ok('a failed SMART test shows in red', /cc-dk-chip cc-dk-err[^>]*>.*SMART-Fehler/.test(chips(disk({}))));
+  extra.sdf = { smart: 'ok' };
+  const err = chips(disk({ errors: 3, errTip: 'Device errors: 3' }));
+  ok('errors show in red with their count and Unraid\'s bubble', /^<span class="cc-dk-chip cc-dk-err" data-tip="Device errors: 3">3 Fehler<\/span>$/.test(err), err);
+  ok('a disk Unassigned Devices counts no errors for shows none', chips(disk({ errors: null })) === '');
+  ok('a state that is not normal keeps its chip', /cc-dk-chip cc-dk-err/.test(chips(disk({ state: 'err', stateTip: 'Datenträger deaktiviert' }))));
+  ok('the chips are written again on every refill, so they follow the feed', /setHtml\(c\.querySelector\('\[data-f="chips"\]'\), chipsHtml\(d\)\);/.test(grabFn(js, 'patch')) && !/smartOk/.test(js));
+  ok('an empty chip row takes no room', /html\.cc-dk-on #displaybox \.cc-dk-chips:empty,/.test(css) && !/\.cc-dk-chips \{[^}]*min-height/.test(css));
+  ok('read and write show only while the disk is busy, the temperature always', /<div class="cc-dk-rate">' \+ esc\(t\("read"\)\)/.test(js) && /<div class="cc-dk-rate">' \+ esc\(t\("write"\)\)/.test(js) && /html\.cc-dk-on #displaybox \.cc-dk-card:not\(\.cc-dk-busy\) \.cc-dk-rate \{ display: none; \}/.test(css) && /<div>' \+ esc\(t\("temp"\)\)/.test(js));
+}
+
+console.log('\nThe array is a vessel on the left of its card');
+{
+  const made = [];
+  const kid = () => ({ textContent: '', attrs: {}, getAttribute(k) { return this.attrs[k] ?? null; }, setAttribute(k, v) { this.attrs[k] = v; } });
+  const box = () => { const b = kid(); b.parts = { '[data-f="vpct"]': kid() }; b.querySelector = (s) => b.parts[s]; b.insertBefore = () => {}; b.style = { setProperty() {}, removeProperty() {} }; return b; };
+  const host = { kids: [], querySelector() { return this.kids[0] || null; }, insertBefore(n) { this.kids.unshift(n); }, removeChild(n) { this.kids.splice(this.kids.indexOf(n), 1); } };
+  const pictures = { vessel(o) { const v = { el: {}, o, level: null, tone: null, setLevel(s) { v.level = s; return v; }, setTone(t) { v.tone = t; return v; } }; made.push(v); return v; } };
+  const src = [grabFn(js, 'arrayVessel'), grabFn(js, 'fillTone'), grabFn(js, 'setText'), 'var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabFn(js, 't'), grabFn(js, 'esc')].join('\n') + '\nreturn arrayVessel;';
+  const arrayVessel = new Function('window', 'el', 'colourAt', 'LANG', src)({ CCPictures: pictures }, () => box(), () => '', 'de');
+  const fs1 = { pct: 84.4, used: '43.9 TB', size: '52 TB' };
+  arrayVessel(host, fs1);
+  const v = made[0];
+  ok('it is built with the array\'s used share and a label', made.length === 1 && Math.abs(v.o.share - 0.844) < 1e-9 && v.o.label === 'Füllstand des Arrays');
+  ok('below 90 % it takes the accent', v.tone === 'accent' && host.kids[0].parts['[data-f="vpct"]'].textContent === '84');
+  ok('its bubble names used and size', host.kids[0].attrs['data-tip'] === '43.9 TB von 52 TB belegt');
+  arrayVessel(host, { pct: 90, used: '', size: '' });
+  ok('from 90 % it turns orange, on the same vessel', made.length === 1 && v.tone === 'warn' && v.level === 0.9);
+  arrayVessel(host, { pct: 95, used: '', size: '' });
+  ok('95 % is still orange', v.tone === 'warn');
+  arrayVessel(host, { pct: 95.2, used: '', size: '' });
+  ok('past 95 % it turns red', v.tone === 'err');
+  arrayVessel(host, null);
+  ok('without a file system the vessel goes', host.kids.length === 0);
+  ok('the render feeds it from the totals row each time', /arrayUse = data\.total && data\.total\.fs;[^}]*arrayVessel\(host, arrayUse\);/.test(js));
+  ok('it stands left of the disks, and above them on a phone', /\.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ display: grid; grid-template-columns: auto minmax\(0, 1fr\);/.test(css) && /@media \(max-width: 600px\) \{\s*html\.cc-dk-on #displaybox \.cc-dk-host\[data-cc-dk="array"\]:has\(> \.cc-dk-vessel\) \{ grid-template-columns: minmax\(0, 1fr\); \}/.test(css));
 }
 
 console.log('\ndisks.php reads emhttp\'s own files');

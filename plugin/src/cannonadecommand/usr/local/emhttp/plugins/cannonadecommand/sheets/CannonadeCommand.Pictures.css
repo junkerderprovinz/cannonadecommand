@@ -1,0 +1,302 @@
+/* The animated pictures the areas share (scripts/pictures.js, GlimStone "Illustrations"). Nothing
+   here matches until an area draws a picture, so the sheet needs no gate of its own. The colour of
+   a picture is --cc-pic-c, which the area sets where its pictures stand, and the accent otherwise.
+   A bar's slosh lives in Tokens.css as .cc-slosh-edge; the vessel shares its swing duration. */
+
+/* The dials, read by the same keyframes at every level. A level is a different number, never a
+   different animation, so every level answers every dial. The numbers outside the gate are the
+   still ones, which a request for reduced motion keeps and "off" chooses by hand. For the vessel:
+   how far the liquid tilts, how high a crest runs up the wall and the hump rises as multiples of
+   their drawn height, the time a bubble takes per unit of depth and how strongly it shows, how far
+   a popping bubble lifts, swells, rings and sprays, how long a splash takes, how far it tilts and
+   how high its crest and ripple run, and how long the liquid takes to rise to a new level. */
+html {
+  --cc-motion-check-dur:         0s;
+  --cc-motion-ring-dur:          0s;
+  --cc-motion-vessel-rise:       0s;
+  --cc-motion-vessel-tilt:       0deg;
+  --cc-motion-vessel-run:        0;
+  --cc-motion-vessel-hump:       0;
+  --cc-motion-vessel-bubble-pace: 6s;
+  --cc-motion-vessel-bubble-opacity: 0;
+  --cc-motion-vessel-pop-lift:   0;
+  --cc-motion-vessel-pop-swell:  1;
+  --cc-motion-vessel-pop-ring:   1;
+  --cc-motion-vessel-pop-spray:  0;
+  --cc-motion-vessel-splash-dur: 60s;
+  --cc-motion-vessel-splash-tilt: 0deg;
+  --cc-motion-vessel-splash-run: 0;
+  --cc-motion-vessel-splash-ripple: 0;
+  /* A picture's corners follow the shape setting like a card's. */
+  --cc-pic-corner: 6px;
+}
+html[data-cc-shape="soft"] { --cc-pic-corner: 3px; }
+html[data-cc-shape="square"] { --cc-pic-corner: 0px; }
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    --cc-motion-check-dur:         360ms;
+    --cc-motion-ring-dur:          420ms;
+    --cc-motion-vessel-rise:       1.1s;
+    --cc-motion-vessel-tilt:       5deg;
+    --cc-motion-vessel-run:        3.2;
+    --cc-motion-vessel-hump:       .9;
+    --cc-motion-vessel-bubble-pace: .35s;
+    --cc-motion-vessel-bubble-opacity: .7;
+    --cc-motion-vessel-pop-lift:   3.6;
+    --cc-motion-vessel-pop-swell:  1.5;
+    --cc-motion-vessel-pop-ring:   3.4;
+    --cc-motion-vessel-pop-spray:  1.3;
+    --cc-motion-vessel-splash-dur: .9s;
+    --cc-motion-vessel-splash-tilt: 7deg;
+    --cc-motion-vessel-splash-run: 3.4;
+    --cc-motion-vessel-splash-ripple: 1.5;
+  }
+  html[data-cc-motion="subtle"] {
+    --cc-motion-check-dur:         200ms;
+    --cc-motion-ring-dur:          260ms;
+    --cc-motion-vessel-rise:       .8s;
+    --cc-motion-vessel-tilt:       3deg;
+    --cc-motion-vessel-run:        2.2;
+    --cc-motion-vessel-hump:       .6;
+    --cc-motion-vessel-bubble-pace: .5s;
+    --cc-motion-vessel-bubble-opacity: .55;
+    --cc-motion-vessel-pop-lift:   3;
+    --cc-motion-vessel-pop-swell:  1.4;
+    --cc-motion-vessel-pop-ring:   3;
+    --cc-motion-vessel-pop-spray:  1.1;
+    --cc-motion-vessel-splash-dur: 1.1s;
+    --cc-motion-vessel-splash-tilt: 4deg;
+    --cc-motion-vessel-splash-run: 2.2;
+    --cc-motion-vessel-splash-ripple: 1;
+  }
+  html[data-cc-motion="off"] {
+    --cc-motion-check-dur:         0s;
+    --cc-motion-ring-dur:          0s;
+    --cc-motion-vessel-rise:       0s;
+    --cc-motion-vessel-tilt:       0deg;
+    --cc-motion-vessel-run:        0;
+    --cc-motion-vessel-hump:       0;
+    --cc-motion-vessel-bubble-pace: 6s;
+    --cc-motion-vessel-bubble-opacity: 0;
+    --cc-motion-vessel-pop-lift:   0;
+    --cc-motion-vessel-pop-swell:  1;
+    --cc-motion-vessel-pop-ring:   1;
+    --cc-motion-vessel-pop-spray:  0;
+    --cc-motion-vessel-splash-dur: 60s;
+    --cc-motion-vessel-splash-tilt: 0deg;
+    --cc-motion-vessel-splash-run: 0;
+    --cc-motion-vessel-splash-ripple: 0;
+  }
+}
+
+/* The vessel. The liquid sloshes for as long as it is shown: the body tilts, a crest runs up the
+   wall it tilts toward and drains as it swings back, a small hump crosses the middle, and a paler
+   back layer lags the front. Every part runs on the bar's swing duration, so a crest rises exactly
+   while the liquid tilts toward its wall. Three bubbles rise and fade below the surface, three more
+   go through it and pop into a ring and three drops. The bubbles are white in every theme, since
+   they only need to be lighter than the liquid. */
+@keyframes cc-vessel-tilt {
+  from { rotate: 0deg; }
+  25%  { rotate: var(--cc-motion-vessel-tilt, 5deg); }
+  50%  { rotate: 0deg; }
+  75%  { rotate: calc(var(--cc-motion-vessel-tilt, 5deg) * -1); }
+  to   { rotate: 0deg; }
+}
+@keyframes cc-vessel-crest-left {
+  from  { scale: 1 0; }
+  12.5% { scale: 1 0; }
+  28%   { scale: 1 var(--cc-motion-vessel-run, 3.2); }
+  52%   { scale: 1 0; }
+  to    { scale: 1 0; }
+}
+@keyframes cc-vessel-crest-right {
+  from  { scale: 1 0; }
+  62.5% { scale: 1 0; }
+  78%   { scale: 1 var(--cc-motion-vessel-run, 3.2); }
+  to    { scale: 1 0; }
+}
+@keyframes cc-vessel-hump {
+  from { translate: 0 0; scale: 1 var(--cc-motion-vessel-hump, .9); }
+  10%  { translate: -2px 0; scale: 1 0; }
+  40%  { translate: -2px 0; scale: 1 0; }
+  50%  { translate: 0 0; scale: 1 var(--cc-motion-vessel-hump, .9); }
+  60%  { translate: 2px 0; scale: 1 0; }
+  90%  { translate: 2px 0; scale: 1 0; }
+  to   { translate: 0 0; scale: 1 var(--cc-motion-vessel-hump, .9); }
+}
+/* A bubble starts at its share of the depth and fades just below the surface. The vessel sets
+   --cc-vessel-depth on its svg, the floor's distance below the surface as a plain number, so the
+   bubbles rise at one speed at any level. */
+@keyframes cc-vessel-bubble {
+  from { translate: 0 calc(max(var(--cc-vessel-depth, 10) * var(--cc-bubble-from, 1), 3) * 1px); opacity: 0; }
+  15%  { opacity: var(--cc-motion-vessel-bubble-opacity, .7); }
+  50%  { translate: var(--cc-bubble-sway, 0px) calc(max(var(--cc-vessel-depth, 10) * var(--cc-bubble-from, 1), 3) * .5px); }
+  82%  { opacity: var(--cc-motion-vessel-bubble-opacity, .7); }
+  to   { translate: 0 1.8px; opacity: 0; }
+}
+/* A popping bubble goes on through the surface into the air above it, swells a little and bursts
+   into a thin ring and three drops in the liquid's colour. Its parts share one duration and delay
+   through --cc-pop-dur and --cc-pop-delay on its group, so they stay in step. */
+@keyframes cc-vessel-pop {
+  from    { translate: 0 calc(max(var(--cc-vessel-depth, 10) * var(--cc-bubble-from, 1), 3) * 1px); }
+  45%     { translate: var(--cc-bubble-sway, 0px) calc(max(var(--cc-vessel-depth, 10) * var(--cc-bubble-from, 1), 3) * .45px); }
+  72%     { translate: 0 0; }
+  80%     { translate: calc(var(--cc-bubble-sway, 0px) * -.5) calc(var(--cc-motion-vessel-pop-lift, 3.6) * -.8px); }
+  86%, to { translate: 0 calc(var(--cc-motion-vessel-pop-lift, 3.6) * -1px); }
+}
+@keyframes cc-vessel-pop-bubble {
+  from { opacity: 0; scale: 1; }
+  12%  { opacity: var(--cc-motion-vessel-bubble-opacity, .7); }
+  70%  { opacity: var(--cc-motion-vessel-bubble-opacity, .7); scale: 1; }
+  76%  { opacity: 1; scale: 1.1; }
+  86%  { opacity: 1; scale: 1.15; }
+  89%  { opacity: 0; scale: var(--cc-motion-vessel-pop-swell, 1.5); }
+  to   { opacity: 0; scale: 1; }
+}
+@keyframes cc-vessel-pop-ring {
+  from, 86% { opacity: 0; scale: 1; }
+  87%       { opacity: .9; scale: 1.3; }
+  93%       { opacity: 0; scale: var(--cc-motion-vessel-pop-ring, 3.4); }
+  to        { opacity: 0; scale: 1; }
+}
+@keyframes cc-vessel-pop-drop {
+  from, 86% { opacity: 0; translate: 0 0; }
+  87%       { opacity: 1; }
+  94%       { opacity: 0; translate: calc(var(--cc-drop-x) * var(--cc-motion-vessel-pop-spray, 1.3)) calc(var(--cc-drop-y) * var(--cc-motion-vessel-pop-spray, 1.3)); }
+  to        { opacity: 0; translate: 0 0; }
+}
+/* A packet lands from the left: the liquid kicks up that wall, rocks back over the middle and
+   settles in two smaller swings on top of its slosh, while a crest shoots up the left wall and a
+   ripple runs across to the right one, flattening as it goes. */
+@keyframes cc-vessel-splash-tilt {
+  from { rotate: 0deg; }
+  12%  { rotate: var(--cc-motion-vessel-splash-tilt, 7deg); }
+  34%  { rotate: calc(var(--cc-motion-vessel-splash-tilt, 7deg) * -.45); }
+  58%  { rotate: calc(var(--cc-motion-vessel-splash-tilt, 7deg) * .18); }
+  80%  { rotate: calc(var(--cc-motion-vessel-splash-tilt, 7deg) * -.05); }
+  to   { rotate: 0deg; }
+}
+@keyframes cc-vessel-splash-crest {
+  from    { scale: 1 0; }
+  14%     { scale: 1 var(--cc-motion-vessel-splash-run, 3.4); }
+  40%, to { scale: 1 0; }
+}
+@keyframes cc-vessel-splash-ripple {
+  from, 8% { translate: 0 0; scale: 1 0; }
+  22%      { translate: 3px 0; scale: 1 var(--cc-motion-vessel-splash-ripple, 1.5); }
+  70%, to  { translate: 14px 0; scale: 1 0; }
+}
+@keyframes cc-check-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+.cc-vessel { --cc-vessel-liquid: var(--cc-pic-c, var(--cc-accent, #FCC419)); position: relative; display: block; flex: none; width: 44px; height: 52px; }
+.cc-vessel[data-tone="warn"] { --cc-vessel-liquid: var(--cc-warn); }
+.cc-vessel[data-tone="err"] { --cc-vessel-liquid: var(--cc-err); }
+.cc-vessel > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.cc-vessel-liquid { fill: var(--cc-vessel-liquid); }
+.cc-vessel-back { fill-opacity: .45; }
+/* A wash of the text colour rather than a surface step, since a vessel stands on cards and in wells alike. */
+.cc-vessel-wash { fill: var(--cc-text-dim, #8a8a8a); fill-opacity: .18; }
+.cc-vessel-wall { fill: none; stroke: var(--cc-text-dim, #8a8a8a); stroke-width: 1.6; rx: var(--cc-pic-corner, 6px); }
+.cc-vessel-in { rx: max(0px, calc(var(--cc-pic-corner, 6px) - 1.5px)); }
+.cc-vessel-brim { stroke: var(--cc-text-hint, #a3a3a3); stroke-width: 1.2; stroke-dasharray: 2.5 2.5; }
+.cc-vessel-bubble { fill: #fff; }
+.cc-vessel-pop-bubble { fill: #fff; stroke: var(--cc-vessel-liquid); stroke-width: .25; }
+.cc-vessel-pop-ring { fill: none; stroke: var(--cc-vessel-liquid); stroke-width: .22; }
+.cc-vessel-pop-drop { fill: var(--cc-vessel-liquid); }
+
+/* The resting state, outside the gate, so a still frame is a flat surface at the vessel's level:
+   crests, hump and ripple at zero height, bubbles and pops hidden. The liquid tilts about the
+   middle, 17 units in. */
+.cc-vessel-tilt,
+.cc-vessel-back,
+.cc-vessel-splash-tilt { transform-origin: 17px 0; }
+.cc-vessel-crest,
+.cc-vessel-hump,
+.cc-vessel-splash-crest,
+.cc-vessel-splash-ripple { scale: 1 0; }
+.cc-vessel-bubble,
+.cc-vessel-pop-bubble,
+.cc-vessel-pop-ring,
+.cc-vessel-pop-drop { opacity: 0; }
+.cc-vessel-pop-bubble,
+.cc-vessel-pop-ring,
+.cc-vessel-pop-drop { transform-box: fill-box; transform-origin: center; }
+/* Where the three drops of a pop fly, before the spray dial scales it. */
+.cc-vessel-pop-drop:nth-child(3) { --cc-drop-x: -1.6px; --cc-drop-y: -1.4px; }
+.cc-vessel-pop-drop:nth-child(4) { --cc-drop-x: 1.7px; --cc-drop-y: -1.1px; }
+.cc-vessel-pop-drop:nth-child(5) { --cc-drop-x: .3px; --cc-drop-y: -2px; }
+
+/* The checkmark is drawn at rest outside the gate, so it is never left invisible. Its colour is
+   the state it reports, never a rainbow hue. */
+.cc-check { display: inline-block; width: 1em; height: 1em; flex: none; vertical-align: -.125em; }
+.cc-check-draw { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+
+/* A progress ring, round in every shape like the loaders and the status dots. */
+.cc-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 46px; height: 46px; }
+.cc-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cc-ring-track { fill: none; stroke: currentColor; stroke-opacity: .25; stroke-width: 3.5; }
+.cc-ring-arc { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; }
+.cc-ring-pct { position: relative; font-size: var(--cc-text-meta); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* A line with packets: drawn through in the picture's colour while something travels on it. */
+.cc-flow-line { fill: none; stroke: var(--cc-pic-c, var(--cc-accent, #FCC419)); stroke-opacity: .75; stroke-width: 2.5; stroke-linecap: round; }
+.cc-flow-packet { fill: var(--cc-pic-c, var(--cc-accent, #FCC419)); }
+
+/* The motion lives inside the gate, so reduced motion never reads it and every picture shows its
+   still frame; at "off" it stops outright. */
+@media (prefers-reduced-motion: no-preference) {
+  .cc-vessel-level { transition: transform var(--cc-motion-vessel-rise) cubic-bezier(.2, .8, .3, 1); }
+  .cc-vessel-tilt { animation: cc-vessel-tilt var(--cc-motion-slosh-dur) ease-in-out infinite; }
+  /* The same swing a twenty-fifth of a loop later. */
+  .cc-vessel-back { animation: cc-vessel-tilt var(--cc-motion-slosh-dur) ease-in-out calc(var(--cc-motion-slosh-dur) * -.96) infinite; }
+  .cc-vessel-crest-left { animation: cc-vessel-crest-left var(--cc-motion-slosh-dur) ease-in-out infinite; }
+  .cc-vessel-crest-right { animation: cc-vessel-crest-right var(--cc-motion-slosh-dur) ease-in-out infinite; }
+  .cc-vessel-hump { animation: cc-vessel-hump var(--cc-motion-slosh-dur) ease-in-out infinite; }
+  /* Each bubble starts at its own depth, takes its own time and sways to its own side, so they
+     never rise in a row. A shallow level still gives a bubble long enough to be seen. */
+  .cc-vessel-bubble { animation: cc-vessel-bubble 2s linear infinite; }
+  .cc-vessel-bubble:nth-child(1) {
+    --cc-bubble-from: .95; --cc-bubble-sway: .4px;
+    animation-duration: max(1.4s, calc(var(--cc-vessel-depth, 10) * .95 * var(--cc-motion-vessel-bubble-pace)));
+  }
+  .cc-vessel-bubble:nth-child(2) {
+    --cc-bubble-from: .6; --cc-bubble-sway: -.4px;
+    animation-duration: max(1.4s, calc(var(--cc-vessel-depth, 10) * .66 * var(--cc-motion-vessel-bubble-pace)));
+    animation-delay: calc(var(--cc-vessel-depth, 10) * .66 * var(--cc-motion-vessel-bubble-pace) * -.25);
+  }
+  .cc-vessel-bubble:nth-child(3) {
+    --cc-bubble-from: .85; --cc-bubble-sway: .4px;
+    animation-duration: max(1.4s, calc(var(--cc-vessel-depth, 10) * .722 * var(--cc-motion-vessel-bubble-pace)));
+    animation-delay: calc(var(--cc-vessel-depth, 10) * .722 * var(--cc-motion-vessel-bubble-pace) * -.6);
+  }
+  .cc-vessel-pop { animation: cc-vessel-pop var(--cc-pop-dur, 4s) linear var(--cc-pop-delay, 0s) infinite; }
+  .cc-vessel-pop-bubble { animation: cc-vessel-pop-bubble var(--cc-pop-dur, 4s) linear var(--cc-pop-delay, 0s) infinite; }
+  .cc-vessel-pop-ring { animation: cc-vessel-pop-ring var(--cc-pop-dur, 4s) linear var(--cc-pop-delay, 0s) infinite; }
+  .cc-vessel-pop-drop { animation: cc-vessel-pop-drop var(--cc-pop-dur, 4s) linear var(--cc-pop-delay, 0s) infinite; }
+  .cc-vessel-pop:nth-child(1) {
+    --cc-bubble-from: .8; --cc-bubble-sway: -.4px;
+    --cc-pop-dur: max(1.8s, calc(var(--cc-vessel-depth, 10) * 1.17 * var(--cc-motion-vessel-bubble-pace)));
+    --cc-pop-delay: calc(var(--cc-vessel-depth, 10) * 1.17 * var(--cc-motion-vessel-bubble-pace) * -.5);
+  }
+  .cc-vessel-pop:nth-child(2) {
+    --cc-bubble-from: .9; --cc-bubble-sway: .4px;
+    --cc-pop-dur: max(1.8s, calc(var(--cc-vessel-depth, 10) * 1.069 * var(--cc-motion-vessel-bubble-pace)));
+    --cc-pop-delay: calc(var(--cc-vessel-depth, 10) * 1.069 * var(--cc-motion-vessel-bubble-pace) * -.75);
+  }
+  .cc-vessel-pop:nth-child(3) {
+    --cc-bubble-from: .9; --cc-bubble-sway: -.4px;
+    --cc-pop-dur: max(1.8s, calc(var(--cc-vessel-depth, 10) * 1.046 * var(--cc-motion-vessel-bubble-pace)));
+    --cc-pop-delay: calc(var(--cc-vessel-depth, 10) * 1.046 * var(--cc-motion-vessel-bubble-pace) * -.15);
+  }
+  /* pictures.js sets cc-vessel-splashing on the svg as a packet lands, afresh for each one. */
+  .cc-vessel-splashing .cc-vessel-splash-tilt { animation: cc-vessel-splash-tilt var(--cc-motion-vessel-splash-dur) ease-in-out; }
+  .cc-vessel-splashing .cc-vessel-splash-crest { animation: cc-vessel-splash-crest var(--cc-motion-vessel-splash-dur) ease-out; }
+  .cc-vessel-splashing .cc-vessel-splash-ripple { animation: cc-vessel-splash-ripple var(--cc-motion-vessel-splash-dur) ease-out; }
+  .cc-check-draw { stroke-dashoffset: 1; animation: cc-check-draw var(--cc-motion-check-dur) ease forwards; }
+  .cc-ring-arc { transition: stroke-dashoffset var(--cc-motion-ring-dur) ease-out; }
+  html[data-cc-motion="off"] :is(.cc-vessel-level, .cc-ring-arc) { transition: none; }
+  html[data-cc-motion="off"] :is(.cc-vessel-tilt, .cc-vessel-back, .cc-vessel-crest, .cc-vessel-hump, .cc-vessel-bubble,
+    .cc-vessel-pop, .cc-vessel-pop-bubble, .cc-vessel-pop-ring, .cc-vessel-pop-drop,
+    .cc-vessel-splash-tilt, .cc-vessel-splash-crest, .cc-vessel-splash-ripple) { animation: none; }
+  html[data-cc-motion="off"] .cc-check-draw { animation: none; stroke-dashoffset: 0; }
+}

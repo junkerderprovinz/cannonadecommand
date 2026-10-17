@@ -16,20 +16,22 @@
   var TXT = {
     de: { view: "Ansicht", list: "Liste", tiles: "Kacheln", spinDown: "Platte anhalten", spinUp: "Platte anlaufen lassen", browse: "Durchsuchen", log: "Datenträgerprotokoll",
       resting: "Ruht", used: "belegt", free: "frei", of: "von", temp: "Temperatur", read: "Lesen", write: "Schreiben", errors: "Fehler",
-      smartOk: "SMART ok", smartWarn: "SMART-Warnung", smartFail: "SMART-Fehler", smartOkTip: "SMART meldet nichts Auffälliges",
+      smartWarn: "SMART-Warnung", smartFail: "SMART-Fehler",
       smartFailTip: "Der SMART-Selbsttest ist fehlgeschlagen", parity: "Parität gültig, schützt %n Datenträger",
       tempTip: "Warnung ab %w, kritisch ab %c", tempNone: "Meldet keine Temperatur", tempDown: "Ruht und misst gerade nicht",
       serial: "Seriennummer", hours: "%n Betriebsstunden", wear: "Abnutzung %n %", counts: "Lesezugriffe %r, Schreibzugriffe %w",
       member: "Gehört zum Pool %p", details: "Details", aopArray: "Array", aopDisks: "Platten", aopSystem: "System",
-      spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten",
+      spinAllUp: "Platten anlaufen lassen", spinAllDown: "Platten anhalten", arrayFill: "Füllstand des Arrays",
+      moving: "Mover läuft", movingTip: "Er verschiebt gerade Dateien zwischen den Pools und dem Array.",
       hdd: "Festplatte", ssd: "SATA-SSD", nvme: "NVMe-SSD", usb: "USB-Stick" },
     en: { view: "View", list: "List", tiles: "Tiles", spinDown: "Spin down", spinUp: "Spin up", browse: "Browse", log: "Disk log",
       resting: "Spun down", used: "used", free: "free", of: "of", temp: "Temperature", read: "Read", write: "Write", errors: "errors",
-      smartOk: "SMART ok", smartWarn: "SMART warning", smartFail: "SMART failed", smartOkTip: "SMART reports nothing unusual",
+      smartWarn: "SMART warning", smartFail: "SMART failed",
       smartFailTip: "The SMART self-assessment failed", parity: "Parity valid, protects %n disks",
       tempTip: "Warning from %w, critical from %c", tempNone: "Reports no temperature", tempDown: "Spun down, not measuring",
       serial: "Serial number", hours: "%n power-on hours", wear: "Wear %n %", counts: "Reads %r, writes %w",
-      member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System",
+      member: "Part of pool %p", details: "Details", aopArray: "Array", aopDisks: "Disks", aopSystem: "System", arrayFill: "Array fill level",
+      moving: "Mover running", movingTip: "It is moving files between the pools and the array.",
       hdd: "Hard disk", ssd: "SATA SSD", nvme: "NVMe SSD", usb: "USB flash drive" }
   };
   function t(k) { return (TXT[LANG] || TXT.en)[k] || TXT.en[k]; }
@@ -338,7 +340,6 @@
       '<rect class="cc-dk-st" x="34" y="28" width="122" height="24" rx="5"/><rect class="cc-dk-st" x="34" y="44" width="122" height="8"/>' +
       '<text class="cc-dk-ink" x="44" y="45" font-size="12" font-weight="800" letter-spacing="1.5">SSD</text>' +
       '<rect class="cc-dk-bar" x="44" y="64" width="70" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n2" x="44" y="76" width="96" height="5" rx="2.5"/><rect class="cc-dk-bar cc-dk-n3" x="44" y="88" width="52" height="5" rx="2.5"/>' +
-      '<g clip-path="url(#' + id + ')"><rect class="cc-dk-sweep" x="34" y="28" width="56" height="80" fill="url(#cc-dk-sweep)"/></g>' +
       '<circle class="cc-dk-led" cx="156" cy="112" r="3"/></svg>';
   }
   function drawNvme() {
@@ -349,7 +350,7 @@
       '<rect x="44" y="55" width="24" height="26" rx="2" fill="var(--cc-dk-nand)"/><rect x="49" y="60" width="14" height="16" rx="1" fill="#222"/>' +
       '<rect class="cc-dk-st" x="74" y="51" width="104" height="34" rx="2"/>' +
       '<text class="cc-dk-ink" x="126" y="72.5" font-size="12" font-weight="800" letter-spacing="1" text-anchor="middle">NVMe</text>' +
-      '<circle class="cc-dk-flow cc-dk-st" cx="22" cy="60" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n2" cx="22" cy="68" r="1.8"/><circle class="cc-dk-flow cc-dk-st cc-dk-n3" cx="22" cy="76" r="1.8"/></svg>';
+      '<circle class="cc-dk-led" cx="186" cy="84" r="2.4"/></svg>';
   }
   function drawUsb() {
     return '<svg class="cc-dk-drive" viewBox="10 22 174 92" aria-hidden="true"><rect x="22" y="52" width="46" height="32" rx="2" fill="url(#cc-dk-conn)"/>' +
@@ -368,7 +369,6 @@
       '<radialGradient id="cc-dk-plat" cx=".42" cy=".38" r=".7"><stop offset="0" style="stop-color:var(--cc-dk-plat-a)"/><stop offset=".55" style="stop-color:color-mix(in srgb, var(--cc-dk-plat-a) 55%, var(--cc-dk-plat-b))"/><stop offset="1" style="stop-color:var(--cc-dk-plat-b)"/></radialGradient>' +
       '<linearGradient id="cc-dk-conn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6d6d6"/><stop offset=".5" stop-color="#9a9a9a"/><stop offset="1" stop-color="#c4c4c4"/></linearGradient>' +
       '<linearGradient id="cc-dk-plastic" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--cc-dk-plastic)"/><stop offset="1" style="stop-color:var(--cc-dk-plastic-b)"/></linearGradient>' +
-      '<linearGradient id="cc-dk-sweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
       "</defs></svg>";
     document.body.appendChild(box.firstChild);
   }
@@ -388,15 +388,16 @@
     return '<div class="cc-dk-use"><div class="cc-dk-uselbl"><span><b data-f="used">' + esc(d.fs.used) + "</b> " + esc(t("used")) + ' · <span data-f="pct">' + Math.round(d.fs.pct) + '</span> %</span><span data-f="free">' + esc(d.fs.free + " " + t("free")) + "</span></div>" +
       '<div class="cc-dk-track"><div class="cc-dk-fill ' + lvl(d.fs.pct) + '" data-f="fill" style="width:' + Math.max(d.fs.pct, 1.5).toFixed(1) + '%"></div></div></div>';
   }
+  // A chip only for what deviates: a state that is not normal, SMART that warns or fails, errors.
+  // A disk that is fine shows none.
   function chipsHtml(d) {
     var x = extra[d.dev], h = "";
     if ((d.state === "warn" || d.state === "err" || d.state === "new") && !d.parity) h += '<span class="cc-dk-chip cc-dk-' + (d.state === "new" ? "plain" : d.state) + '" data-tip="' + esc(d.stateTip) + '">' + esc(d.stateTip.split("\n")[0]) + "</span>";
-    if (x && x.smart) {
-      var cls = x.smart === "fail" ? " cc-dk-err" : x.smart === "warn" ? " cc-dk-warn" : "";
-      var tip = x.smart === "fail" ? t("smartFailTip") : x.smart === "warn" ? x.tip : t("smartOkTip");
-      h += '<span class="cc-dk-chip' + cls + '" data-tip="' + esc(tip) + '"><span class="cc-dk-dot"></span>' + esc(x.smart === "fail" ? t("smartFail") : x.smart === "warn" ? t("smartWarn") : t("smartOk")) + "</span>";
+    if (x && (x.smart === "fail" || x.smart === "warn")) {
+      var fail = x.smart === "fail";
+      h += '<span class="cc-dk-chip ' + (fail ? "cc-dk-err" : "cc-dk-warn") + '" data-tip="' + esc(fail ? t("smartFailTip") : x.tip) + '"><span class="cc-dk-dot"></span>' + esc(fail ? t("smartFail") : t("smartWarn")) + "</span>";
     }
-    if (d.errors != null) h += '<span class="cc-dk-chip' + (d.errors ? " cc-dk-err" : "") + '"' + (d.errTip ? ' data-tip="' + esc(d.errTip) + '"' : "") + ">" + esc(nf.format(d.errors) + " " + t("errors")) + "</span>";
+    if (d.errors) h += '<span class="cc-dk-chip cc-dk-err"' + (d.errTip ? ' data-tip="' + esc(d.errTip) + '"' : "") + ">" + esc(nf.format(d.errors) + " " + t("errors")) + "</span>";
     return h;
   }
   function tempHtml(d) {
@@ -420,7 +421,7 @@
       '<div class="cc-dk-namerow"><span class="cc-dk-nb">' + esc(d.name) + "</span>" + (d.size ? '<span class="cc-dk-cap">' + esc(cap(d.size)) + "</span>" : "") + '<span class="cc-info cc-dk-info" tabindex="0" data-f="tip">' + INFO + '</span><span class="cc-dk-dev">' + esc(d.dev) + "</span></div>" +
       '<div class="cc-dk-model">' + esc(d.model + (d.fs ? " · " + d.fs.fs : "")) + "</div>" + useHtml(d, ctx) +
       '<div class="cc-dk-chips" data-f="chips"></div>' +
-      '<div class="cc-dk-io"><div>' + esc(t("temp")) + '<b data-f="temp"></b></div><div>' + esc(t("read")) + '<b data-f="rd"></b></div><div>' + esc(t("write")) + '<b data-f="wr"></b></div></div>';
+      '<div class="cc-dk-io"><div>' + esc(t("temp")) + '<b data-f="temp"></b></div><div class="cc-dk-rate">' + esc(t("read")) + '<b data-f="rd"></b></div><div class="cc-dk-rate">' + esc(t("write")) + '<b data-f="wr"></b></div></div>';
     if (window.CCTheme && window.CCTheme.pressable) Array.prototype.forEach.call(c.querySelectorAll(".cc-dk-ib"), window.CCTheme.pressable);
     c.addEventListener("animationend", function (e) { if (e.target === c) c.classList.remove("cc-dk-enter"); });
     return c;
@@ -495,6 +496,65 @@
     setHtml(n, html);
     var f = n.querySelector(".cc-dk-fill");
     if (f && window.CCTheme && window.CCTheme.slosh) window.CCTheme.slosh(f);
+  }
+
+  function fillTone(p) { return p > 95 ? "err" : p >= 90 ? "warn" : "accent"; }
+  // The array's fill level as a vessel on the left of its card (GlimStone: "A fill level is a
+  // vessel"), orange from 90 % and red past 95 %. It is built once, so its liquid keeps sloshing,
+  // and follows the numbers each time Unraid refills the table.
+  function arrayVessel(host, fs) {
+    var box = host.querySelector(":scope > .cc-dk-vessel");
+    if (!fs || !window.CCPictures) { if (box) host.removeChild(box); return; }
+    if (!box) {
+      box = el("div", "cc-dk-vessel", '<span class="cc-dk-vpct"><b data-f="vpct"></b> %</span><span class="cc-dk-vlbl">' + esc(t("used")) + "</span>");
+      box.__ccVessel = window.CCPictures.vessel({ share: fs.pct / 100, label: t("arrayFill") });
+      box.insertBefore(box.__ccVessel.el, box.firstChild);
+      host.insertBefore(box, host.firstChild);
+    }
+    box.__ccVessel.setLevel(fs.pct / 100).setTone(fillTone(fs.pct));
+    setText(box.querySelector('[data-f="vpct"]'), String(Math.round(fs.pct)));
+    var tip = fs.used + " " + t("of") + " " + fs.size + " " + t("used");
+    if (box.getAttribute("data-tip") !== tip) box.setAttribute("data-tip", tip);
+    var c = colourAt(0);
+    if (c) box.style.setProperty("--cc-dk-c", c); else box.style.removeProperty("--cc-dk-c");
+  }
+
+  // Unraid's own subscriber on /Main says what the array is busy with, and 2 is the mover. Its
+  // number reads the same in every language, where the button texts it sets would not.
+  var moving = false, arrayUse = null;
+  function watchMover() {
+    var mon = window.mymonitor;
+    if (!mon || typeof mon.on !== "function") return;
+    mon.on("message", function (state) {
+      var m = String(state) === "2";
+      if (m !== moving) { moving = m; soon(); }
+    });
+  }
+  // While the mover runs, the pools card shows its work as a picture: a line from each pool to the
+  // array, packets travelling on it at one speed, the array's vessel splashing as each one lands.
+  var MOVE_W = 220, MOVE_PITCH = 34;
+  function moverFlow(host, pools) {
+    var box = host.querySelector(":scope > .cc-dk-move");
+    var from = pools.filter(function (p) { return p.disks.length; });
+    var key = moving && window.CCPictures && from.length ? from.map(function (p) { return p.key; }).join("|") : "";
+    if (box && box.__ccKey !== key) { box.__ccFlows.forEach(function (f) { f.remove(); }); host.removeChild(box); box = null; }
+    if (!key) return;
+    if (!box) {
+      var h = Math.max(from.length * MOVE_PITCH, 56), top = (h - from.length * MOVE_PITCH) / 2 + MOVE_PITCH / 2;
+      var figures = from.map(function (p, i) {
+        var y = top + i * MOVE_PITCH;
+        return '<rect class="cc-dk-movepool" x="0" y="' + (y - 12) + '" width="92" height="24" rx="12"/><text class="cc-dk-movename" x="46" y="' + (y + 4) + '" text-anchor="middle">' + esc(p.name) + "</text>";
+      }).join("");
+      box = el("div", "cc-dk-move", '<div class="cc-dk-movetxt"><b>' + esc(t("moving")) + "</b><span>" + esc(t("movingTip")) + "</span></div>" +
+        '<div class="cc-dk-movepic"><svg viewBox="0 0 ' + MOVE_W + " " + h + '" width="' + MOVE_W + '" height="' + h + '" aria-hidden="true">' + figures + '</svg><span class="cc-dk-movedest"><span>' + esc(t("aopArray")) + "</span></span></div>");
+      var svg = box.querySelector("svg"), dest = box.querySelector(".cc-dk-movedest");
+      box.__ccVessel = window.CCPictures.vessel({ share: arrayUse ? arrayUse.pct / 100 : 0, label: t("arrayFill") });
+      dest.insertBefore(box.__ccVessel.el, dest.firstChild);
+      box.__ccFlows = from.map(function (p, i) { return window.CCPictures.flow(svg, [96, top + i * MOVE_PITCH], [MOVE_W, h / 2], { land: box.__ccVessel }); });
+      box.__ccKey = key;
+      host.appendChild(box);
+    }
+    if (arrayUse) box.__ccVessel.setLevel(arrayUse.pct / 100).setTone(fillTone(arrayUse.pct));
   }
 
   // The four sections, each found by the tbody Unraid fills and the box the list view shows.
@@ -600,6 +660,7 @@
       boxes.push(box);
     });
     order(wrap, boxes);
+    moverFlow(host, pools);
   }
   // Unassigned Devices' parts (its disks, the network shares, the past devices) share one wrapping
   // row, so they stand side by side where the section has room. UD finds them by class, wherever
@@ -689,7 +750,7 @@
     var grid = host.querySelector(":scope > .cc-dk-grid") || host.insertBefore(el("div", "cc-dk-grid"), host.firstChild);
     grid.style.setProperty("--cc-dk-n", data.disks.length);
     fillGrid(grid, cardsOf(data.disks, 0), colourAt);
-    if (S.key === "array") strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : "");
+    if (S.key === "array") { arrayUse = data.total && data.total.fs; strip(host, "cc-dk-sum", data.total ? sumHtml(data.total) : ""); arrayVessel(host, arrayUse); }
     if (S.key === "boot") notesStrip(host, data.notes);
   }
 
@@ -801,6 +862,7 @@
     loadExtra();
     setInterval(loadExtra, 10 * 60 * 1000);
     watch();
+    watchMover();
     window.addEventListener("resize", level);
     window.addEventListener("storage", function (e) { if (e && e.key && /^cc[a-z]*\./.test(e.key) && e.key !== "cc.stateCache") soon(); });
   }
