@@ -415,6 +415,71 @@
   }
   function busy(d) { return !d.down && (d.rd > 0 || d.wr > 0); }
   function pace(d) { var r = d.rd + d.wr; return r > 100e6 ? 0.5 : r > 10e6 ? 0.75 : 1.1; }
+
+  // Unraid sends the rates once a second, and a disk that reads in bursts drops to zero between
+  // them, so a card stays busy until HOLD after its last rate above zero.
+  var HOLD = 5000;
+  function hold(c, active, after) {
+    var now = Date.now();
+    if (active) c.__ccSeen = now;
+    var left = c.__ccSeen ? c.__ccSeen + HOLD - now : 0;
+    clearTimeout(c.__ccHold);
+    if (left > 0) c.__ccHold = setTimeout(function () { hold(c, false, after); }, left);
+    c.classList.toggle("cc-dk-busy", left > 0);
+    if (after) after(c);
+  }
+
+  // The platter runs up and coasts to a stop where it is, and the data in a flash drive glides to
+  // a new pace. A CSS animation would stop dead, or jump when its duration changes.
+  var UP = 0.9, DOWN = 1.6, GLIDE = 1.2, turning = [], last = 0, ticking = false;
+  var FLOWS = { "cc-dk-sweep": 1, "cc-dk-bars": 1, "cc-dk-flow": 1 };
+  function still() {
+    return document.documentElement.getAttribute("data-cc-motion") === "off" || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function ms(v) { var m = /([\d.]+)\s*(m?s)/.exec(v || ""); return m ? parseFloat(m[1]) * (m[2] === "ms" ? 1 : 1000) : 0; }
+  function flows(c) { return c.getAnimations({ subtree: true }).filter(function (a) { return FLOWS[a.animationName]; }); }
+  function toward(v, to, step) { return v < to ? Math.min(to, v + step) : Math.max(to, v - step); }
+  function motion(c) {
+    var m = c.__ccMotion || (c.__ccMotion = { p: 0, f: 0, on: false, flowing: false });
+    var on = c.classList.contains("cc-dk-busy") && !c.classList.contains("cc-dk-down");
+    var plat = c.querySelector(".cc-dk-plat");
+    if (still()) { m.p = 0; m.on = false; if (m.spin) m.spin.pause(); return; }
+    var dur = plat ? ms(getComputedStyle(plat).getPropertyValue("--cc-motion-disk-spin")) : 0;
+    if (plat && dur && on && !m.spin) { m.spin = plat.animate([{ rotate: "0deg" }, { rotate: "360deg" }], { duration: dur, iterations: Infinity }); m.spin.pause(); }
+    if (m.spin && dur && m.spin.effect.getTiming().duration !== dur) {
+      var was = m.spin.effect.getTiming().duration, at = m.spin.currentTime % was;
+      m.spin.effect.updateTiming({ duration: dur });
+      m.spin.currentTime = at / was * dur;
+    }
+    m.on = on;
+    m.ft = 1 / (c.__ccPace || 1.1);
+    if (on && !m.flowing) m.f = m.ft;
+    m.flowing = on;
+    if (on) flows(c).forEach(function (a) { a.playbackRate = m.f; });
+    if (((m.spin && m.p !== (on ? 1 : 0)) || m.f !== m.ft) && turning.indexOf(c) < 0) turning.push(c);
+    if (turning.length && !ticking) { ticking = true; last = 0; requestAnimationFrame(tick); }
+  }
+  function glide(c, dt) {
+    var m = c.__ccMotion;
+    if (!c.isConnected) { if (m.spin) m.spin.cancel(); m.spin = null; return false; }
+    if (m.spin) {
+      m.p = toward(m.p, m.on ? 1 : 0, dt / (m.on ? UP : DOWN));
+      var r = m.p * m.p * (3 - 2 * m.p);
+      if (r > 0) { m.spin.playbackRate = r; if (m.spin.playState !== "running") m.spin.play(); }
+      else m.spin.pause();
+    }
+    if (m.f !== m.ft) {
+      m.f = toward(m.f, m.ft, dt * GLIDE);
+      flows(c).forEach(function (a) { a.playbackRate = m.f; });
+    }
+    return (m.spin && m.p !== (m.on ? 1 : 0)) || m.f !== m.ft;
+  }
+  function tick(now) {
+    var dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
+    last = now;
+    turning = turning.filter(function (c) { return glide(c, dt); });
+    if (turning.length) requestAnimationFrame(tick); else ticking = false;
+  }
   function shapeOf(d, ctx) { return [d.kind, d.size, !!d.fs, d.parity, !!d.spin, !!d.browse, !!d.log, d.down, d.name, ctx.member || "", ctx.colour].join("|"); }
 
   function newCard(d, i, ctx) {
@@ -440,7 +505,10 @@
   function patch(c, d, ctx) {
     c.__ccDisk = d;
     c.classList.toggle("cc-dk-down", d.down);
-    c.classList.toggle("cc-dk-busy", busy(d));
+    c.classList.toggle("cc-dk-access", busy(d));
+    if (busy(d)) c.__ccPace = pace(d);
+    if (d.down) c.__ccSeen = 0;
+    hold(c, busy(d), motion);
     c.style.setProperty("--cc-dk-k", pace(d));
     var tip = c.querySelector('[data-f="tip"]'), tp = tipFor(d);
     if (tip && tip.getAttribute("data-tip") !== tp) { tip.setAttribute("data-tip", tp); tip.setAttribute("aria-label", t("details")); }
@@ -535,7 +603,7 @@
     setHtml(c.querySelector('[data-f="temp"]'), total.temp ? '<span class="cc-dk-dot"></span>' + esc("Ø " + nf.format(total.temp.shown) + " °" + total.temp.unit) : '<span class="cc-dk-dot cc-dk-idle"></span>*');
     setText(c.querySelector('[data-f="rd"]'), total.rdText);
     setText(c.querySelector('[data-f="wr"]'), total.wrText);
-    c.classList.toggle("cc-dk-busy", rate(total.rdText) > 0 || rate(total.wrText) > 0);
+    hold(c, rate(total.rdText) > 0 || rate(total.wrText) > 0);
     if (colour) { c.style.setProperty("--cc-dk-c", colour); c.style.setProperty("--cc-dk-ct", ink(colour)); }
     else { c.style.removeProperty("--cc-dk-c"); c.style.removeProperty("--cc-dk-ct"); }
     return c;

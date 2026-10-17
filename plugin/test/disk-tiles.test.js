@@ -110,22 +110,22 @@ console.log('\nThe motion stays inside the gate and stops at "off"');
 {
   const media = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
   const anims = [...css.matchAll(/^\s*(html[^\n{]*)\{[^}\n]*\banimation:\s*cc-dk-/gm)].map((m) => m[1]);
-  ok('there are animations', anims.length >= 7, anims.length);
+  ok('there are animations', anims.length >= 6, anims.length);
   ok('each one names the quiet level and none the lively one', anims.every((s) => /:not\(\[data-cc-motion="off"\]\)/.test(s)) && !/data-cc-motion="(wild|subtle)"\]/.test(css));
   ok('they all sit in the no-preference block', anims.every((s) => media.includes(s)));
   const tokens = read('sheets/CannonadeCommand.Tokens.css');
-  for (const d of ['spin', 'seek', 'swing', 'blink', 'flow', 'rise', 'stagger']) ok('the platter, arm, LED, data flow and entrance read --cc-motion-disk-' + d, css.includes('var(--cc-motion-disk-' + d) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
+  for (const d of ['spin', 'seek', 'swing', 'blink', 'flow', 'rise', 'stagger']) ok('the platter, arm, LED, data flow and entrance read --cc-motion-disk-' + d, (css.includes('var(--cc-motion-disk-' + d) || js.includes('getPropertyValue("--cc-motion-disk-' + d + '")')) && (tokens.match(new RegExp('--cc-motion-disk-' + d + ':', 'g')) || []).length === 4);
   ok('the entrance ends at transform: none', /@keyframes cc-dk-in \{[^}]*\}[^}]*to \{ transform: none;/.test(css));
-  ok('the platter waits paused and turns only while the disk reads or writes, so it stops where it was', /#displaybox \.cc-dk-plat \{ animation: cc-dk-spin var\(--cc-motion-disk-spin\) linear infinite paused; \}/.test(css) && /\.cc-dk-card\.cc-dk-busy:not\(\.cc-dk-down\) \.cc-dk-plat \{ animation-play-state: running; \}/.test(css));
+  ok('no CSS animation turns the platter, so nothing can stop it dead', !/cc-dk-spin/.test(css) && !/\.cc-dk-plat \{[^}]*animation/.test(css));
   const outside = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference) {\n  html.cc-dk-on:not'));
-  ok('the LED blinks while busy, and outside the gate it is lit without blinking', /\.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ animation: cc-dk-blink/.test(media) && /html\.cc-dk-on #displaybox \.cc-dk-card\.cc-dk-busy \.cc-dk-led \{ fill: var\(--cc-dk-c/.test(outside) && !/cc-dk-blink/.test(outside.replace(/@keyframes[^\n]*/g, '')));
+  ok('the LED blinks with every second the disk reads or writes, and outside the gate it is lit without blinking', /\.cc-dk-card\.cc-dk-access \.cc-dk-led \{ animation: cc-dk-blink/.test(media) && /html\.cc-dk-on #displaybox \.cc-dk-card\.cc-dk-access \.cc-dk-led \{ fill: var\(--cc-dk-c/.test(outside) && /c\.classList\.toggle\("cc-dk-access", busy\(d\)\);/.test(grabFn(js, 'patch')) && !/cc-dk-blink/.test(outside.replace(/@keyframes[^\n]*/g, '')));
   ok('a resting disk dims its LED, a waiting one glows faintly', /\.cc-dk-card\.cc-dk-down \.cc-dk-led \{ opacity: \.45; \}/.test(css) && /\.cc-dk-card:not\(\.cc-dk-down\) \.cc-dk-led \{ fill: color-mix\(/.test(css));
   ok('every drawing keeps its LED', ['drawHdd', 'drawSsd', 'drawNvme', 'drawUsb'].every((n) => /class="cc-dk-led"/.test(grabFn(js, n))));
   const flowDots = new Function(grabFn(js, 'flowDots') + '\nreturn flowDots;')();
   ok('an SSD has a light that passes over its lines, an NVMe stick three dots from its contacts, a USB stick three beside its label', /class="cc-dk-sweep"/.test(grabFn(js, 'drawSsd')) && /id="cc-dk-sweep"/.test(grabFn(js, 'defs')) && /flowDots\(22, \[60, 68, 76\]\)/.test(grabFn(js, 'drawNvme')) && /flowDots\(66, \[50, 86, 50\]\)/.test(grabFn(js, 'drawUsb')) && (flowDots(22, [60, 68, 76]).match(/class="cc-dk-flow cc-dk-st( cc-dk-n[23])?"/g) || []).length === 3);
   const busyOnly = ['cc-dk-sweep', 'cc-dk-bars', 'cc-dk-flow'].map((k) => [...media.matchAll(new RegExp('^\\s*(html[^\\n{]*)\\{[^}\\n]*animation: ' + k + ' ', 'gm'))].map((m) => m[1]));
   ok('the data flows only while the drive reads or writes', busyOnly.every((l) => l.length === 1 && /\.cc-dk-card\.cc-dk-busy /.test(l[0])), busyOnly.join(' | '));
-  ok('each flow runs at the pace the rate sets', ['cc-dk-sweep', 'cc-dk-bars', 'cc-dk-flow'].every((k) => new RegExp('animation: ' + k + ' calc\\(var\\(--cc-motion-disk-flow\\) \\* var\\(--cc-dk-k, 1\\)').test(media)));
+  ok('each flow runs on the dial alone, and disks.js sets its pace', ['cc-dk-sweep var(--cc-motion-disk-flow) ', 'cc-dk-bars calc(var(--cc-motion-disk-flow) * .8) ', 'cc-dk-flow var(--cc-motion-disk-flow) '].every((k) => media.includes('animation: ' + k)) && !/--cc-dk-k/.test(media.split('\n').filter((l) => /cc-dk-(sweep|bar|flow)/.test(l)).join('\n')) && /"cc-dk-sweep": 1, "cc-dk-bars": 1, "cc-dk-flow": 1/.test(js));
   ok('outside the gate the light and the dots are hidden, so a still frame and an idle drive show neither', /html\.cc-dk-on #displaybox :is\(\.cc-dk-sweep, \.cc-dk-flow\) \{ opacity: 0; \}/.test(outside) && !/cc-dk-(sweep|bars|flow) /.test(outside.replace(/@keyframes[^\n]*/g, '')));
   const v = (lvl) => { const m = new RegExp(lvl + ' \\{[^}]*--cc-motion-disk-flow:\\s*([^;]+);').exec(tokens); return m && m[1].trim(); };
   ok('the flow dial moves at the lively levels and stands at "off" and outside the gate', v('html\\[data-cc-motion="off"\\]') === '60s' && /^html \{[^}]*--cc-motion-disk-flow:\s*60s;/m.test(tokens) && /--cc-motion-disk-flow:\s*\.9s;/.test(tokens) && /--cc-motion-disk-flow:\s*2\.4s;/.test(tokens));
@@ -348,9 +348,9 @@ console.log('\nThe array is a card of its own, first among its disks, with a ves
   };
   const made = [];
   const pictures = { vessel(o) { const v = { el: dom('span'), o, level: null, tone: null, setLevel(s) { v.level = s; return v; }, setTone(t) { v.tone = t; return v; } }; made.push(v); return v; } };
-  const helpers = ['totalCard', 'fillTone', 'setText', 'setHtml', 't', 'esc', 'fill', 'el', 'cap', 'bytes', 'clean', 'rate', 'lvl', 'ink'];
-  const src = ['var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabVar(js, 'POW'), grabVar(js, 'INFO')].concat(helpers.map((n) => grabFn(js, n))).join('\n') + '\nreturn totalCard;';
-  const totalCard = new Function('window', 'document', 'LANG', 'nf', src)({ CCPictures: pictures }, { createElement: dom }, 'de', { format: String });
+  const helpers = ['totalCard', 'fillTone', 'setText', 'setHtml', 't', 'esc', 'fill', 'el', 'cap', 'bytes', 'clean', 'rate', 'lvl', 'ink', 'hold'];
+  const src = ['var TXT = ' + /var TXT = (\{[\s\S]*?\n  \});/.exec(js)[1] + ';', grabVar(js, 'POW'), grabVar(js, 'INFO'), grabVar(js, 'HOLD')].concat(helpers.map((n) => grabFn(js, n))).join('\n') + '\nreturn totalCard;';
+  const totalCard = new Function('window', 'document', 'LANG', 'nf', 'setTimeout', 'clearTimeout', src)({ CCPictures: pictures }, { createElement: dom }, 'de', { format: String }, () => 0, () => {});
   const grid = dom('div');
   const total = { label: 'Array aus fünf Datenträgern', temp: { shown: 34, c: 34, unit: 'C' }, rdText: '0.0 B/s', wrText: '0.0 B/s', fs: { size: '52 TB', used: '43.9 TB', free: '8.12 TB', pct: 84.4 } };
   const c = totalCard(grid, total, '');
@@ -393,6 +393,90 @@ console.log('\nThe array is a card of its own, first among its disks, with a ves
   ok('the grid takes the lead first and keeps the disk cards it had, in their order', g2.children[0] === lead && g2.children[1] === parity && g2.children.map((n) => n.getAttribute('data-key')).slice(1).join() === 'parity,disk1');
   fg(g2, items, () => '', lead);
   ok('a refill keeps the lead where it is', g2.children[0] === lead && g2.children.length === 3);
+}
+
+console.log('\nA disk that reads in bursts keeps working, and its platter runs up and coasts down');
+{
+  const names = ['busy', 'pace', 'hold', 'still', 'ms', 'flows', 'toward', 'motion', 'glide', 'tick'];
+  const src = [grabVar(js, 'HOLD'), grabVar(js, 'UP'), grabVar(js, 'FLOWS')].concat(names.map((n) => grabFn(js, n))).join('\n') + '\nreturn {' + names.join(',') + '};';
+  // A clock that runs the due timers and one animation frame every 16 ms.
+  const make = (opts = {}) => {
+    const env = { now: 1e6, timers: [], frames: [] };
+    const M = new Function('document', 'window', 'getComputedStyle', 'requestAnimationFrame', 'Date', 'setTimeout', 'clearTimeout', src)(
+      { documentElement: { getAttribute: () => (opts.off ? 'off' : null) } },
+      { matchMedia: () => ({ matches: !!opts.reduced }) },
+      () => ({ getPropertyValue: () => ' 1.5s' }),
+      (f) => env.frames.push(f),
+      { now: () => env.now },
+      (f, ms) => { const t = { f, at: env.now + ms }; env.timers.push(t); return t; },
+      (t) => { env.timers = env.timers.filter((x) => x !== t); });
+    const cls = new Set();
+    const spin = { playbackRate: 1, playState: 'running', currentTime: 0, made: 0, cancelled: false, duration: 0 };
+    Object.assign(spin, { pause() { spin.playState = 'paused'; }, play() { spin.playState = 'running'; }, cancel() { spin.cancelled = true; },
+      effect: { getTiming: () => ({ duration: spin.duration }), updateTiming: (t) => { spin.duration = t.duration; } } });
+    const flow = { animationName: 'cc-dk-flow', playbackRate: 1 };
+    const plat = { animate: (kf, o) => { spin.made++; spin.duration = o.duration; spin.kf = kf; return spin; } };
+    const card = { isConnected: true, classList: { contains: (c) => cls.has(c), toggle: (c, on) => (on ? cls.add(c) : cls.delete(c)) },
+      querySelector: (s) => (s === '.cc-dk-plat' ? plat : null), getAnimations: () => [flow, { animationName: 'cc-dk-blink', playbackRate: 1 }] };
+    const feed = (rd) => { const d = { rd, wr: 0, down: false }; if (M.busy(d)) card.__ccPace = M.pace(d); M.hold(card, M.busy(d), M.motion); };
+    const samples = [];
+    const run = (ms) => {
+      const end = env.now + ms;
+      while (env.now < end) {
+        env.now += 16;
+        const due = env.timers.filter((t) => t.at <= env.now);
+        env.timers = env.timers.filter((t) => t.at > env.now);
+        due.forEach((t) => t.f());
+        const fr = env.frames; env.frames = [];
+        fr.forEach((f) => f(env.now));
+        samples.push({ t: env.now, busy: cls.has('cc-dk-busy'), rate: spin.playState === 'running' ? spin.playbackRate : 0, flow: flow.playbackRate });
+      }
+    };
+    return { env, M, cls, spin, flow, feed, run, samples };
+  };
+
+  const a = make(), t0 = a.env.now;
+  for (let i = 0; i < 8; i++) { a.feed(i % 2 ? 0 : 40e6); a.run(1000); }
+  const burst = a.samples.slice();
+  ok('the hold keeps a disk that reads in bursts busy the whole time', burst.every((s) => s.busy));
+  const up = burst.filter((s) => s.t <= t0 + 1200);
+  const steps = up.slice(1).map((s, i) => s.rate - up[i].rate);
+  ok('the platter runs up from rest in small steps instead of starting at full speed', up[0].rate < 0.05 && steps.every((d) => d >= 0 && d < 0.06) && up.some((s) => s.rate > 0.3 && s.rate < 0.7), up.slice(0, 6).map((s) => s.rate.toFixed(2)).join(' '));
+  ok('it reaches full speed within a second and keeps it through the gaps between the bursts', burst.filter((s) => s.t >= t0 + 1000).every((s) => s.rate === 1 && a.spin.playState === 'running'));
+  ok('the platter is one animation, a full turn at the spin dial, made once', a.spin.made === 1 && a.spin.duration === 1500 && a.spin.kf[1].rotate === '360deg');
+
+  a.samples.length = 0;
+  a.run(2800);
+  ok('after the last rate above zero it stays busy for the hold', a.samples.every((s) => s.busy));
+  a.run(2600);
+  const tail = a.samples.filter((s) => !s.busy);
+  const down = tail.slice(1).map((s, i) => s.rate - tail[i].rate);
+  ok('then it stops being busy', tail.length > 0 && !a.cls.has('cc-dk-busy'));
+  ok('the platter coasts down in small steps', down.every((d) => d <= 0 && d > -0.06) && tail.some((s) => s.rate > 0.3 && s.rate < 0.7), tail.slice(0, 6).map((s) => s.rate.toFixed(2)).join(' '));
+  ok('and stays where it ran out, paused rather than reset', a.spin.playState === 'paused' && !a.spin.cancelled && a.env.frames.length === 0);
+
+  const b = make();
+  b.feed(40e6); b.run(1000); b.feed(40e6); b.run(1000); b.feed(0); b.run(4000 + 600);
+  const mid = b.samples[b.samples.length - 1].rate;
+  b.samples.length = 0;
+  b.feed(40e6); b.run(400);
+  ok('a start while it coasts speeds up from where it is', mid > 0.2 && mid < 1 && b.samples.every((s) => s.rate >= mid - 1e-9) && b.samples.slice(1).every((s, i) => s.rate >= b.samples[i].rate), mid.toFixed(2));
+
+  const c = make();
+  c.feed(40e6); c.run(500);
+  const slow = c.flow.playbackRate;
+  c.samples.length = 0;
+  c.feed(160e6); c.run(1500);
+  const glide = c.samples.map((s) => s.flow);
+  ok('the flow starts at the pace of the rate', Math.abs(slow - 1 / 0.75) < 1e-9);
+  ok('a faster rate glides the flow to its pace instead of jumping', Math.abs(glide[glide.length - 1] - 2) < 1e-9 && glide.slice(1).every((v, i) => v - glide[i] >= 0 && v - glide[i] < 0.03) && glide.some((v) => v > 1.5 && v < 1.9), glide.slice(0, 5).map((v) => v.toFixed(2)).join(' '));
+
+  for (const [label, opts] of [['motion "off"', { off: true }], ['reduced motion', { reduced: true }]]) {
+    const s = make(opts);
+    for (let i = 0; i < 4; i++) { s.feed(i % 2 ? 0 : 40e6); s.run(1000); }
+    ok('at ' + label + ' the platter stands still while the card shows it is busy', s.spin.made === 0 && s.samples.every((x) => x.busy) && s.env.frames.length === 0);
+  }
+  ok('the card keeps the rates in view for as long as it counts as busy', /hold\(c, busy\(d\), motion\);/.test(grabFn(js, 'patch')) && /hold\(c, rate\(total\.rdText\) > 0 \|\| rate\(total\.wrText\) > 0\);/.test(grabFn(js, 'totalCard')));
 }
 
 console.log('\nThe boot hint stands beside the boot card');
